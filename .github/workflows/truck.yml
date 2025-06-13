@@ -1,0 +1,24 @@
+name: Truck Congestion Map
+on: [push]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          
+      - name: Inject Secrets
+        run: |
+          echo "const SPREADSHEET_ID = '${{ secrets.SPREADSHEET_ID }}';" > js/config.js
+          echo "const GOOGLE_CREDENTIALS = ${{ secrets.GOOGLE_CREDENTIALS_JSON }};" >> js/config.js
+          
+      - name: Deploy
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: .
