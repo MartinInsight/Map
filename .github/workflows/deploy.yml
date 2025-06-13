@@ -15,7 +15,7 @@ jobs:
       - name: Inject Secrets
         run: |
           echo "const SPREADSHEET_ID = '${{ secrets.SPREADSHEET_ID }}';" > js/config.js
-          echo "const GOOGLE_CREDENTIALS = ${{ secrets.GOOGLE_CREDENTIALS_JSON }};" >> js/config.js
+          echo "const GOOGLE_CREDENTIALS = '${{ secrets.GOOGLE_CREDENTIALS_JSON }}';" >> js/config.js
           
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
