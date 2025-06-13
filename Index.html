@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Truck Congestion Map</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+        #map {
+            width: 100%;
+            height: 100vh;
+        }
+        .info {
+            padding: 6px 8px;
+            font: 14px/16px Arial, Helvetica, sans-serif;
+            background: white;
+            background: rgba(255,255,255,0.9);
+            box-shadow: 0 0 15px rgba(0,0,0,0.2);
+            border-radius: 5px;
+        }
+        .info h4 {
+            margin: 0 0 5px;
+            color: #333;
+            font-weight: bold;
+        }
+        .info table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .info table td, .info table th {
+            padding: 3px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        .info table th {
+            font-weight: bold;
+        }
+        .legend {
+            line-height: 18px;
+            color: #555;
+            background: rgba(255,255,255,0.9);
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .legend i {
+            width: 18px;
+            height: 18px;
+            float: left;
+            margin-right: 8px;
+            opacity: 0.7;
+        }
+        .loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 24px;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <div id="loading" class="loading">데이터 로드 중...</div>
+    <div id="map"></div>
+    
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <!-- 미국 주별 GeoJSON 데이터 -->
+    <script src="https://raw.githubusercontent.com/python-visualization/folium/master/examples/data/us-states.js"></script>
+    
+    <script>
+        // Google Sheets API를 사용하여 데이터 가져오기
+        async function fetchDataFromGoogleSheets() {
+            try {
+                // Google Apps Script 웹 앱 URL (공개적으로 접근 가능해야 함)
+                const scriptUrl = 'https://script.google.com/macros/s/YOUR_GOOGLE_SCRIPT_ID/exec';
+                
+                const response = await fetch(scriptUrl);
+                if (!response.ok) {
+                    throw new Error('데이터를 가져오는 데 실패했습니다.');
+                }
+                return await response.json();
+            } catch (error) {
+                console.error('Google Sheets 데이터 가져오기 오류:', error);
+                throw error;
+            }
+        }
+
+        // 색상 범주 정의
+        function getColor(value, type) {
+            if (value === 0 || value === null || value === undefined) return '#cccccc'; // 데이터 없는 경우
+            
+            if (type === 'inbound' || type === 'outbound') {
+                return value > 0 ? 
+                    (value === 1 ? '#ffcccc' : (value === 2 ? '#ff9999' : '#ff6666')) :
+                    (value === -1 ? '#ccffff' : (value === -2 ? '#99ffff' : '#66ffff'));
+            } else { // dwell 데이터
+                return value > 0 ? 
+                    (value === 1 ? '#ffebcc' : (value === 2 ? '#ffd699' : '#ffc266')) :
+                    (value === -1 ? '#e6ffcc' : (value === -2 ? '#ccff99' : '#b3ff66'));
+            }
+        }
+
+        // 지도 초기화 및 데이터 로드
+        async function initMap() {
+            // 지도 초기화
+            const map = L.map('map').setView([37.8, -96], 4);
+
+            // 타일 레이어 추가
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+
+            // Google Sheets에서 데이터 가져오기
+            let truckData = {};
+            try {
+                const sheetData = await fetchDataFromGoogleSheets();
+                
+                // 데이터 형식 변환
+                sheetData.forEach(row => {
+                    truckData[row.State] = {
+                        code: row.Code,
+                        inboundDelay: row['Inbound Delay'],
+                        inboundColor: row['Inbound Color'],
+                        outboundDelay: row['Outbound Delay'],
+                        outboundColor: row['Outbound Color'],
+                        dwellInbound: row['Dwell Inbound'],
+                        dwellInboundColor: row['Dwell Inbound Color'],
+                        dwellOutbound: row['Dwell Outbound']
+                    };
+                });
+            } catch (error) {
+                console.error('데이터 로드 실패:', error);
+                document.getElementById('loading').textContent = '데이터 로드 실패. 새로고침 해주세요.';
+                return;
+            }
+
+            // GeoJSON 데이터 스타일링 함수
+            function style(feature) {
+                const stateName = feature.properties.name;
+                const data = truckData[stateName] || {};
+                
+                return {
+                    fillColor: getColor(data.inboundColor, 'inbound'),
+                    weight: 1,
+                    opacity: 1,
+                    color: 'white',
+                    dashArray: '3',
+                    fillOpacity: 0.7
+                };
+            }
+
+            // 정보 컨트롤 생성
+            const info = L.control();
+
+            info.onAdd = function(map) {
+                this._div = L.DomUtil.create('div', 'info');
+                this.update();
+                return this._div;
+            };
+
+            info.update = function(props) {
+                if (props) {
+                    const stateName = props.name;
+                    const data = truckData[stateName] || {};
+                    
+                    this._div.innerHTML = `<h4>${stateName} (${data.code || 'N/A'})</h4>
+                        <table>
+                            <tr><th>항목</th><th>값</th></tr>
+                            <tr><td>Inbound Delay:</td><td>${data.inboundDelay !== undefined ? data.inboundDelay : 'N/A'}</td></tr>
+                            <tr><td>Outbound Delay:</td><td>${data.outboundDelay !== undefined ? data.outboundDelay : 'N/A'}</td></tr>
+                            <tr><td>Dwell Inbound:</td><td>${data.dwellInbound !== undefined ? data.dwellInbound : 'N/A'}</td></tr>
+                            <tr><td>Dwell Outbound:</td><td>${data.dwellOutbound !== undefined ? data.dwellOutbound : 'N/A'}</td></tr>
+                        </table>`;
+                } else {
+                    this._div.innerHTML = '<h4>미국 주별 트럭 물동량</h4>지역 위에 마우스를 올려 정보 확인';
+                }
+            };
+
+            info.addTo(map);
+
+            // 주별 정보 표시 함수
+            function highlightFeature(e) {
+                const layer = e.target;
+
+                layer.setStyle({
+                    weight: 3,
+                    color: '#666',
+                    dashArray: '',
+                    fillOpacity: 0.7
+                });
+
+                layer.bringToFront();
+                info.update(layer.feature.properties);
+            }
+
+            // 하이라이트 제거 함수
+            function resetHighlight(e) {
+                geojson.resetStyle(e.target);
+                info.update();
+            }
+
+            // 주 클릭 시 확대
+            function zoomToFeature(e) {
+                map.fitBounds(e.target.getBounds());
+            }
+
+            // 각 주에 이벤트 추가
+            function onEachFeature(feature, layer) {
+                layer.on({
+                    mouseover: highlightFeature,
+                    mouseout: resetHighlight,
+                    click: zoomToFeature
+                });
+            }
+
+            // GeoJSON 레이어 생성
+            const geojson = L.geoJson(statesData, {
+                style: style,
+                onEachFeature: onEachFeature
+            }).addTo(map);
+
+            // 범례 추가
+            const legend = L.control({position: 'bottomright'});
+
+            legend.onAdd = function(map) {
+                const div = L.DomUtil.create('div', 'legend');
+                const categories = [
+                    'Inbound Positive', 'Inbound Neutral', 'Inbound Negative',
+                    'Outbound Positive', 'Outbound Neutral', 'Outbound Negative',
+                    'Dwell Positive', 'Dwell Neutral', 'Dwell Negative'
+                ];
+                const colors = [
+                    '#ff9999', '#ffcccc', '#ff6666',
+                    '#99ffff', '#ccffff', '#66ffff',
+                    '#ffd699', '#ffebcc', '#ffc266'
+                ];
+                
+                div.innerHTML = '<h4>범례</h4>';
+                
+                for (let i = 0; i < categories.length; i++) {
+                    div.innerHTML += 
+                        '<i style="background:' + colors[i] + '"></i> ' + 
+                        categories[i] + '<br>';
+                }
+                
+                return div;
+            };
+
+            legend.addTo(map);
+
+            // 로딩 화면 숨기기
+            document.getElementById('loading').style.display = 'none';
+        }
+
+        // 페이지 로드 시 지도 초기화
+        document.addEventListener('DOMContentLoaded', initMap);
+    </script>
+</body>
+</html>
