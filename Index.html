@@ -3,29 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Truck Congestion Map</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <title>U.S. Truck Congestion Map</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: Arial, sans-serif;
-        }
-        #map {
-            width: 100%;
-            height: 100vh;
-        }
-        .info {
-            padding: 6px 8px;
-            font: 14px/16px Arial, sans-serif;
-            background: white;
-            background: rgba(255,255,255,0.8);
-            box-shadow: 0 0 15px rgba(0,0,0,0.2);
+        body { margin: 0; padding: 0; }
+        #map { height: 100vh; width: 100%; }
+        .info { 
+            padding: 8px; 
+            background: rgba(255,255,255,0.9);
             border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.2);
         }
         .legend {
             line-height: 18px;
-            color: #555;
+            color: #333;
         }
         .legend i {
             width: 18px;
@@ -39,7 +30,8 @@
 <body>
     <div id="map"></div>
 
-    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
-    <script src="js/Truck.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="js/Truck.js" type="module"></script>
 </body>
 </html>
