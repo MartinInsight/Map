@@ -1,47 +1,87 @@
-const { google } = require('googleapis');
+import { fetchTruckData } from './google-sheets.js';
 
-export default async function handler(req, res) {
-  // 환경 변수 검증
-  if (!process.env.GOOGLE_CREDENTIALS_JSON) {
-    return res.status(500).json({ error: 'GOOGLE_CREDENTIALS_JSON 환경 변수가 필요합니다' });
-  }
-  if (!process.env.SPREADSHEET_ID) {
-    return res.status(500).json({ error: 'SPREADSHEET_ID 환경 변수가 필요합니다' });
-  }
+// 지도 초기화
+const map = L.map('map').setView([37.8, -96], 4);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap'
+}).addTo(map);
 
-  try {
-    // Google Sheets 인증
-    const auth = new google.auth.GoogleAuth({
-      credentials: JSON.parse(process.env.GOOGLE_CREDENTIALS_JSON),
-      scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
-    });
+// 색상 매핑
+const COLOR_SCALE = {
+    '-4': '#d73027',  // 심각한 지연
+    '-3': '#fc8d59',
+    '-2': '#fee08b',
+    '-1': '#91cf60',  // 약간의 지연
+    '0': '#f7f7f7',   // 정상
+    '1': '#91cf60',
+    '2': '#fee08b',
+    '3': '#fc8d59',
+    '4': '#d73027'
+};
 
-    const sheets = google.sheets({ version: 'v4', auth: await auth.getClient() });
-    
-    // 데이터 가져오기
-    const response = await sheets.spreadsheets.values.get({
-      spreadsheetId: process.env.SPREADSHEET_ID,
-      range: 'CONGESTION_TRUCK!A1:I51',
-    });
+let currentMode = 'inbound';
+let geoJsonLayer = null;
 
-    const rows = response.data.values;
-    if (!rows || rows.length === 0) {
-      return res.status(404).json({ error: '데이터가 없습니다' });
-    }
+// 데이터 로드 및 지도 업데이트
+async function loadData() {
+    const [statesData, truckData] = await Promise.all([
+        fetch('us-states.json').then(res => res.json()),
+        fetchTruckData()
+    ]);
 
-    // 데이터 포맷팅
-    const headers = rows[0];
-    const data = rows.slice(1).map(row => {
-      const obj = {};
-      headers.forEach((header, index) => {
-        obj[header] = row[index];
-      });
-      return obj;
-    });
-
-    res.status(200).json(data);
-  } catch (error) {
-    console.error('Error:', error);
-    res.status(500).json({ error: '데이터를 가져오는 데 실패했습니다' });
-  }
+    renderMap(statesData, truckData);
 }
+
+function renderMap(statesData, truckData) {
+    if (geoJsonLayer) map.removeLayer(geoJsonLayer);
+
+    geoJsonLayer = L.geoJson(statesData, {
+        style: (feature) => getStyle(feature, truckData),
+        onEachFeature: (feature, layer) => bindPopup(layer, feature, truckData)
+    }).addTo(map);
+}
+
+function getStyle(feature, truckData) {
+    const state = truckData.find(d => d.State === feature.properties.name);
+    const colorKey = currentMode === 'inbound' ? 'InboundColor' : 'OutboundColor';
+    const colorValue = state ? state[colorKey] : 0;
+
+    return {
+        fillColor: COLOR_SCALE[colorValue] || '#f7f7f7',
+        weight: 1,
+        opacity: 1,
+        color: 'white',
+        fillOpacity: 0.7
+    };
+}
+
+function bindPopup(layer, feature, truckData) {
+    const state = truckData.find(d => d.State === feature.properties.name);
+    
+    layer.bindPopup(`
+        <div class="tooltip-content">
+            <h4>${feature.properties.name}</h4>
+            <p><strong>Inbound Delay:</strong> ${state?.InboundDelay?.toFixed(2) || 'N/A'} days</p>
+            <p><strong>Outbound Delay:</strong> ${state?.OutboundDelay?.toFixed(2) || 'N/A'} days</p>
+            <p><strong>Dwell Time:</strong> ${state?.DwellInbound?.toFixed(2) || 'N/A'} days</p>
+        </div>
+    `);
+}
+
+// 토글 이벤트
+document.getElementById('inboundBtn').addEventListener('click', () => {
+    currentMode = 'inbound';
+    document.getElementById('inboundBtn').classList.add('active');
+    document.getElementById('outboundBtn').classList.remove('active');
+    loadData();
+});
+
+document.getElementById('outboundBtn').addEventListener('click', () => {
+    currentMode = 'outbound';
+    document.getElementById('outboundBtn').classList.add('active');
+    document.getElementById('inboundBtn').classList.remove('active');
+    loadData();
+});
+
+// 초기 로드
+document.addEventListener('DOMContentLoaded', loadData);
