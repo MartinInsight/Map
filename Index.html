@@ -3,20 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>U.S. Truck Congestion Map</title>
+    <title>Truck Congestion Map</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
-        body { margin: 0; padding: 0; }
-        #map { height: 100vh; width: 100%; }
-        .info { 
-            padding: 8px; 
+        body { 
+            margin: 0; 
+            font-family: 'Arial', sans-serif;
+        }
+        #map { 
+            height: 100vh; 
+            width: 100%; 
+        }
+        .map-control {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.2);
+        }
+        .toggle-container {
+            display: flex;
+            gap: 10px;
+        }
+        .toggle-btn {
+            padding: 8px 12px;
+            background: #f0f0f0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .toggle-btn.active {
+            background: #4CAF50;
+            color: white;
+            border-color: #4CAF50;
+        }
+        .info-tooltip {
+            padding: 8px;
             background: rgba(255,255,255,0.9);
             border-radius: 5px;
             box-shadow: 0 0 10px rgba(0,0,0,0.2);
         }
         .legend {
             line-height: 18px;
-            color: #333;
+            padding: 8px;
+            background: rgba(255,255,255,0.9);
         }
         .legend i {
             width: 18px;
@@ -29,9 +62,15 @@
 </head>
 <body>
     <div id="map"></div>
+    <div class="map-control">
+        <h3>Truck Congestion Map</h3>
+        <div class="toggle-container">
+            <button id="inboundBtn" class="toggle-btn active">Inbound</button>
+            <button id="outboundBtn" class="toggle-btn">Outbound</button>
+        </div>
+    </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="js/Truck.js" type="module"></script>
 </body>
 </html>
