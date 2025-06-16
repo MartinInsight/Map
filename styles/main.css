@@ -1,4 +1,89 @@
-<style>
+  <style>
+  /* styles/main.css 추가/수정 부분 */
+  .toggle-container {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+  
+  .toggle-wrapper {
+    display: flex;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  }
+  
+  .toggle-btn {
+    padding: 8px 16px;
+    border: none;
+    background: #f0f0f0;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.3s;
+    min-width: 100px;
+    text-align: center;
+  }
+  
+  .toggle-btn.active {
+    background: #00657E;
+    color: white;
+  }
+  
+  .reset-btn {
+    padding: 8px 16px;
+    background: #f0f0f0;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    font-weight: bold;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  }
+  
+  .map-tooltip {
+    font-family: Arial, sans-serif;
+    min-width: 220px;
+    padding: 12px;
+  }
+  
+  .map-tooltip h4 {
+    margin: 0 0 15px 0;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #eee;
+    font-size: 16px;
+    font-weight: bold;
+  }
+  
+  .metric-box {
+    margin: 15px 0 10px 0;
+    padding: 10px;
+    border-radius: 4px;
+    background-color: #f9f9f9;
+  }
+  
+  .metric-box strong {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 14px;
+    font-weight: bold;
+  }
+  
+  .metric-box p {
+    margin: 5px 0 0 0;
+    font-size: 13px;
+  }
+  
+  .metric-box p b {
+    font-weight: bold;
+  }
+  
+  .positive {
+    color: #27ae60;
+  }
+  
+  .negative {
+    color: #e74c3c;
+  }
+
   /* 지도 컨테이너 */
   #map { 
     height: 700px; 
@@ -13,23 +98,7 @@
     box-shadow: 0 0 10px rgba(0,0,0,0.2);
   }
 
-  .toggle-container {
-    display: flex;
-    gap: 5px;
-  }
 
-  .toggle-btn {
-    padding: 6px 12px;
-    border: none;
-    background: #f0f0f0;
-    cursor: pointer;
-    font-weight: bold;
-  }
-
-  .toggle-btn.active {
-    background: #4CAF50;
-    color: white;
-  }
 
   /* 범례 스타일 */
   .legend {
@@ -47,44 +116,4 @@
     opacity: 0.7;
   }
 
-  /* 툴팁 스타일 */
-.map-tooltip {
-  font-family: Arial, sans-serif;
-  min-width: 200px;
-  padding: 10px;
-}
-
-/* 기존 스타일 아래에 추가 */
-.map-tooltip h4 {
-  margin: 0 0 10px 0;
-  padding-bottom: 5px;
-  border-bottom: 1px solid #eee;
-  font-size: 16px;
-}
-
-.metric-box {
-  margin: 12px 0;
-  padding: 8px;
-  border-radius: 4px;
-  background-color: #f9f9f9;
-}
-
-.metric-box strong {
-  display: block;
-  margin-bottom: 4px;
-  font-size: 14px;
-}
-
-.metric-box p {
-  margin: 5px 0 0 0;
-  font-size: 13px;
-}
-
-.positive {
-  color: #27ae60; /* 녹색 */
-}
-
-.negative {
-  color: #e74c3c; /* 빨강 */
-}
 </style>
