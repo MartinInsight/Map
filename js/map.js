@@ -136,17 +136,26 @@ useFallbackData() {
     const delay = isInbound ? data.inboundDelay : data.outboundDelay;
     const dwell = isInbound ? data.dwellInbound : data.dwellOutbound;
   
-    L.popup()
-      .setLatLng(event.latlng)
-      .setContent(`
-        <div style="padding:5px">
-          <strong>${data.name || 'Unknown'}</strong><br>
-          ${this.currentMode.toUpperCase()} Delay: <b>${delay.toFixed(2)}%</b><br>
-          Dwell Time: <b>${dwell.toFixed(2)} mins</b>
+  L.popup()
+    .setLatLng(event.latlng)
+    .setContent(`
+      <div style="padding:8px; font-family:sans-serif; line-height:1.6;">
+        <div style="font-size:16px; font-weight:bold; margin-bottom:6px;">
+          ${data.name || 'Unknown'}
         </div>
-      `)
-      .openOn(this.map);
-  }
+  
+        <div style="font-size:14px; margin-bottom:10px;">
+          <div style="font-weight:600;">Truck Movement</div>
+          <div>${delay < 0 ? '↓' : '↑'} ${Math.abs(delay).toFixed(2)}% ${delay < 0 ? 'below' : 'above'} 2 weeks moving average</div>
+        </div>
+  
+        <div style="font-size:14px;">
+          <div style="font-weight:600;">Dwell Time</div>
+          <div>${dwell < 0 ? '↓' : '↑'} ${Math.abs(dwell).toFixed(2)}% ${dwell < 0 ? 'below' : 'above'} 2 weeks moving average</div>
+        </div>
+      </div>
+    `)
+    .openOn(this.map);
 
   hideTooltip() {
     if (this.tooltip) this.map.closePopup(this.tooltip);
