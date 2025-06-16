@@ -18,8 +18,11 @@ class MapVisualizer {
     async loadData() {
         try {
             const [geoJson, metrics] = await Promise.all([
-                fetch('data/us-states.json').then(r => r.json()),
-                fetch('data/states-data.json').then(r => r.json())
+              fetch('data/us-states.json').then(r => r.json()),
+              fetch('data/states-data.json').then(r => {
+                if (!r.ok) throw new Error(`HTTP error! status: ${r.status}`);
+                return r.json();
+              })
             ]);
             
             this.mergeData(geoJson, metrics);
