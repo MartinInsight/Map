@@ -34,37 +34,40 @@ class TruckCongestionMap {
   // Google Sheets 데이터 가져오는 함수 (여기에 추가!)
 async fetchSheetData() {
   try {
-    const response = await fetch('data/data.csv');
-    if (!response.ok) throw new Error("CSV 로드 실패");
+    // 1. CSV 파일 경로 확인
+    const csvPath = window.location.href.includes('github.io') 
+      ? 'data/data.csv'  // GitHub Pages 배포 시
+      : '../data/data.csv';  // 로컬 개발 시
+
+    // 2. 데이터 로드
+    const response = await fetch(csvPath);
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+    
     const csvText = await response.text();
-    
-    // CSV 파싱
     const rows = csvText.split('\n').filter(row => row.trim() !== '');
-    const headers = rows[0].split(',').map(h => h.trim());
     
+    // 3. 데이터 파싱
     this.metricData = {};
+    const headers = rows[0].split(',');
+    
     for (let i = 1; i < rows.length; i++) {
       const values = rows[i].split(',');
-      const entry = {};
-      headers.forEach((header, index) => {
-        entry[header] = values[index]?.trim() || null;
-      });
-      
-      if (entry.Code) {
-        this.metricData[entry.Code] = {
-          name: entry.State,
-          inboundDelay: parseFloat(entry['Inbound Delay']) || 0,
-          inboundColor: parseInt(entry['Inbound Color']) || 0,
-          outboundDelay: parseFloat(entry['Outbound Delay']) || 0,
-          outboundColor: parseInt(entry['Outbound Color']) || 0,
-          dwellInbound: parseFloat(entry['Dwell Inbound']) || 0,
-          dwellOutbound: parseFloat(entry['Dwell Outbound']) || 0
+      const code = values[1]?.trim();
+      if (code) {
+        this.metricData[code] = {
+          name: values[0]?.trim(),
+          inboundDelay: parseFloat(values[2]) || 0,
+          inboundColor: parseInt(values[3]) || 0,
+          outboundDelay: parseFloat(values[4]) || 0,
+          outboundColor: parseInt(values[5]) || 0,
+          dwellInbound: parseFloat(values[6]) || 0,
+          dwellOutbound: parseFloat(values[8])?.trim() || 0  // Dwell Outbound는 9번째 컬럼
         };
       }
     }
-    console.log("데이터 로드 완료:", this.metricData);  // 디버깅용
+    console.log('로드된 데이터 샘플:', this.metricData['TN']);  // 테네시 데이터 확인
   } catch (e) {
-    console.error("데이터 로드 에러:", e);
+    console.error('데이터 로드 실패:', e);
     this.showError();
   }
 }
