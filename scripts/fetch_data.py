@@ -31,13 +31,14 @@ def fetch_sheet():
             } for row in records if row.get('Code')
         }
         
-        # JSON 저장 (절대 경로 사용)
-        os.makedirs('data', exist_ok=True)
-        output_path = os.path.abspath('data/data.json')
-        with open(output_path, 'w', encoding='utf-8') as f:
-            json.dump(result, f, indent=2, ensure_ascii=False)
+        # 수정된 저장 부분
+        output_dir = os.path.join(os.path.dirname(__file__), '../data')
+        os.makedirs(output_dir, exist_ok=True)
+        output_path = os.path.join(output_dir, 'data.json')
         
-        print(f"✅ JSON 저장 완료: {output_path}")
+        with open(output_path, 'w', encoding='utf-8') as f:
+            json.dump(result, f, indent=2)
+        print(f"✅ 저장 경로: {os.path.abspath(output_path)}")
         print("샘플 데이터:", json.dumps({k: result[k] for k in list(result.keys())[:2]}, indent=2))
         
     except Exception as e:
