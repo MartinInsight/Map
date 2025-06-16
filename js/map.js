@@ -15,21 +15,26 @@ class MapVisualizer {
         }).addTo(this.map);
     }
 
+    // 기존 코드 변경
     async loadData() {
-        try {
-            const [geoJson, metrics] = await Promise.all([
-              fetch('data/us-states.json').then(r => r.json()),
-              fetch('data/states-data.json').then(r => {
-                if (!r.ok) throw new Error(`HTTP error! status: ${r.status}`);
-                return r.json();
-              })
-            ]);
-            
-            this.mergeData(geoJson, metrics);
-        } catch (e) {
-            console.error("Data load error:", e);
-            alert("데이터를 불러오는 데 실패했습니다.");
-        }
+      try {
+        const baseUrl = window.location.href.split('/').slice(0, 3).join('/');
+        const [geoJson, metrics] = await Promise.all([
+          fetch(`${baseUrl}/data/us-states.json`).then(checkStatus),
+          fetch(`${baseUrl}/data/states-data.json`).then(checkStatus)
+        ]);
+        this.mergeData(await geoJson.json(), await metrics.json());
+      } catch (e) {
+        console.error("Data load error:", e);
+        alert("데이터 로드 실패: " + e.message);
+      }
+    }
+    
+    function checkStatus(response) {
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response;
     }
 
     mergeData(geoJson, metrics) {
