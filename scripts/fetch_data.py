@@ -20,7 +20,9 @@ def fetch_sheet():
         # CSV 저장 (헤더 포함)
         df = pd.DataFrame(data[1:], columns=data[0])
         os.makedirs('data', exist_ok=True)
-        df.to_csv('data/data.csv', index=False, encoding='utf-8-sig')  # UTF-8 BOM 추가
+        output_path = os.path.join('data', 'data.csv')
+        df.to_csv(output_path, index=False, encoding='utf-8')
+        print(f"✅ 저장 위치: {os.path.abspath(output_path)}")
         print("✅ 데이터 저장 완료:", df.head(2))
         
     except Exception as e:
