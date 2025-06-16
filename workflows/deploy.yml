@@ -33,6 +33,11 @@ jobs:
           python -m pip install --upgrade pip
           pip install gspread==6.0.0 pandas==2.0.3  # 버전 고정
           pip audit  # 취약점 검사
+      
+      - name: Verify Deployment
+        run: |
+          echo "배포된 파일 목록:"
+          curl -s https://${{ github.repository_owner }}.github.io/${{ github.repository_name }}/data/states-data.json | jq .
 
       - name: Secure data directory setup
         run: |
