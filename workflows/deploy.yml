@@ -1,34 +1,63 @@
-# .github/workflows/deploy.yml
 name: Deploy
-on: [push, workflow_dispatch]
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+# ▼▼▼ 새로운 보안 설정 ▼▼▼
+permissions:
+  contents: write  # gh-pages 배포에 필요한 최소 권한
+  id-token: write  # OIDC 토큰 사용 (선택사항)
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    # ▼▼▼ 환경 변수 보호 ▼▼▼
+    env:
+      ACTIONS_ALLOW_UNSECURE_COMMANDS: 'false'
+      PYTHONWARNINGS: 'ignore:Unverified HTTPS request'
+      
     steps:
       - uses: actions/checkout@v4
-      
+        with:
+          fetch-depth: 1  # 불필요한 커밋 기록 제한
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.10'
-      
+          check-latest: true  # 최신 보안 패치 적용
+
       - name: Install dependencies
-        run: pip install gspread pandas
-      
-      - name: Create data directory
-        run: mkdir -p data && ls -l  # 권한 확인
-      
+        run: |
+          python -m pip install --upgrade pip
+          pip install gspread==6.0.0 pandas==2.0.3  # 버전 고정
+          pip audit  # 취약점 검사
+
+      - name: Secure data directory setup
+        run: |
+          mkdir -p data
+          chmod 700 data  # 소유자만 접근 가능
+          ls -la data/  # 권한 확인
+
       - name: Generate JSON data
         env:
           SPREADSHEET_ID: ${{ secrets.SPREADSHEET_ID }}
           GOOGLE_CREDENTIAL_JSON: ${{ secrets.GOOGLE_CREDENTIAL_JSON }}
         run: |
-          python scripts/fetch_data.py
-          ls -l data/  # 파일 생성 확인
-          cat data/states-data.json  # 내용 출력
-      
+          # 임시 키 파일 보호
+          temp_key=$(mktemp)
+          echo "$GOOGLE_CREDENTIAL_JSON" > "$temp_key"
+          python scripts/fetch_data.py "$temp_key"
+          shred -u "$temp_key"  # 키 파일 완전 삭제
+          
+          # 생성된 데이터 검증
+          jq empty data/states-data.json  # JSON 유효성 검사
+          echo "Data lines count: $(wc -l data/states-data.json)"
+
       - name: Deploy to GH Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./
+          keep_files: false  # 기존 파일 모두 삭제 후 새로 배포
