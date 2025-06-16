@@ -1,5 +1,8 @@
 name: Deploy
-on: [push, workflow_dispatch]
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
 
 jobs:
   deploy:
@@ -7,18 +10,29 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Generate Data
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: pip install gspread==6.0.0 oauth2client==4.1.3
+
+      - name: Generate JSON data
         env:
           SPREADSHEET_ID: ${{ secrets.SPREADSHEET_ID }}
           GOOGLE_CREDENTIAL_JSON: ${{ secrets.GOOGLE_CREDENTIAL_JSON }}
         run: |
-          python scripts/fetch_data.py
-          ls -la data/  # 파일 확인
+          mkdir -p ./data
+          python ./scripts/fetch_data.py
+          echo "생성된 파일 내용:"
+          head -n 5 ./data/states-data.json
+          [ -s "./data/states-data.json" ] || exit 1
 
-      - name: Force Deploy
+      - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./data  # 오직 data 폴더만 배포
-          force_orphan: true  # 배포 기록 무시
-          keep_files: false  # 기존 파일 삭제
+          force_orphan: true    # 배포 기록 초기화
+          keep_files: false     # 기존 파일 모두 삭제
