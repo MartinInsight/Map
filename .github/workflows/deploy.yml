@@ -26,8 +26,10 @@ jobs:
           GOOGLE_CREDENTIAL_JSON: ${{ secrets.GOOGLE_CREDENTIAL_JSON }}
         run: |
           python scripts/fetch_data.py
-          ls -la data/  # 파일 생성 확인
-          cat data/data.csv  # 내용 확인 (디버깅용)
+          echo "생성된 파일:"
+          ls -la data/
+          echo -e "\nJSON 내용 샘플:"
+          jq '.["TN"]' data/data.json || echo "JSON 파싱 실패"
 
       - name: Verify JSON file
         run: |
