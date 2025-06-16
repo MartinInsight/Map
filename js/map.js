@@ -34,36 +34,46 @@ class TruckCongestionMap {
   // Google Sheets 데이터 가져오는 함수 (여기에 추가!)
 async fetchSheetData() {
   try {
-    // 캐시 방지를 위해 타임스탬프 추가
-    const timestamp = new Date().getTime();
-    const response = await fetch(`data/data.json?t=${timestamp}`);
+    // 1. 동적 경로 생성
+    const basePath = window.location.href.includes('github.io') 
+      ? window.location.pathname.split('/').slice(0, 2).join('/')
+      : '';
+    const dataUrl = `${basePath}/data/data.json?t=${Date.now()}`;
+
+    // 2. 데이터 로드
+    const response = await fetch(dataUrl);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
     
-    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-    
+    // 3. JSON 파싱
     this.metricData = await response.json();
-    console.log("데이터 로드 성공:", Object.keys(this.metricData).length + "개 주 데이터");
+    console.log("데이터 로드 성공:", Object.keys(this.metricData).length + "개 주");
     
-    // 임시: 테네시 데이터 확인
-    console.log("TN 데이터:", this.metricData['TN']);
-    
+    // 4. 필드 검증
+    const sampleState = this.metricData['TN'] || this.metricData[Object.keys(this.metricData)[0]];
+    if (!sampleState?.inboundDelay) {
+      throw new Error("데이터 구조 불일치: 필드 검증 실패");
+    }
+
   } catch (e) {
     console.error("데이터 로드 실패:", e);
-    
-    // 임시 폴백 데이터
-    this.metricData = {
-      "TN": {
-        name: "Tennessee",
-        inboundDelay: -3.08,
-        inboundColor: -1,
-        outboundDelay: -6.46,
-        outboundColor: -2,
-        dwellInbound: -5.56,
-        dwellOutbound: -1.55
-      }
-      // 다른 주 데이터 추가 가능
-    };
-    console.warn("임시 데이터 사용 중");
+    this.metricData = this.createFallbackData();
   }
+}
+
+createFallbackData() {
+  console.warn("임시 데이터 사용 중");
+  return {
+    "TN": {
+      name: "Tennessee",
+      inboundDelay: -3.08,
+      inboundColor: -1,
+      outboundDelay: -6.46,
+      outboundColor: -2,
+      dwellInbound: -5.56,
+      dwellOutbound: -1.55
+    },
+    // ... 다른 주 데이터
+  };
 }
 
   renderMap(geoJson) {
