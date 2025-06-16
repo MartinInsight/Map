@@ -1,31 +1,33 @@
 name: Deploy
-on:
-  push:
-    branches: ["main"]
-  workflow_dispatch:
-
-permissions:
-  contents: write  # ⚠️ 이 부분이 핵심
+on: [push]
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Generate Data
+      - uses: actions/checkout@v2
+      
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.9'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pandas google-auth gspread
+      
+      - name: Create data directory
+        run: mkdir -p data
+      
+      - name: Fetch Google Sheets data
         env:
           SPREADSHEET_ID: ${{ secrets.SPREADSHEET_ID }}
-          GOOGLE_CREDENTIAL_JSON: ${{ secrets.GOOGLE_CREDENTIAL_JSON }}
-        run: |
-          mkdir -p data
-          python scripts/fetch_data.py
-          echo "생성된 파일:"
-          ls -l data/
-
-      - name: Deploy
+          GOOGLE_CREDENTIAL_JSON: ${{ secrets.GOOGLE_CREDS }}
+        run: python scripts/fetch_data.py
+      
+      - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./
-          force_orphan: true
