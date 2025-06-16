@@ -1,85 +1,112 @@
-<style>
-  /* 지도 컨테이너 */
-  #map { 
-    height: 700px; 
-    border-radius: 8px;
-  }
+/* 지도 컨테이너 */
+#map {
+  height: 700px;
+  border-radius: 8px;
+}
 
-  /* 모드 토글 버튼 */
-  .mode-control {
-    background: white;
-    padding: 10px;
-    border-radius: 5px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.2);
-  }
-
-  .toggle-container {
-    display: flex;
-    gap: 5px;
-  }
-
-  .toggle-btn {
-    padding: 6px 12px;
-    border: none;
-    background: #f0f0f0;
-    cursor: pointer;
-    font-weight: bold;
-  }
-
-  .toggle-btn.active {
-    background: #4CAF50;
-    color: white;
-  }
-
-  /* 범례 스타일 */
-  .legend {
-    background: white;
-    padding: 10px;
-    border-radius: 5px;
-    line-height: 1.5;
-  }
-
-  .legend i {
-    width: 18px;
-    height: 18px;
-    float: left;
-    margin-right: 8px;
-    opacity: 0.7;
-  }
-
-  /* 툴팁 스타일 */
+/* 툴팁 스타일 */
 .map-tooltip {
+  min-width: 220px;
+  padding: 15px;
   font-family: Arial, sans-serif;
-  min-width: 200px;
-  padding: 10px;
+  line-height: 1.6;
 }
 
-/* 기존 스타일 아래에 추가 */
-.map-tooltip h4 {
-  margin: 0 0 10px 0;
-  padding-bottom: 5px;
+.map-tooltip h3 {
+  margin: 0 0 18px 0;
+  font-size: 18px;
+  color: #333;
   border-bottom: 1px solid #eee;
-  font-size: 16px;
+  padding-bottom: 10px;
+  font-weight: 600;
 }
 
-.metric-box {
-  margin: 12px 0;
-  padding: 8px;
-  border-radius: 4px;
-  background-color: #f9f9f9;
+.map-tooltip .metric-group {
+  margin: 24px 0 0 0;
 }
 
-.metric-box strong {
-  display: block;
-  margin-bottom: 4px;
+.map-tooltip .metric-group:first-child {
+  margin-top: 12px;
+}
+
+.map-tooltip h4 {
+  margin: 0 0 12px 0;
+  font-size: 15px;
+  color: #555;
+  font-weight: 500;
+}
+
+.map-tooltip p {
+  margin: 0;
   font-size: 14px;
 }
 
-.metric-box p {
-  margin: 5px 0 0 0;
-  font-size: 13px;
+.map-tooltip strong {
+  font-weight: 700;
 }
 
+/* 컨트롤 패널 */
+.map-controls {
+  display: flex;
+  gap: 12px;
+  background: white;
+  padding: 10px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.reset-btn {
+  padding: 8px 16px;
+  background: #f8f9fa;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.reset-btn:hover {
+  background: #e9ecef;
+  border-color: #ccc;
+}
+
+.toggle-container {
+  display: flex;
+  border-radius: 24px;
+  overflow: hidden;
+  border: 1px solid #ddd;
+  height: 36px;
+}
+
+.toggle-btn {
+  padding: 0 20px;
+  border: none;
+  background: #f8f9fa;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+}
+
+.toggle-btn.inbound {
+  border-radius: 24px 0 0 24px;
+  padding-right: 18px;
+}
+
+.toggle-btn.outbound {
+  border-radius: 0 24px 24px 0;
+  padding-left: 18px;
+}
+
+.toggle-btn.active {
+  background: #00657E;
+  color: white;
+}
+
+/* 색상 시스템 */
 .positive {
   color: #27ae60; /* 녹색 */
 }
@@ -87,4 +114,3 @@
 .negative {
   color: #e74c3c; /* 빨강 */
 }
-</style>
