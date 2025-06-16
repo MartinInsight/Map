@@ -3,15 +3,6 @@ import gspread
 import json
 from google.oauth2 import service_account
 
-def convert_to_float_or_none(value):
-    """값을 float으로 변환, 실패하면 None 반환"""
-    if value == "" or value is None:
-        return None
-    try:
-        return float(value)
-    except (ValueError, TypeError):
-        return None
-
 def fetch_sheet():
     try:
         # 서비스 계정 인증 (JSON 문자열 파싱)
@@ -27,18 +18,25 @@ def fetch_sheet():
         worksheet = sheet.worksheet('CONGESTION_TRUCK')
         records = worksheet.get_all_records()
         
-        # JSON 변환 (명시적 컬럼 매핑 + 값 변환)
+        # JSON 변환 (명시적 컬럼 매핑)
         result = {
             row['Code']: {
                 'name': row['State'],
-                'inboundDelay': convert_to_float_or_none(row.get('Inbound Delay')),
-                'inboundColor': int(row.get('Inbound Color', 0)) if row.get('Inbound Color', 0) != "" else None,
-                'outboundDelay': convert_to_float_or_none(row.get('Outbound Delay')),
-                'outboundColor': int(row.get('Outbound Color', 0)) if row.get('Outbound Color', 0) != "" else None,
-                'dwellInbound': convert_to_float_or_none(row.get('Dwell Inbound')),
-                'dwellOutbound': convert_to_float_or_none(row.get('Dwell Outbound'))
+                'inboundDelay': row.get('Inbound Delay', 0),
+                'inboundColor': row.get('Inbound Color', 0),
+                'outboundDelay': row.get('Outbound Delay', 0),
+                'outboundColor': row.get('Outbound Color', 0),
+                'dwellInbound': row.get('Dwell Inbound', 0),
+                'dwellOutbound': row.get('Dwell Outbound', 0)
             } for row in records if row.get('Code')
         }
+        
+        # JSON 저장 전 데이터 검증 추가
+        for code, values in result.items():
+            for key in ['inboundDelay', 'outboundDelay', 'dwellInbound', 'dwellOutbound']:
+                if not isinstance(values[key], (int, float)):
+                    print(f"⚠️ {code}의 {key} 값이 숫자가 아님: {values[key]}")
+                    values[key] = 0  # 기본값 설정
         
         # 수정된 저장 부분
         output_dir = os.path.join(os.path.dirname(__file__), '../data')
@@ -46,7 +44,7 @@ def fetch_sheet():
         output_path = os.path.join(output_dir, 'data.json')
         
         with open(output_path, 'w', encoding='utf-8') as f:
-            json.dump(result, f, indent=2, default=lambda o: None if o is None else o)
+            json.dump(result, f, indent=2)
         print(f"✅ 저장 경로: {os.path.abspath(output_path)}")
         print("샘플 데이터:", json.dumps({k: result[k] for k in list(result.keys())[:2]}, indent=2))
         
