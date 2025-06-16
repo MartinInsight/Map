@@ -201,37 +201,6 @@ renderControls() {
                 data-mode="outbound">OUTBOUND</button>
       </div>
     </div>
-
-// 범례 업데이트 메서드 (기본 구현)
-updateLegend() {
-  // 범례가 필요없다면 이 메서드를 비워두거나 renderMap()에서 호출 부분 제거
-}
-
-// 에러 표시 메서드
-showError() {
-  this.map.setView([39.5, -98.35], 4);
-  L.popup()
-    .setLatLng([39.5, -98.35])
-    .setContent('데이터를 불러오는 중 오류 발생')
-    .openOn(this.map);
-}
-
-// 대체 데이터 사용 메서드
-useFallbackData() {
-  console.warn("Using fallback data");
-  this.metricData = {}; // 기본 빈 객체 사용
-  // 또는 기본 데이터 구조를 생성할 수 있음
-}
-
-// 툴팁 숨기기 메서드
-hideTooltip() {
-  this.map.closePopup();
-}
-
-// 주로 확대 메서드
-zoomToState(feature) {
-  this.map.fitBounds(L.geoJSON(feature).getBounds());
-}
   `;
 
   // 버튼 이벤트 바인딩
@@ -247,6 +216,37 @@ zoomToState(feature) {
   this.controlDiv.querySelector('.reset-btn').addEventListener('click', () => {
     this.map.setView([37.8, -96], 4);
   });
+}
+
+// 범례 업데이트 메서드
+updateLegend() {
+  // 범례 구현이 필요없으면 비워둠
+  // 필요시 여기에 범례 업데이트 로직 구현
+}
+
+// 에러 표시 메서드
+showError() {
+  this.map.setView([39.5, -98.35], 4);
+  L.popup()
+    .setLatLng([39.5, -98.35])
+    .setContent('데이터를 불러오는 중 오류 발생')
+    .openOn(this.map);
+}
+
+// 대체 데이터 사용 메서드
+useFallbackData() {
+  console.warn("Using fallback data");
+  this.metricData = {};
+}
+
+// 툴팁 숨기기 메서드
+hideTooltip() {
+  this.map.closePopup();
+}
+
+// 주로 확대 메서드
+zoomToState(feature) {
+  this.map.fitBounds(L.geoJSON(feature).getBounds());
 }
 
 // 지도 초기화
