@@ -39,26 +39,20 @@ async fetchSheetData() {
     
     const rawData = await response.json();
     
-    // 데이터 타입 강제 변환 (null 체크 추가)
+    // 데이터 타입 강제 변환
     this.metricData = Object.fromEntries(
-      Object.entries(rawData).map(([code, data]) => {
-        // null 체크 추가
-        const safeNumber = (val) => 
-          val === null || val === undefined ? 0 : Number(val) || 0;
-        
-        return [
-          code,
-          {
-            name: data.name || 'Unknown',
-            inboundDelay: safeNumber(data.inboundDelay),
-            inboundColor: safeNumber(data.inboundColor),
-            outboundDelay: safeNumber(data.outboundDelay),
-            outboundColor: safeNumber(data.outboundColor),
-            dwellInbound: safeNumber(data.dwellInbound),
-            dwellOutbound: safeNumber(data.dwellOutbound)
-          }
-        ];
-      })
+      Object.entries(rawData).map(([code, data]) => [
+        code,
+        {
+          name: data.name,
+          inboundDelay: Number(data.inboundDelay) || 0,
+          inboundColor: Number(data.inboundColor) || 0,
+          outboundDelay: Number(data.outboundDelay) || 0,
+          outboundColor: Number(data.outboundColor) || 0,
+          dwellInbound: Number(data.dwellInbound) || 0,
+          dwellOutbound: Number(data.dwellOutbound) || 0
+        }
+      ])
     );
     
     console.log("데이터 변환 완료:", this.metricData['TN']);
@@ -87,8 +81,8 @@ async fetchSheetData() {
   getStyle(feature) {
     const data = this.metricData[feature.id] || {};
     const colorValue = this.currentMode === 'inbound' 
-      ? (data.inboundColor || 0)
-      : (data.outboundColor || 0);
+      ? data.inboundColor 
+      : data.outboundColor;
     
     return {
       fillColor: this.getColor(colorValue),
@@ -124,148 +118,130 @@ async fetchSheetData() {
     });
   }
 
-// js/map.js 수정 부분
 showTooltip(event, data) {
-  const safeData = data || {};
-  const safeNumber = (val) => 
-    val === null || val === undefined ? 0 : Number(val) || 0;
-
+  // 데이터 값 보정
   const formatValue = (val) => {
-    const num = safeNumber(val);
-    return Math.abs(num).toFixed(2);
+    const num = Number(val);
+    return isNaN(num) ? 0 : Math.abs(num).toFixed(2);
   };
 
+  // INBOUND/OUTBOUND에 따라 필드 선택
   const isInbound = this.currentMode === 'inbound';
   const delay = isInbound ? data.inboundDelay : data.outboundDelay;
-  const dwell = isInbound ? data.dwellInbound : data.dwellOutbound;
+  const dwell = data.dwellInbound; // Dwell Time은 항상 동일하게 표시
 
-  const delayInfo = delay >= 0 
-    ? { icon: '↑', text: 'above', color: 'positive' } 
-    : { icon: '↓', text: 'below', color: 'negative' };
-  
-  const dwellInfo = dwell >= 0 
-    ? { icon: '↑', text: 'above', color: 'positive' } 
-    : { icon: '↓', text: 'below', color: 'negative' };
+  // 방향 및 문구 설정
+  const getDirectionInfo = (value) => {
+    if (value >= 0) return { icon: '↑', text: 'above' };
+    return { icon: '↓', text: 'below' };
+  };
 
+  const delayInfo = getDirectionInfo(delay);
+  const dwellInfo = getDirectionInfo(dwell);
+
+  // 툴팁 HTML 생성
   const content = `
     <div class="map-tooltip">
       <h4>${data.name || 'Unknown'}</h4>
       
-      <div class="metric-box">
+      <div class="metric-box ${delay >= 0 ? 'positive' : 'negative'}">
         <strong>Truck Movement</strong>
-        <p class="${delayInfo.color}">
-          <b>${delayInfo.icon} ${formatValue(delay)}%</b> ${delayInfo.text} 2 weeks moving average
+        <p>
+          ${delayInfo.icon} ${formatValue(delay)}% ${delayInfo.text} 2 weeks moving average
         </p>
       </div>
       
-      <div class="metric-box">
+      <div class="metric-box ${dwell >= 0 ? 'positive' : 'negative'}">
         <strong>Dwell Time</strong>
-        <p class="${dwellInfo.color}">
-          <b>${dwellInfo.icon} ${formatValue(dwell)}%</b> ${dwellInfo.text} 2 weeks moving average
+        <p>
+          ${dwellInfo.icon} ${formatValue(dwell)}% ${dwellInfo.text} 2 weeks moving average
         </p>
       </div>
     </div>
   `;
 
-  // 주의 중심 좌표 계산
-  const layer = event.target;
-  const center = layer.getBounds().getCenter();
-
+  // 툴팁 생성
   L.popup()
-    .setLatLng(center)
+    .setLatLng(event.latlng)
     .setContent(content)
     .openOn(this.map);
 }
 
-addControls() {
-  // 모드 토글 버튼 + 리셋 버튼
-  const controlContainer = L.control({ position: 'topright' });
-  
-  controlContainer.onAdd = () => {
-    this.controlDiv = L.DomUtil.create('div', 'mode-control');
-    this.renderControls();
-    return this.controlDiv;
-  };
-  
-  controlContainer.addTo(this.map);
-}
+  hideTooltip() {
+    if (this.tooltip) this.map.closePopup(this.tooltip);
+  }
 
-renderControls() {
-  this.controlDiv.innerHTML = `
-    <div class="toggle-container">
-      <button class="reset-btn">Reset View</button>
-      <div class="toggle-wrapper">
+  zoomToState(feature) {
+    this.map.fitBounds(L.geoJSON(feature).getBounds(), { padding: [50, 50] });
+  }
+
+  addControls() {
+    // 모드 토글 버튼
+    const toggleControl = L.control({ position: 'topright' });
+    
+    toggleControl.onAdd = () => {
+      this.controlContainer = L.DomUtil.create('div', 'mode-control');
+      this.renderToggle();
+      return this.controlContainer;
+    };
+    
+    toggleControl.addTo(this.map);
+  }
+
+  renderToggle() {
+    this.controlContainer.innerHTML = `
+      <div class="toggle-container">
         <button class="toggle-btn ${this.currentMode === 'inbound' ? 'active' : ''}" 
                 data-mode="inbound">INBOUND</button>
         <button class="toggle-btn ${this.currentMode === 'outbound' ? 'active' : ''}" 
                 data-mode="outbound">OUTBOUND</button>
       </div>
-    </div>
-  `;
+    `;
 
-  // 버튼 이벤트 바인딩
-  this.controlDiv.querySelectorAll('.toggle-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      this.currentMode = btn.dataset.mode;
-      this.renderControls();
-      this.stateLayer.setStyle(feature => this.getStyle(feature));
+    // 버튼 이벤트 바인딩
+    this.controlContainer.querySelectorAll('.toggle-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        this.currentMode = btn.dataset.mode;
+        this.renderToggle();
+        this.stateLayer.setStyle(feature => this.getStyle(feature));
+        this.updateLegend();
+      });
     });
-  });
+  }
 
-  // 리셋 버튼 이벤트
-  this.controlDiv.querySelector('.reset-btn').addEventListener('click', () => {
-    this.map.setView([37.8, -96], 4);
-  });
-}
-
-// 범례 업데이트 메서드
-updateLegend() {
-  if (this.legend) this.map.removeControl(this.legend);
-  
-  this.legend = L.control({ position: 'bottomright' });
-  
-  this.legend.onAdd = () => {
-    const div = L.DomUtil.create('div', 'info legend');
-    const grades = [-3, -2, -1, 0, 1, 2, 3];
-    const title = `${this.currentMode.toUpperCase()} DELAY`;
+  updateLegend() {
+    // 기존 범례 제거
+    if (this.legend) this.map.removeControl(this.legend);
     
-    div.innerHTML = `<strong>${title}</strong><br>`;
+    // 새로운 범례 추가
+    this.legend = L.control({ position: 'bottomright' });
     
-    grades.forEach(grade => {
-      div.innerHTML +=
-        `<i style="background:${this.getColor(grade)}"></i> ` +
-        `${grade < 0 ? grade : '+' + grade}<br>`;
-    });
+    this.legend.onAdd = () => {
+      const div = L.DomUtil.create('div', 'info legend');
+      const grades = [-3, -2, -1, 0, 1, 2, 3];
+      const title = `${this.currentMode.toUpperCase()} DELAY`;
+      
+      div.innerHTML = `<strong>${title}</strong><br>`;
+      
+      grades.forEach(grade => {
+        div.innerHTML +=
+          `<i style="background:${this.getColor(grade)}"></i> ` +
+          `${grade < 0 ? grade : '+' + grade}<br>`;
+      });
+      
+      return div;
+    };
     
-    return div;
-  };
-  
-  this.legend.addTo(this.map);
-}
+    this.legend.addTo(this.map);
+  }
 
-// 에러 표시 메서드
-showError() {
-  this.map.setView([39.5, -98.35], 4);
-  L.popup()
-    .setLatLng([39.5, -98.35])
-    .setContent('데이터를 불러오는 중 오류 발생')
-    .openOn(this.map);
-}
-
-// 대체 데이터 사용 메서드
-useFallbackData() {
-  console.warn("Using fallback data");
-  this.metricData = {};
-}
-
-// 툴팁 숨기기 메서드
-hideTooltip() {
-  this.map.closePopup();
-}
-
-// 주로 확대 메서드
-zoomToState(feature) {
-  this.map.fitBounds(L.geoJSON(feature).getBounds());
+  showError() {
+    this.map.setView([39.5, -98.35], 4);
+    L.popup()
+      .setLatLng([39.5, -98.35])
+      .setContent('데이터를 불러오는 중 오류 발생')
+      .openOn(this.map);
+  }
 }
 
 // 지도 초기화
