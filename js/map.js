@@ -3,7 +3,7 @@ class TruckCongestionMap {
     this.map = L.map(mapElementId).setView([43.8041, -120.5542], 6);
     this.stateLayer = null;
     this.currentMode = 'inbound';
-    this.metricData = null;
+    this.metricData = {};
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© OpenStreetMap'
@@ -15,25 +15,19 @@ class TruckCongestionMap {
 
   async loadData() {
     try {
-      // 1. GeoJSON과 시트 데이터 병렬 로드
       const [geoJsonResp, sheetDataResp] = await Promise.all([
         fetch('data/us-states.json'),
         fetch('data/data.json')
       ]);
 
-      // 2. 응답 검증
       if (!geoJsonResp.ok || !sheetDataResp.ok) {
         throw new Error("Data loading failed");
       }
 
-      // 3. JSON 파싱
       const geoJson = await geoJsonResp.json();
       const rawData = await sheetDataResp.json();
 
-      // 4. 데이터 처리
       this.processMetricData(rawData);
-      
-      // 5. 지도 렌더링
       this.renderMap(geoJson);
     } catch (e) {
       console.error("Error:", e);
