@@ -1,66 +1,82 @@
 class TruckCongestionMap {
   constructor(mapElementId) {
-    this.map = L.map(mapElementId).setView([37.8, -96], 4);
+    this.map = L.map(mapElementId).setView([43.8041, -120.5542], 6);
     this.stateLayer = null;
     this.currentMode = 'inbound';
     this.metricData = null;
 
-    // 지도 초기화
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© OpenStreetMap'
     }).addTo(this.map);
 
     this.addControls();
-    this.loadData(); // 데이터 로드 시작
+    this.loadData();
   }
 
   async loadData() {
     try {
-      // 1. GeoJSON 로드
-      const geoJsonResp = await fetch('data/us-states.json');
+      // 1. GeoJSON과 시트 데이터 병렬 로드
+      const [geoJsonResp, sheetDataResp] = await Promise.all([
+        fetch('data/us-states.json'),
+        fetch('data/data.json')
+      ]);
+
+      // 2. 응답 검증
+      if (!geoJsonResp.ok || !sheetDataResp.ok) {
+        throw new Error("Data loading failed");
+      }
+
+      // 3. JSON 파싱
       const geoJson = await geoJsonResp.json();
+      const rawData = await sheetDataResp.json();
 
-      // 2. Google Sheets 데이터 로드 (추가된 부분)
-      await this.fetchSheetData();
-
-      // 3. 지도 렌더링
+      // 4. 데이터 처리
+      this.processMetricData(rawData);
+      
+      // 5. 지도 렌더링
       this.renderMap(geoJson);
     } catch (e) {
       console.error("Error:", e);
-      this.showError();
+      this.useFallbackData();
     }
   }
 
-  // Google Sheets 데이터 가져오는 함수 (여기에 추가!)
-async fetchSheetData() {
-  try {
-    const response = await fetch('data/data.json');
-    if (!response.ok) throw new Error("Failed to load data");
-    
-    const rawData = await response.json();
-    
-    // 데이터 타입 강제 변환
+  processMetricData(rawData) {
     this.metricData = Object.fromEntries(
       Object.entries(rawData).map(([code, data]) => [
         code,
         {
           name: data.name,
           inboundDelay: Number(data.inboundDelay) || 0,
-          inboundColor: Number(data.inboundColor) || 0,
+          inboundColor: Math.min(3, Math.max(-3, Number(data.inboundColor) || 0),
           outboundDelay: Number(data.outboundDelay) || 0,
-          outboundColor: Number(data.outboundColor) || 0,
+          outboundColor: Math.min(3, Math.max(-3, Number(data.outboundColor) || 0),
           dwellInbound: Number(data.dwellInbound) || 0,
           dwellOutbound: Number(data.dwellOutbound) || 0
         }
-      ])
+      ]
     );
-    
-    console.log("데이터 변환 완료:", this.metricData['TN']);
-  } catch (e) {
-    console.error("데이터 로드 실패:", e);
-    this.useFallbackData();
   }
-}
+
+  useFallbackData() {
+    console.warn("Using fallback data");
+    this.metricData = {
+      'OR': {
+        name: 'Oregon',
+        inboundDelay: 5.99,
+        inboundColor: 1,
+        outboundDelay: -3.2,
+        outboundColor: -1,
+        dwellInbound: -5.51,
+        dwellOutbound: 2.1
+      }
+    };
+    
+    fetch('data/us-states.json')
+      .then(res => res.json())
+      .then(geoJson => this.renderMap(geoJson))
+      .catch(e => console.error("Fallback failed:", e));
+  }
 
   renderMap(geoJson) {
     // 기존 레이어 제거
