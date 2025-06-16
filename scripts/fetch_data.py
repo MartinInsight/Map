@@ -3,6 +3,15 @@ import gspread
 import json
 from google.oauth2 import service_account
 
+def safe_convert_number(val):
+    """빈 셀/문자열을 안전하게 숫자로 변환"""
+    if val in [None, "", " ", "N/A", "NaN"]:
+        return None  # 명시적으로 None 반환
+    try:
+        return float(val)
+    except:
+        return None
+
 def fetch_sheet():
     try:
         # 서비스 계정 인증 (JSON 문자열 파싱)
