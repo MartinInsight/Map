@@ -31,6 +31,13 @@ def fetch_sheet():
             } for row in records if row.get('Code')
         }
         
+        # JSON 저장 전 데이터 검증 추가
+        for code, values in result.items():
+            for key in ['inboundDelay', 'outboundDelay', 'dwellInbound', 'dwellOutbound']:
+                if not isinstance(values[key], (int, float)):
+                    print(f"⚠️ {code}의 {key} 값이 숫자가 아님: {values[key]}")
+                    values[key] = 0  # 기본값 설정
+        
         # 수정된 저장 부분
         output_dir = os.path.join(os.path.dirname(__file__), '../data')
         os.makedirs(output_dir, exist_ok=True)
