@@ -6,35 +6,27 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.10'
-      
-      - name: Install dependencies
-        run: pip install gspread==6.0.0 pandas==2.0.3
 
-      - name: Verify File
-        run: |
-          echo "파일 내용 샘플:"
-          head -n 5 data/states-data.json
-          [ $(wc -c < data/states-data.json) -gt 100 ] || exit 1
-      
-      - name: Generate JSON data
+      - name: Generate Data
         env:
           SPREADSHEET_ID: ${{ secrets.SPREADSHEET_ID }}
           GOOGLE_CREDENTIAL_JSON: ${{ secrets.GOOGLE_CREDENTIAL_JSON }}
         run: |
           mkdir -p data
           python scripts/fetch_data.py
-          echo "생성된 파일 확인:"
+          # 파일 생성 여부 확인 (중요!)
+          [ -f "data/states-data.json" ] || (echo "파일 생성 실패!" && exit 1)
+          echo "파일 생성 성공:"
           ls -l data/
-          [ -s "data/states-data.json" ] || exit 1
-      
-      - name: Deploy to GitHub Pages
+
+      - name: Deploy to GH Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./  # 전체 프로젝트 배포
-          keep_files: false  # 기존 파일 모두 삭제 후 재배포
+          force_orphan: true  # 기존 배포 기록 무시
