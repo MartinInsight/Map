@@ -86,12 +86,10 @@ async fetchSheetData() {
   }
 
   getStyle(feature) {
-    const stateCode = feature.id;
-    const data = this.metricData?.[stateCode] || {};
-    const isInbound = this.currentMode === 'inbound';
-    
-    // 현재 모드에 따른 색상 결정
-    const colorValue = isInbound ? data.inboundColor : data.outboundColor;
+    const data = this.metricData[feature.id] || {};
+    const colorValue = this.currentMode === 'inbound' 
+      ? data.inboundColor 
+      : data.outboundColor;
     
     return {
       fillColor: this.getColor(colorValue),
@@ -131,14 +129,14 @@ async fetchSheetData() {
     const isInbound = this.currentMode === 'inbound';
     const delay = isInbound ? data.inboundDelay : data.outboundDelay;
     const dwell = isInbound ? data.dwellInbound : data.dwellOutbound;
-
-    this.tooltip = L.popup()
+  
+    L.popup()
       .setLatLng(event.latlng)
       .setContent(`
-        <div class="map-tooltip">
-          <strong>${data.name || 'N/A'}</strong><br>
-          ${this.currentMode.toUpperCase()} Delay: <b>${delay?.toFixed(2) || 'N/A'}%</b><br>
-          Dwell Time: <b>${dwell?.toFixed(2) || 'N/A'} mins</b>
+        <div style="padding:5px">
+          <strong>${data.name || 'Unknown'}</strong><br>
+          ${this.currentMode.toUpperCase()} Delay: <b>${delay.toFixed(2)}%</b><br>
+          Dwell Time: <b>${dwell.toFixed(2)} mins</b>
         </div>
       `)
       .openOn(this.map);
