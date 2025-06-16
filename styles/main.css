@@ -1,7 +1,14 @@
-html, body, #map {
+html, body {
   height: 100%;
   margin: 0;
   padding: 0;
+  overflow: hidden; /* 스크롤바 방지 */
+}
+
+#map {
+  height: 100vh; /* 뷰포트 전체 높이 */
+  width: 100vw; /* 뷰포트 전체 너비 */
+  position: fixed; /* 고정 위치 */
 }
 
 /* 툴팁 위치 고정 추가 */
