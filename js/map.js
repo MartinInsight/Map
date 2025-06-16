@@ -1,44 +1,58 @@
 class TruckCongestionMap {
   constructor(mapElementId) {
-    // 지도 초기화 (미국 중심)
     this.map = L.map(mapElementId).setView([37.8, -96], 4);
     this.stateLayer = null;
-    this.currentMode = 'inbound'; // 'inbound' or 'outbound'
+    this.currentMode = 'inbound';
     this.metricData = null;
 
-    // OpenStreetMap 배경 지도
+    // 지도 초기화
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+      attribution: '© OpenStreetMap'
     }).addTo(this.map);
 
-    // 컨트롤 UI 추가
     this.addControls();
-    this.loadData();
+    this.loadData(); // 데이터 로드 시작
   }
 
   async loadData() {
     try {
-      // GeoJSON 데이터 로드
+      // 1. GeoJSON 로드
       const geoJsonResp = await fetch('data/us-states.json');
       const geoJson = await geoJsonResp.json();
 
-      // CSV/Google Sheets 데이터 처리 (예시)
-      this.metricData = {
-        "TN": { 
-          inboundDelay: -3.08, inboundColor: -1,
-          outboundDelay: -6.46, outboundColor: -2,
-          dwellInbound: -5.56, dwellOutbound: -1.55
-        },
-        // ... (실제로는 Google Sheets API로 데이터 가져옴)
-      };
+      // 2. Google Sheets 데이터 로드 (추가된 부분)
+      await this.fetchSheetData();
 
-      // 지도 렌더링
+      // 3. 지도 렌더링
       this.renderMap(geoJson);
-      
     } catch (e) {
-      console.error("Data load error:", e);
+      console.error("Error:", e);
       this.showError();
     }
+  }
+
+  // Google Sheets 데이터 가져오는 함수 (여기에 추가!)
+  async fetchSheetData() {
+    const SPREADSHEET_ID = 'YOUR_SPREADSHEET_ID'; // 시크릿으로 대체
+    const SHEET_NAME = 'CONGESTION_TRUCK';
+    const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&sheet=${SHEET_NAME}`;
+
+    const response = await fetch(url);
+    const text = await response.text();
+    const json = JSON.parse(text.substr(47).slice(0, -2));
+    
+    this.metricData = {};
+    json.table.rows.forEach(row => {
+      const cells = row.c;
+      this.metricData[cells[1].v] = { // State Code (e.g., "TN")
+        inboundDelay: cells[2]?.v,
+        inboundColor: cells[3]?.v,
+        outboundDelay: cells[4]?.v,
+        outboundColor: cells[5]?.v,
+        dwellInbound: cells[6]?.v,
+        dwellOutbound: cells[7]?.v
+      };
+    });
   }
 
   renderMap(geoJson) {
