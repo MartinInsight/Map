@@ -34,41 +34,35 @@ class TruckCongestionMap {
   // Google Sheets 데이터 가져오는 함수 (여기에 추가!)
 async fetchSheetData() {
   try {
-    // 1. CSV 파일 경로 확인
-    const csvPath = window.location.href.includes('github.io') 
-      ? 'data/data.csv'  // GitHub Pages 배포 시
-      : '../data/data.csv';  // 로컬 개발 시
-
-    // 2. 데이터 로드
-    const response = await fetch(csvPath);
+    // 캐시 방지를 위해 타임스탬프 추가
+    const timestamp = new Date().getTime();
+    const response = await fetch(`data/data.json?t=${timestamp}`);
+    
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     
-    const csvText = await response.text();
-    const rows = csvText.split('\n').filter(row => row.trim() !== '');
+    this.metricData = await response.json();
+    console.log("데이터 로드 성공:", Object.keys(this.metricData).length + "개 주 데이터");
     
-    // 3. 데이터 파싱
-    this.metricData = {};
-    const headers = rows[0].split(',');
+    // 임시: 테네시 데이터 확인
+    console.log("TN 데이터:", this.metricData['TN']);
     
-    for (let i = 1; i < rows.length; i++) {
-      const values = rows[i].split(',');
-      const code = values[1]?.trim();
-      if (code) {
-        this.metricData[code] = {
-          name: values[0]?.trim(),
-          inboundDelay: parseFloat(values[2]) || 0,
-          inboundColor: parseInt(values[3]) || 0,
-          outboundDelay: parseFloat(values[4]) || 0,
-          outboundColor: parseInt(values[5]) || 0,
-          dwellInbound: parseFloat(values[6]) || 0,
-          dwellOutbound: parseFloat(values[8])?.trim() || 0  // Dwell Outbound는 9번째 컬럼
-        };
-      }
-    }
-    console.log('로드된 데이터 샘플:', this.metricData['TN']);  // 테네시 데이터 확인
   } catch (e) {
-    console.error('데이터 로드 실패:', e);
-    this.showError();
+    console.error("데이터 로드 실패:", e);
+    
+    // 임시 폴백 데이터
+    this.metricData = {
+      "TN": {
+        name: "Tennessee",
+        inboundDelay: -3.08,
+        inboundColor: -1,
+        outboundDelay: -6.46,
+        outboundColor: -2,
+        dwellInbound: -5.56,
+        dwellOutbound: -1.55
+      }
+      // 다른 주 데이터 추가 가능
+    };
+    console.warn("임시 데이터 사용 중");
   }
 }
 
