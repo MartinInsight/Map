@@ -1,0 +1,59 @@
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+.header {
+    padding: 15px;
+    background: #2c3e50;
+    color: white;
+    text-align: center;
+}
+
+.controls {
+    margin-top: 10px;
+}
+
+#toggle-mode {
+    padding: 8px 15px;
+    background: #3498db;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+#mode-display {
+    margin-left: 10px;
+    font-weight: bold;
+    font-size: 1.2em;
+}
+
+#map {
+    height: 70vh;
+    width: 100%;
+}
+
+.legend {
+    margin: 15px auto;
+    text-align: center;
+    width: 80%;
+}
+
+.legend-gradient {
+    height: 20px;
+    background: linear-gradient(to right, 
+        rgb(255, 100, 100),  /* -4 */
+        rgb(200, 200, 200),  /* 0 */
+        rgb(100, 255, 100)   /* +4 */
+    );
+    margin-bottom: 5px;
+    border-radius: 3px;
+}
+
+.legend span {
+    display: inline-block;
+    width: 30%;
+    font-size: 0.9em;
+}
