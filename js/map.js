@@ -192,27 +192,24 @@ async fetchSheetData() {
       </div>
     `;
 
-    // 버튼 이벤트 바인딩
     this.controlDiv.querySelectorAll('.toggle-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         this.currentMode = btn.dataset.mode;
         this.renderControls();
         this.stateLayer.setStyle(feature => this.getStyle(feature));
+        this.updateLegend();
       });
     });
   
-    // 리셋 버튼 이벤트
     this.controlDiv.querySelector('.reset-btn').addEventListener('click', () => {
       this.map.setView([37.8, -96], 4);
     });
   }
   
-  // 범례 제거
+  // 범례 유지 (기존과 동일)
   updateLegend() {
-    // 기존 범례 제거
     if (this.legend) this.map.removeControl(this.legend);
     
-    // 새로운 범례 추가
     this.legend = L.control({ position: 'bottomright' });
     
     this.legend.onAdd = () => {
@@ -233,17 +230,8 @@ async fetchSheetData() {
     
     this.legend.addTo(this.map);
   }
-
-  showError() {
-    this.map.setView([39.5, -98.35], 4);
-    L.popup()
-      .setLatLng([39.5, -98.35])
-      .setContent('데이터를 불러오는 중 오류 발생')
-      .openOn(this.map);
-  }
 }
 
-// 지도 초기화
 document.addEventListener('DOMContentLoaded', () => {
   new TruckCongestionMap('map');
 });
