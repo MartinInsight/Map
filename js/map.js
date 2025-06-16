@@ -33,27 +33,31 @@ class TruckCongestionMap {
 
   // Google Sheets 데이터 가져오는 함수 (여기에 추가!)
   async fetchSheetData() {
-    const SPREADSHEET_ID = 'YOUR_SPREADSHEET_ID'; // 시크릿으로 대체
-    const SHEET_NAME = 'CONGESTION_TRUCK';
-    const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&sheet=${SHEET_NAME}`;
-
-    const response = await fetch(url);
-    const text = await response.text();
-    const json = JSON.parse(text.substr(47).slice(0, -2));
+  const response = await fetch('data/data.csv');
+  const csvText = await response.text();
+  const rows = csvText.split('\n').slice(1); // 헤더 제거
+  
+  this.metricData = {};
+  rows.forEach(row => {
+    if (!row) return;
+    const [
+      state, code, inDelay, inColor, 
+      outDelay, outColor, dwellIn, , dwellOut
+    ] = row.split(',');
     
-    this.metricData = {};
-    json.table.rows.forEach(row => {
-      const cells = row.c;
-      this.metricData[cells[1].v] = { // State Code (e.g., "TN")
-        inboundDelay: cells[2]?.v,
-        inboundColor: cells[3]?.v,
-        outboundDelay: cells[4]?.v,
-        outboundColor: cells[5]?.v,
-        dwellInbound: cells[6]?.v,
-        dwellOutbound: cells[7]?.v
+    if (code) {
+      this.metricData[code] = {
+        name: state,
+        inboundDelay: parseFloat(inDelay) || 0,
+        inboundColor: parseInt(inColor) || 0,
+        outboundDelay: parseFloat(outDelay) || 0,
+        outboundColor: parseInt(outColor) || 0,
+        dwellInbound: parseFloat(dwellIn) || 0,
+        dwellOutbound: parseFloat(dwellOut) || 0
       };
-    });
-  }
+    }
+  });
+}
 
   renderMap(geoJson) {
     // 기존 레이어 제거
