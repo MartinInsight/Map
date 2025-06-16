@@ -183,7 +183,7 @@
     "name": "Rhode Island",
     "inboundDelay": -10.13,
     "inboundColor": -3,
-    "outboundDelay": "",
+    "outboundDelay": 0,
     "outboundColor": 0,
     "dwellInbound": 0.03,
     "dwellOutbound": 24.61
@@ -237,16 +237,16 @@
     "name": "New Hampshire",
     "inboundDelay": -2.24,
     "inboundColor": -1,
-    "outboundDelay": "",
+    "outboundDelay": 0,
     "outboundColor": 0,
     "dwellInbound": -0.69,
     "dwellOutbound": 3.32
   },
   "WY": {
     "name": "Wyoming",
-    "inboundDelay": "",
+    "inboundDelay": 0,
     "inboundColor": 0,
-    "outboundDelay": "",
+    "outboundDelay": 0,
     "outboundColor": 0,
     "dwellInbound": 0.35,
     "dwellOutbound": 4.14
@@ -255,7 +255,7 @@
     "name": "Maine",
     "inboundDelay": -3.34,
     "inboundColor": -1,
-    "outboundDelay": "",
+    "outboundDelay": 0,
     "outboundColor": 0,
     "dwellInbound": -14.23,
     "dwellOutbound": -5.41
@@ -361,9 +361,9 @@
   },
   "AK": {
     "name": "Alaska",
-    "inboundDelay": "",
+    "inboundDelay": 0,
     "inboundColor": 0,
-    "outboundDelay": "",
+    "outboundDelay": 0,
     "outboundColor": 0,
     "dwellInbound": -100,
     "dwellOutbound": 1273.68
@@ -424,12 +424,12 @@
   },
   "HI": {
     "name": "Hawaii",
-    "inboundDelay": "",
+    "inboundDelay": 0,
     "inboundColor": 0,
-    "outboundDelay": "",
+    "outboundDelay": 0,
     "outboundColor": 0,
-    "dwellInbound": "",
-    "dwellOutbound": ""
+    "dwellInbound": 0,
+    "dwellOutbound": 0
   },
   "UT": {
     "name": "Utah",
