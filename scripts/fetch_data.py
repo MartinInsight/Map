@@ -80,16 +80,23 @@ def process_data(records):
         }
     return processed
 
+# scripts/fetch_data.py
 def save_json(data, file_path):
-    """안전한 JSON 저장"""
+    """JSON 저장을 보장하는 함수"""
     temp_path = f"{file_path}.tmp"
     try:
         with open(temp_path, 'w', encoding='utf-8') as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
+        
+        # 파일 존재 여부 확인
+        if not os.path.exists(temp_path):
+            raise IOError("임시 파일 생성 실패")
+            
         os.replace(temp_path, file_path)
-        print(f"파일 저장 성공: {file_path} (크기: {os.path.getsize(file_path)} bytes)")
+        print(f"파일 생성 확인: {os.path.abspath(file_path)}")
     except Exception as e:
-        secure_cleanup(temp_path)
+        if os.path.exists(temp_path):
+            os.remove(temp_path)
         raise
 
 if __name__ == "__main__":
