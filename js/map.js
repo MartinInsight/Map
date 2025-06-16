@@ -32,31 +32,41 @@ class TruckCongestionMap {
   }
 
   // Google Sheets 데이터 가져오는 함수 (여기에 추가!)
-  async fetchSheetData() {
-  const response = await fetch('data/data.csv');
-  const csvText = await response.text();
-  const rows = csvText.split('\n').slice(1); // 헤더 제거
-  
-  this.metricData = {};
-  rows.forEach(row => {
-    if (!row) return;
-    const [
-      state, code, inDelay, inColor, 
-      outDelay, outColor, dwellIn, , dwellOut
-    ] = row.split(',');
+async fetchSheetData() {
+  try {
+    const response = await fetch('data/data.csv');
+    if (!response.ok) throw new Error("CSV 로드 실패");
+    const csvText = await response.text();
     
-    if (code) {
-      this.metricData[code] = {
-        name: state,
-        inboundDelay: parseFloat(inDelay) || 0,
-        inboundColor: parseInt(inColor) || 0,
-        outboundDelay: parseFloat(outDelay) || 0,
-        outboundColor: parseInt(outColor) || 0,
-        dwellInbound: parseFloat(dwellIn) || 0,
-        dwellOutbound: parseFloat(dwellOut) || 0
-      };
+    // CSV 파싱
+    const rows = csvText.split('\n').filter(row => row.trim() !== '');
+    const headers = rows[0].split(',').map(h => h.trim());
+    
+    this.metricData = {};
+    for (let i = 1; i < rows.length; i++) {
+      const values = rows[i].split(',');
+      const entry = {};
+      headers.forEach((header, index) => {
+        entry[header] = values[index]?.trim() || null;
+      });
+      
+      if (entry.Code) {
+        this.metricData[entry.Code] = {
+          name: entry.State,
+          inboundDelay: parseFloat(entry['Inbound Delay']) || 0,
+          inboundColor: parseInt(entry['Inbound Color']) || 0,
+          outboundDelay: parseFloat(entry['Outbound Delay']) || 0,
+          outboundColor: parseInt(entry['Outbound Color']) || 0,
+          dwellInbound: parseFloat(entry['Dwell Inbound']) || 0,
+          dwellOutbound: parseFloat(entry['Dwell Outbound']) || 0
+        };
+      }
     }
-  });
+    console.log("데이터 로드 완료:", this.metricData);  // 디버깅용
+  } catch (e) {
+    console.error("데이터 로드 에러:", e);
+    this.showError();
+  }
 }
 
   renderMap(geoJson) {
