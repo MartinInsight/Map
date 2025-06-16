@@ -1,0 +1,46 @@
+name: Deploy
+on: [push]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pandas gspread google-auth
+      
+      - name: Create data directory
+        run: mkdir -p data
+      
+      - name: Fetch Google Sheets data
+        env:
+          SPREADSHEET_ID: ${{ secrets.SPREADSHEET_ID }}
+          GOOGLE_CREDENTIAL_JSON: ${{ secrets.GOOGLE_CREDENTIAL_JSON }}
+        run: |
+          python scripts/fetch_data.py
+          echo "생성된 파일:"
+          ls -la data/
+          echo -e "\nJSON 내용 샘플:"
+          jq '.["TN"]' data/data.json || echo "JSON 파싱 실패"
+
+      - name: Verify JSON file
+        run: |
+          echo "파일 내용 샘플:"
+          jq -r '.["TN"]' data/data.json
+          echo -e "\n파일 크기:"
+          ls -lh data/data.json
+      
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./
+          keep_files: true  # ⭐️ 기존 파일 유지 옵션 추가
