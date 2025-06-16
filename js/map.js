@@ -1,13 +1,11 @@
 async function loadData() {
-  const repoName = window.location.pathname.split('/')[1];
-  const dataUrl = `/${repoName}/data/states-data.json?t=${new Date().getTime()}`;
-
   try {
-    const response = await fetch(dataUrl);
+    // 현재 페이지 URL 기반으로 데이터 경로 생성
+    const basePath = window.location.pathname.includes('/Map/') ? '/Map' : '';
+    const response = await fetch(`${basePath}/data/states-data.json?t=${Date.now()}`);
+    
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const data = await response.json();
-    console.log("데이터 로드 성공:", Object.keys(data).length + "개 주");
-    return data;
+    return await response.json();
   } catch (error) {
     console.error("데이터 로드 실패:", error);
     return {
@@ -20,5 +18,27 @@ async function loadData() {
 // 사용 예시
 document.addEventListener('DOMContentLoaded', async () => {
   const data = await loadData();
-  // 지도 렌더링 코드...
+  console.log("로드된 데이터:", data);
+  // 기존 지도 렌더링 코드...
+// 기존 코드 변경
+async loadData() {
+  try {
+    const baseUrl = window.location.href.split('/').slice(0, 3).join('/');
+    const [geoJson, metrics] = await Promise.all([
+      fetch(`${baseUrl}/data/us-states.json`).then(checkStatus),
+      fetch(`${baseUrl}/data/states-data.json`).then(checkStatus)
+    ]);
+    this.mergeData(await geoJson.json(), await metrics.json());
+  } catch (e) {
+    console.error("Data load error:", e);
+    alert("데이터 로드 실패: " + e.message);
+  }
+}
+
+function checkStatus(response) {
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+  return response;
+}
 });
