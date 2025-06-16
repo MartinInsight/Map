@@ -136,26 +136,39 @@ useFallbackData() {
     const delay = isInbound ? data.inboundDelay : data.outboundDelay;
     const dwell = isInbound ? data.dwellInbound : data.dwellOutbound;
   
-  L.popup()
-    .setLatLng(event.latlng)
-    .setContent(`
-      <div style="padding:8px; font-family:sans-serif; line-height:1.6;">
-        <div style="font-size:16px; font-weight:bold; margin-bottom:6px;">
-          ${data.name || 'Unknown'}
-        </div>
+    // 방향 아이콘 결정
+    const delayIcon = delay >= 0 ? '↑' : '↓';
+    const dwellIcon = dwell >= 0 ? '↑' : '↓';
+    
+    // 값에 따른 설명 텍스트
+    const delayText = delay >= 0 ? "above" : "below";
+    const dwellText = dwell >= 0 ? "above" : "below";
+    
+    // 색상 클래스 (CSS에 추가 필요)
+    const delayClass = delay >= 0 ? "positive" : "negative";
+    const dwellClass = dwell >= 0 ? "positive" : "negative";
   
-        <div style="font-size:14px; margin-bottom:10px;">
-          <div style="font-weight:600;">Truck Movement</div>
-          <div>${delay < 0 ? '↓' : '↑'} ${Math.abs(delay).toFixed(2)}% ${delay < 0 ? 'below' : 'above'} 2 weeks moving average</div>
+    L.popup()
+      .setLatLng(event.latlng)
+      .setContent(`
+        <div class="map-tooltip">
+          <h4>${data.name || 'Unknown'}</h4>
+          <div class="metric">
+            <strong>Truck Movement</strong>
+            <p class="${delayClass}">
+              ${delayIcon} ${Math.abs(delay).toFixed(2)}% ${delayText} 2 weeks moving average
+            </p>
+          </div>
+          <div class="metric">
+            <strong>Dwell Time</strong>
+            <p class="${dwellClass}">
+              ${dwellIcon} ${Math.abs(dwell).toFixed(2)}% ${dwellText} 2 weeks moving average
+            </p>
+          </div>
         </div>
-  
-        <div style="font-size:14px;">
-          <div style="font-weight:600;">Dwell Time</div>
-          <div>${dwell < 0 ? '↓' : '↑'} ${Math.abs(dwell).toFixed(2)}% ${dwell < 0 ? 'below' : 'above'} 2 weeks moving average</div>
-        </div>
-      </div>
-    `)
-    .openOn(this.map);
+      `)
+      .openOn(this.map);
+  }
 
   hideTooltip() {
     if (this.tooltip) this.map.closePopup(this.tooltip);
