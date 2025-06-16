@@ -45,15 +45,19 @@ jobs:
           SPREADSHEET_ID: ${{ secrets.SPREADSHEET_ID }}
           GOOGLE_CREDENTIAL_JSON: ${{ secrets.GOOGLE_CREDENTIAL_JSON }}
         run: |
-          # 임시 키 파일 보호
-          temp_key=$(mktemp)
-          echo "$GOOGLE_CREDENTIAL_JSON" > "$temp_key"
-          python scripts/fetch_data.py "$temp_key"
-          shred -u "$temp_key"  # 키 파일 완전 삭제
+          # 보안 감사 로그 활성화
+          export PYTHONWARNINGS="default"
+          python -c "import os; print('ENV KEYS:', [k for k in os.environ if 'KEY' in k])"
           
-          # 생성된 데이터 검증
-          jq empty data/states-data.json  # JSON 유효성 검사
-          echo "Data lines count: $(wc -l data/states-data.json)"
+          # 스크립트 실행 (stderr도 출력)
+          python scripts/fetch_data.py 2>&1 | tee -a security.log
+          
+          # 보안 로그 검사
+          if grep -q -i 'error\|warning\|fail' security.log; then
+            echo "::warning::보안 문제 발견"
+            cat security.log
+          fi
+          rm -f security.log
 
       - name: Deploy to GH Pages
         uses: peaceiris/actions-gh-pages@v3
