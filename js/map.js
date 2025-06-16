@@ -1,76 +1,66 @@
 class TruckCongestionMap {
   constructor(mapElementId) {
-    this.map = L.map(mapElementId).setView([43.8041, -120.5542], 6);
+    this.map = L.map(mapElementId).setView([37.8, -96], 4);
     this.stateLayer = null;
     this.currentMode = 'inbound';
-    this.metricData = {};
+    this.metricData = null;
 
+    // 지도 초기화
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© OpenStreetMap'
     }).addTo(this.map);
 
     this.addControls();
-    this.loadData();
+    this.loadData(); // 데이터 로드 시작
   }
 
   async loadData() {
     try {
-      const [geoJsonResp, sheetDataResp] = await Promise.all([
-        fetch('data/us-states.json'),
-        fetch('data/data.json')
-      ]);
-
-      if (!geoJsonResp.ok || !sheetDataResp.ok) {
-        throw new Error("Data loading failed");
-      }
-
+      // 1. GeoJSON 로드
+      const geoJsonResp = await fetch('data/us-states.json');
       const geoJson = await geoJsonResp.json();
-      const rawData = await sheetDataResp.json();
 
-      this.processMetricData(rawData);
+      // 2. Google Sheets 데이터 로드 (추가된 부분)
+      await this.fetchSheetData();
+
+      // 3. 지도 렌더링
       this.renderMap(geoJson);
     } catch (e) {
       console.error("Error:", e);
-      this.useFallbackData();
+      this.showError();
     }
   }
 
-  processMetricData(rawData) {
+  // Google Sheets 데이터 가져오는 함수 (여기에 추가!)
+async fetchSheetData() {
+  try {
+    const response = await fetch('data/data.json');
+    if (!response.ok) throw new Error("Failed to load data");
+    
+    const rawData = await response.json();
+    
+    // 데이터 타입 강제 변환
     this.metricData = Object.fromEntries(
       Object.entries(rawData).map(([code, data]) => [
         code,
         {
           name: data.name,
           inboundDelay: Number(data.inboundDelay) || 0,
-          inboundColor: Math.min(3, Math.max(-3, Number(data.inboundColor) || 0),
+          inboundColor: Number(data.inboundColor) || 0,
           outboundDelay: Number(data.outboundDelay) || 0,
-          outboundColor: Math.min(3, Math.max(-3, Number(data.outboundColor) || 0),
+          outboundColor: Number(data.outboundColor) || 0,
           dwellInbound: Number(data.dwellInbound) || 0,
           dwellOutbound: Number(data.dwellOutbound) || 0
         }
-      ]
+      ])
     );
-  }
-
-  useFallbackData() {
-    console.warn("Using fallback data");
-    this.metricData = {
-      'OR': {
-        name: 'Oregon',
-        inboundDelay: 5.99,
-        inboundColor: 1,
-        outboundDelay: -3.2,
-        outboundColor: -1,
-        dwellInbound: -5.51,
-        dwellOutbound: 2.1
-      }
-    };
     
-    fetch('data/us-states.json')
-      .then(res => res.json())
-      .then(geoJson => this.renderMap(geoJson))
-      .catch(e => console.error("Fallback failed:", e));
+    console.log("데이터 변환 완료:", this.metricData['TN']);
+  } catch (e) {
+    console.error("데이터 로드 실패:", e);
+    this.useFallbackData();
   }
+}
 
   renderMap(geoJson) {
     // 기존 레이어 제거
@@ -128,46 +118,55 @@ class TruckCongestionMap {
     });
   }
 
-  showTooltip(event, data) {
-    const safeNumber = (val) => {
-      const num = Number(val);
-      return isNaN(num) ? 0 : num;
-    };
-  
-    const isInbound = this.currentMode === 'inbound';
-    const delay = safeNumber(isInbound ? data.inboundDelay : data.outboundDelay);
-    const dwell = safeNumber(isInbound ? data.dwellInbound : data.dwellOutbound);
-  
-    const content = `
-      <div class="map-tooltip">
-        <h4>${data.name || 'Unknown'}</h4>
-        
-        <div class="metric-box">
-          <strong>Truck Movement</strong>
-          <p class="${delay >= 0 ? 'positive' : 'negative'}">
-            <b>${delay >= 0 ? '↑' : '↓'} ${Math.abs(delay).toFixed(2)}%</b> ${delay >= 0 ? 'above' : 'below'} 2 weeks moving average
-          </p>
-        </div>
-        
-        <div class="metric-box">
-          <strong>Dwell Time</strong>
-          <p class="${dwell >= 0 ? 'positive' : 'negative'}">
-            <b>${dwell >= 0 ? '↑' : '↓'} ${Math.abs(dwell).toFixed(2)}%</b> ${dwell >= 0 ? 'above' : 'below'} 2 weeks moving average
-          </p>
-        </div>
+showTooltip(event, data) {
+  // 데이터 값 보정
+  const formatValue = (val) => {
+    const num = Number(val);
+    return isNaN(num) ? 0 : Math.abs(num).toFixed(2);
+  };
+
+  // INBOUND/OUTBOUND에 따라 필드 선택
+  const isInbound = this.currentMode === 'inbound';
+  const delay = isInbound ? data.inboundDelay : data.outboundDelay;
+  const dwell = data.dwellInbound; // Dwell Time은 항상 동일하게 표시
+
+  // 방향 및 문구 설정
+  const getDirectionInfo = (value) => {
+    if (value >= 0) return { icon: '↑', text: 'above' };
+    return { icon: '↓', text: 'below' };
+  };
+
+  const delayInfo = getDirectionInfo(delay);
+  const dwellInfo = getDirectionInfo(dwell);
+
+  // 툴팁 HTML 생성
+  const content = `
+    <div class="map-tooltip">
+      <h4>${data.name || 'Unknown'}</h4>
+      
+      <div class="metric-box ${delay >= 0 ? 'positive' : 'negative'}">
+        <strong>Truck Movement</strong>
+        <p>
+          ${delayInfo.icon} ${formatValue(delay)}% ${delayInfo.text} 2 weeks moving average
+        </p>
       </div>
-    `;
-  
-    // 주의 정중앙 계산
-    const bounds = event.target.getBounds();
-    const center = bounds.getCenter();
-    
-    L.popup()
-      .setLatLng(center)
-      .setContent(content)
-      .openOn(this.map);
-  }
-  
+      
+      <div class="metric-box ${dwell >= 0 ? 'positive' : 'negative'}">
+        <strong>Dwell Time</strong>
+        <p>
+          ${dwellInfo.icon} ${formatValue(dwell)}% ${dwellInfo.text} 2 weeks moving average
+        </p>
+      </div>
+    </div>
+  `;
+
+  // 툴팁 생성
+  L.popup()
+    .setLatLng(event.latlng)
+    .setContent(content)
+    .openOn(this.map);
+}
+
   hideTooltip() {
     if (this.tooltip) this.map.closePopup(this.tooltip);
   }
@@ -176,50 +175,45 @@ class TruckCongestionMap {
     this.map.fitBounds(L.geoJSON(feature).getBounds(), { padding: [50, 50] });
   }
 
-  // addControls 및 renderControls 메서드 수정
   addControls() {
-    const controlContainer = L.control({ position: 'topright' });
+    // 모드 토글 버튼
+    const toggleControl = L.control({ position: 'topright' });
     
-    controlContainer.onAdd = () => {
-      this.controlDiv = L.DomUtil.create('div', 'mode-control');
-      this.renderControls();
-      return this.controlDiv;
+    toggleControl.onAdd = () => {
+      this.controlContainer = L.DomUtil.create('div', 'mode-control');
+      this.renderToggle();
+      return this.controlContainer;
     };
     
-    controlContainer.addTo(this.map);
+    toggleControl.addTo(this.map);
   }
-  
-  renderControls() {
-    this.controlDiv.innerHTML = `
+
+  renderToggle() {
+    this.controlContainer.innerHTML = `
       <div class="toggle-container">
-        <button class="reset-btn">Reset View</button>
-        <div class="toggle-wrapper">
-          <button class="toggle-btn ${this.currentMode === 'inbound' ? 'active' : ''}" 
-                  data-mode="inbound">INBOUND</button>
-          <button class="toggle-btn ${this.currentMode === 'outbound' ? 'active' : ''}" 
-                  data-mode="outbound">OUTBOUND</button>
-        </div>
+        <button class="toggle-btn ${this.currentMode === 'inbound' ? 'active' : ''}" 
+                data-mode="inbound">INBOUND</button>
+        <button class="toggle-btn ${this.currentMode === 'outbound' ? 'active' : ''}" 
+                data-mode="outbound">OUTBOUND</button>
       </div>
     `;
 
-    this.controlDiv.querySelectorAll('.toggle-btn').forEach(btn => {
+    // 버튼 이벤트 바인딩
+    this.controlContainer.querySelectorAll('.toggle-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         this.currentMode = btn.dataset.mode;
-        this.renderControls();
+        this.renderToggle();
         this.stateLayer.setStyle(feature => this.getStyle(feature));
         this.updateLegend();
       });
     });
-  
-    this.controlDiv.querySelector('.reset-btn').addEventListener('click', () => {
-      this.map.setView([37.8, -96], 4);
-    });
   }
-  
-  // 범례 유지 (기존과 동일)
+
   updateLegend() {
+    // 기존 범례 제거
     if (this.legend) this.map.removeControl(this.legend);
     
+    // 새로운 범례 추가
     this.legend = L.control({ position: 'bottomright' });
     
     this.legend.onAdd = () => {
@@ -240,8 +234,17 @@ class TruckCongestionMap {
     
     this.legend.addTo(this.map);
   }
+
+  showError() {
+    this.map.setView([39.5, -98.35], 4);
+    L.popup()
+      .setLatLng([39.5, -98.35])
+      .setContent('데이터를 불러오는 중 오류 발생')
+      .openOn(this.map);
+  }
 }
 
+// 지도 초기화
 document.addEventListener('DOMContentLoaded', () => {
   new TruckCongestionMap('map');
 });
