@@ -4,34 +4,27 @@ import gspread
 from google.oauth2 import service_account
 
 def fetch_sheet():
-    """Google Sheets 데이터를 CSV로 저장"""
     try:
-        # 서비스 계정 인증 (JSON 내용 직접 사용)
-        creds_json = os.environ['GOOGLE_CREDENTIAL_JSON']
+        # 서비스 계정 인증
         creds = service_account.Credentials.from_service_account_info(
-            eval(creds_json),
+            eval(os.environ['GOOGLE_CREDENTIAL_JSON']),
             scopes=['https://www.googleapis.com/auth/spreadsheets']
         )
         gc = gspread.authorize(creds)
         
-        # 데이터 로드
+        # 데이터 로드 (정확한 시트 이름과 범위 지정)
         sheet = gc.open_by_key(os.environ['SPREADSHEET_ID'])
         worksheet = sheet.worksheet('CONGESTION_TRUCK')
-        records = worksheet.get_all_records(expected_headers=[
-            'State', 'Code', 'Inbound Delay', 'Inbound Color',
-            'Outbound Delay', 'Outbound Color', 'Dwell Inbound',
-            'Dwell Inbound Color', 'Dwell Outbound', 'Dwell Outbound Color'
-        ])
+        data = worksheet.get_all_values()
         
-        # CSV 저장
-        df = pd.DataFrame(records)
+        # CSV 저장 (헤더 포함)
+        df = pd.DataFrame(data[1:], columns=data[0])
         os.makedirs('data', exist_ok=True)
-        df.to_csv('data/data.csv', index=False)
-        print(f"✅ Data saved to: data/data.csv")
-        print(f"Loaded {len(df)} rows")
+        df.to_csv('data/data.csv', index=False, encoding='utf-8-sig')  # UTF-8 BOM 추가
+        print("✅ 데이터 저장 완료:", df.head(2))
         
     except Exception as e:
-        print(f"❌ Error: {str(e)}")
+        print(f"❌ 오류 발생: {str(e)}")
         raise
 
 if __name__ == "__main__":
