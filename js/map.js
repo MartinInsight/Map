@@ -119,58 +119,50 @@ async fetchSheetData() {
   }
 
 showTooltip(event, data) {
-  // 값 포맷팅 함수
+  // 데이터 값 보정
   const formatValue = (val) => {
     const num = Number(val);
     return isNaN(num) ? 0 : Math.abs(num).toFixed(2);
   };
 
-  // 방향 및 스타일 결정
-  const getDirectionStyle = (value) => {
-    if (value >= 0) return { 
-      icon: '↑', 
-      text: 'above', 
-      color: '#27ae60' // 초록
-    };
-    return { 
-      icon: '↓', 
-      text: 'below', 
-      color: '#e74c3c' // 빨강
-    };
+  // INBOUND/OUTBOUND에 따라 필드 선택
+  const isInbound = this.currentMode === 'inbound';
+  const delay = isInbound ? data.inboundDelay : data.outboundDelay;
+  const dwell = data.dwellInbound; // Dwell Time은 항상 동일하게 표시
+
+  // 방향 및 문구 설정
+  const getDirectionInfo = (value) => {
+    if (value >= 0) return { icon: '↑', text: 'above' };
+    return { icon: '↓', text: 'below' };
   };
 
-  const delay = this.currentMode === 'inbound' ? data.inboundDelay : data.outboundDelay;
-  const dwell = data.dwellInbound;
-  const delayStyle = getDirectionStyle(delay);
-  const dwellStyle = getDirectionStyle(dwell);
+  const delayInfo = getDirectionInfo(delay);
+  const dwellInfo = getDirectionInfo(dwell);
 
-  // 툴팁 HTML
+  // 툴팁 HTML 생성
   const content = `
     <div class="map-tooltip">
-      <h3>${data.name || 'Unknown'}</h3>
+      <h4>${data.name || 'Unknown'}</h4>
       
-      <div class="metric-group">
-        <h4>Truck Movement</h4>
-        <p style="color: ${delayStyle.color}">
-          <strong>${delayStyle.icon} ${formatValue(delay)}% ${delayStyle.text}</strong> 2 weeks moving average
+      <div class="metric-box ${delay >= 0 ? 'positive' : 'negative'}">
+        <strong>Truck Movement</strong>
+        <p>
+          ${delayInfo.icon} ${formatValue(delay)}% ${delayInfo.text} 2 weeks moving average
         </p>
       </div>
       
-      <div class="metric-group">
-        <h4>Dwell Time</h4>
-        <p style="color: ${dwellStyle.color}">
-          <strong>${dwellStyle.icon} ${formatValue(dwell)}% ${dwellStyle.text}</strong> 2 weeks moving average
+      <div class="metric-box ${dwell >= 0 ? 'positive' : 'negative'}">
+        <strong>Dwell Time</strong>
+        <p>
+          ${dwellInfo.icon} ${formatValue(dwell)}% ${dwellInfo.text} 2 weeks moving average
         </p>
       </div>
     </div>
   `;
 
-  // 툴팁 생성 (주 중심에 고정)
-  const bounds = L.geoJSON(feature).getBounds();
-  const center = bounds.getCenter();
-  
-  L.popup({ autoClose: false, closeOnClick: false })
-    .setLatLng(center)
+  // 툴팁 생성
+  L.popup()
+    .setLatLng(event.latlng)
     .setContent(content)
     .openOn(this.map);
 }
@@ -183,61 +175,40 @@ showTooltip(event, data) {
     this.map.fitBounds(L.geoJSON(feature).getBounds(), { padding: [50, 50] });
   }
 
-addControls() {
-  // 기존 범례 제거
-  if (this.legend) this.map.removeControl(this.legend);
+  addControls() {
+    // 모드 토글 버튼
+    const toggleControl = L.control({ position: 'topright' });
+    
+    toggleControl.onAdd = () => {
+      this.controlContainer = L.DomUtil.create('div', 'mode-control');
+      this.renderToggle();
+      return this.controlContainer;
+    };
+    
+    toggleControl.addTo(this.map);
+  }
 
-  // 컨트롤 컨테이너 생성
-  const controlContainer = L.control({ position: 'topright' });
-  
-  controlContainer.onAdd = () => {
-    this.controlDiv = L.DomUtil.create('div', 'map-controls');
-    
-    // Reset View 버튼
-    const resetBtn = L.DomUtil.create('button', 'reset-btn', this.controlDiv);
-    resetBtn.innerHTML = 'Reset View';
-    L.DomEvent.on(resetBtn, 'click', () => {
-      this.map.setView([37.8, -96], 4);
-    });
+  renderToggle() {
+    this.controlContainer.innerHTML = `
+      <div class="toggle-container">
+        <button class="toggle-btn ${this.currentMode === 'inbound' ? 'active' : ''}" 
+                data-mode="inbound">INBOUND</button>
+        <button class="toggle-btn ${this.currentMode === 'outbound' ? 'active' : ''}" 
+                data-mode="outbound">OUTBOUND</button>
+      </div>
+    `;
 
-    // 토글 버튼 컨테이너
-    const toggleContainer = L.DomUtil.create('div', 'toggle-container', this.controlDiv);
-    
-    // INBOUND 버튼
-    const inboundBtn = L.DomUtil.create('button', 'toggle-btn inbound', toggleContainer);
-    inboundBtn.innerHTML = 'INBOUND';
-    inboundBtn.dataset.mode = 'inbound';
-    
-    // OUTBOUND 버튼
-    const outboundBtn = L.DomUtil.create('button', 'toggle-btn outbound', toggleContainer);
-    outboundBtn.innerHTML = 'OUTBOUND';
-    outboundBtn.dataset.mode = 'outbound';
-    
     // 버튼 이벤트 바인딩
-    [inboundBtn, outboundBtn].forEach(btn => {
-      L.DomEvent.on(btn, 'click', () => {
+    this.controlContainer.querySelectorAll('.toggle-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
         this.currentMode = btn.dataset.mode;
-        this.updateToggleButtons();
-        if (this.stateLayer) {
-          this.stateLayer.setStyle(feature => this.getStyle(feature));
-        }
+        this.renderToggle();
+        this.stateLayer.setStyle(feature => this.getStyle(feature));
+        this.updateLegend();
       });
     });
+  }
 
-    this.updateToggleButtons();
-    return this.controlDiv;
-  };
-
-  controlContainer.addTo(this.map);
-}
-
-updateToggleButtons() {
-  const buttons = this.controlDiv.querySelectorAll('.toggle-btn');
-  buttons.forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.mode === this.currentMode);
-  });
-}
-  
   updateLegend() {
     // 기존 범례 제거
     if (this.legend) this.map.removeControl(this.legend);
