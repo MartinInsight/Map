@@ -1,0 +1,24 @@
+name: Deploy
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Generate Sample Data
+        run: |
+          mkdir -p data
+          echo '{"CA":{"name":"California","inbound":1.2}}' > data/states-data.json
+          echo "✅ 샘플 데이터 생성 완료"
+
+      - name: Deploy
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./
+          force_orphan: true
