@@ -4,17 +4,24 @@ on:
     branches: ["main"]
   workflow_dispatch:
 
+permissions:
+  contents: write  # ⚠️ 이 부분이 핵심
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Generate Sample Data
+      - name: Generate Data
+        env:
+          SPREADSHEET_ID: ${{ secrets.SPREADSHEET_ID }}
+          GOOGLE_CREDENTIAL_JSON: ${{ secrets.GOOGLE_CREDENTIAL_JSON }}
         run: |
           mkdir -p data
-          echo '{"CA":{"name":"California","inbound":1.2}}' > data/states-data.json
-          echo "✅ 샘플 데이터 생성 완료"
+          python scripts/fetch_data.py
+          echo "생성된 파일:"
+          ls -l data/
 
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
