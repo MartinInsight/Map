@@ -9,4 +9,4 @@ def fetch_sheet():
     )
     sheet_id = os.environ['SPREADSHEET_ID']
     df = pd.read_csv(f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv")
-    df.to_csv("../data/data.csv", index=False)
+    df.to_csv(os.path.join(os.path.dirname(__file__), "../data/data.csv", index=False)
