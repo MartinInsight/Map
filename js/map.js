@@ -39,20 +39,26 @@ async fetchSheetData() {
     
     const rawData = await response.json();
     
-    // 데이터 타입 강제 변환
+    // 데이터 타입 강제 변환 (null 체크 추가)
     this.metricData = Object.fromEntries(
-      Object.entries(rawData).map(([code, data]) => [
-        code,
-        {
-          name: data.name,
-          inboundDelay: Number(data.inboundDelay) || 0,
-          inboundColor: Number(data.inboundColor) || 0,
-          outboundDelay: Number(data.outboundDelay) || 0,
-          outboundColor: Number(data.outboundColor) || 0,
-          dwellInbound: Number(data.dwellInbound) || 0,
-          dwellOutbound: Number(data.dwellOutbound) || 0
-        }
-      ])
+      Object.entries(rawData).map(([code, data]) => {
+        // null 체크 추가
+        const safeNumber = (val) => 
+          val === null || val === undefined ? 0 : Number(val) || 0;
+        
+        return [
+          code,
+          {
+            name: data.name || 'Unknown',
+            inboundDelay: safeNumber(data.inboundDelay),
+            inboundColor: safeNumber(data.inboundColor),
+            outboundDelay: safeNumber(data.outboundDelay),
+            outboundColor: safeNumber(data.outboundColor),
+            dwellInbound: safeNumber(data.dwellInbound),
+            dwellOutbound: safeNumber(data.dwellOutbound)
+          }
+        ];
+      })
     );
     
     console.log("데이터 변환 완료:", this.metricData['TN']);
@@ -81,8 +87,8 @@ async fetchSheetData() {
   getStyle(feature) {
     const data = this.metricData[feature.id] || {};
     const colorValue = this.currentMode === 'inbound' 
-      ? data.inboundColor 
-      : data.outboundColor;
+      ? (data.inboundColor || 0)
+      : (data.outboundColor || 0);
     
     return {
       fillColor: this.getColor(colorValue),
@@ -120,9 +126,13 @@ async fetchSheetData() {
 
 // js/map.js 수정 부분
 showTooltip(event, data) {
+  const safeData = data || {};
+  const safeNumber = (val) => 
+    val === null || val === undefined ? 0 : Number(val) || 0;
+
   const formatValue = (val) => {
-    const num = Number(val);
-    return isNaN(num) ? 0 : Math.abs(num).toFixed(2);
+    const num = safeNumber(val);
+    return Math.abs(num).toFixed(2);
   };
 
   const isInbound = this.currentMode === 'inbound';
