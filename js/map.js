@@ -1,77 +1,72 @@
-class StateMap {
+class TruckCongestionMap {
   constructor(mapElementId) {
-    // 지도 초기화
+    // 지도 초기화 (미국 중심)
     this.map = L.map(mapElementId).setView([37.8, -96], 4);
     this.stateLayer = null;
-    
-    // 타일 레이어 추가 (OpenStreetMap)
+    this.currentMode = 'inbound'; // 'inbound' or 'outbound'
+    this.metricData = null;
+
+    // OpenStreetMap 배경 지도
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
     }).addTo(this.map);
 
-    // 데이터 로드 시작
+    // 컨트롤 UI 추가
+    this.addControls();
     this.loadData();
   }
 
   async loadData() {
     try {
-      // 동적 경로 생성 (GitHub Pages 호환)
-      const basePath = window.location.pathname.includes('/Map') 
-        ? window.location.pathname.split('/').slice(0, 2).join('/')
-        : '';
-      
-      const [geoJsonResp, metricsResp] = await Promise.all([
-        fetch(`${basePath}/data/us-states.json`),
-        fetch(`${basePath}/data/states-data.json?t=${Date.now()}`)
-      ]);
+      // GeoJSON 데이터 로드
+      const geoJsonResp = await fetch('data/us-states.json');
+      const geoJson = await geoJsonResp.json();
 
-      if (!geoJsonResp.ok || !metricsResp.ok) {
-        throw new Error(`Data loading failed: ${geoJsonResp.status}, ${metricsResp.status}`);
-      }
-
-      const [geoJson, metrics] = await Promise.all([
-        geoJsonResp.json(),
-        metricsResp.json()
-      ]);
-
-      // GeoJSON 속성 처리
-      geoJson.features.forEach(feature => {
-        feature.properties.state_code = feature.properties.code || feature.id;
-      });
+      // CSV/Google Sheets 데이터 처리 (예시)
+      this.metricData = {
+        "TN": { 
+          inboundDelay: -3.08, inboundColor: -1,
+          outboundDelay: -6.46, outboundColor: -2,
+          dwellInbound: -5.56, dwellOutbound: -1.55
+        },
+        // ... (실제로는 Google Sheets API로 데이터 가져옴)
+      };
 
       // 지도 렌더링
-      this.renderMap(geoJson, metrics);
+      this.renderMap(geoJson);
       
     } catch (e) {
       console.error("Data load error:", e);
-      this.showErrorMap();
+      this.showError();
     }
   }
 
-  renderMap(geoJson, metrics) {
+  renderMap(geoJson) {
     // 기존 레이어 제거
     if (this.stateLayer) {
       this.map.removeLayer(this.stateLayer);
     }
 
-    // 새로운 레이어 생성
+    // 주별 폴리곤 렌더링
     this.stateLayer = L.geoJSON(geoJson, {
-      style: (feature) => this.getStyle(feature, metrics),
-      onEachFeature: (feature, layer) => this.bindPopup(feature, layer, metrics)
+      style: (feature) => this.getStyle(feature),
+      onEachFeature: (feature, layer) => this.bindEvents(feature, layer)
     }).addTo(this.map);
 
-    // 범례 추가
-    this.addLegend();
+    // 범례 업데이트
+    this.updateLegend();
   }
 
-  getStyle(feature, metrics) {
-    const stateCode = feature.properties.state_code;
-    const data = metrics[stateCode] || {};
-    const value = data.inbound || 0;
+  getStyle(feature) {
+    const stateCode = feature.id;
+    const data = this.metricData?.[stateCode] || {};
+    const isInbound = this.currentMode === 'inbound';
     
-    // 색상 그래디언트
+    // 현재 모드에 따른 색상 결정
+    const colorValue = isInbound ? data.inboundColor : data.outboundColor;
+    
     return {
-      fillColor: this.getColor(value),
+      fillColor: this.getColor(colorValue),
       weight: 1,
       opacity: 1,
       color: 'white',
@@ -80,67 +75,125 @@ class StateMap {
   }
 
   getColor(value) {
-    // 값에 따른 색상 반환
-    if (value > 10000) return '#005824';
-    if (value > 5000) return '#238b45';
-    if (value > 1000) return '#41ab5d';
-    if (value > 0) return '#74c476';
-    if (value < 0) return '#f03b20';
-    return '#cccccc'; // 중립값
+    // 색상 그래디언트 (-3 ~ 3)
+    const colors = {
+      '-3': '#d73027',  // 진한 빨강
+      '-2': '#f46d43',
+      '-1': '#fdae61',  // 연한 빨강
+      '0': '#ffffbf',   // 중립
+      '1': '#a6d96a',   // 연한 초록
+      '2': '#66bd63',
+      '3': '#1a9850'    // 진한 초록
+    };
+    return colors[value] || '#cccccc';
   }
 
-  bindPopup(feature, layer, metrics) {
-    const stateCode = feature.properties.state_code;
-    const data = metrics[stateCode] || {};
+  bindEvents(feature, layer) {
+    const stateCode = feature.id;
+    const data = this.metricData?.[stateCode] || {};
     
-    layer.bindPopup(`
-      <div class="map-popup">
-        <h4>${data.name || feature.properties.name}</h4>
-        <p><strong>Inbound:</strong> ${this.formatNumber(data.inbound)}</p>
-        <p><strong>Outbound:</strong> ${this.formatNumber(data.outbound)}</p>
-        <p><strong>Net Change:</strong> ${this.formatNumber(data.net)}</p>
+    layer.on({
+      mouseover: (e) => this.showTooltip(e, data),
+      mouseout: () => this.hideTooltip(),
+      click: () => this.zoomToState(feature)
+    });
+  }
+
+  showTooltip(event, data) {
+    const isInbound = this.currentMode === 'inbound';
+    const delay = isInbound ? data.inboundDelay : data.outboundDelay;
+    const dwell = isInbound ? data.dwellInbound : data.dwellOutbound;
+
+    this.tooltip = L.popup()
+      .setLatLng(event.latlng)
+      .setContent(`
+        <div class="map-tooltip">
+          <strong>${data.name || 'N/A'}</strong><br>
+          ${this.currentMode.toUpperCase()} Delay: <b>${delay?.toFixed(2) || 'N/A'}%</b><br>
+          Dwell Time: <b>${dwell?.toFixed(2) || 'N/A'} mins</b>
+        </div>
+      `)
+      .openOn(this.map);
+  }
+
+  hideTooltip() {
+    if (this.tooltip) this.map.closePopup(this.tooltip);
+  }
+
+  zoomToState(feature) {
+    this.map.fitBounds(L.geoJSON(feature).getBounds(), { padding: [50, 50] });
+  }
+
+  addControls() {
+    // 모드 토글 버튼
+    const toggleControl = L.control({ position: 'topright' });
+    
+    toggleControl.onAdd = () => {
+      this.controlContainer = L.DomUtil.create('div', 'mode-control');
+      this.renderToggle();
+      return this.controlContainer;
+    };
+    
+    toggleControl.addTo(this.map);
+  }
+
+  renderToggle() {
+    this.controlContainer.innerHTML = `
+      <div class="toggle-container">
+        <button class="toggle-btn ${this.currentMode === 'inbound' ? 'active' : ''}" 
+                data-mode="inbound">INBOUND</button>
+        <button class="toggle-btn ${this.currentMode === 'outbound' ? 'active' : ''}" 
+                data-mode="outbound">OUTBOUND</button>
       </div>
-    `);
+    `;
+
+    // 버튼 이벤트 바인딩
+    this.controlContainer.querySelectorAll('.toggle-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        this.currentMode = btn.dataset.mode;
+        this.renderToggle();
+        this.stateLayer.setStyle(feature => this.getStyle(feature));
+        this.updateLegend();
+      });
+    });
   }
 
-  formatNumber(num) {
-    if (num === undefined || num === null) return 'N/A';
-    return new Intl.NumberFormat('en-US').format(num);
-  }
-
-  addLegend() {
-    const legend = L.control({ position: 'bottomright' });
+  updateLegend() {
+    // 기존 범례 제거
+    if (this.legend) this.map.removeControl(this.legend);
     
-    legend.onAdd = () => {
+    // 새로운 범례 추가
+    this.legend = L.control({ position: 'bottomright' });
+    
+    this.legend.onAdd = () => {
       const div = L.DomUtil.create('div', 'info legend');
-      const grades = [0, 1000, 5000, 10000];
-      const labels = ['<strong>Population Change</strong>'];
+      const grades = [-3, -2, -1, 0, 1, 2, 3];
+      const title = `${this.currentMode.toUpperCase()} DELAY`;
       
-      // 범례 아이템 추가
-      for (let i = 0; i < grades.length; i++) {
+      div.innerHTML = `<strong>${title}</strong><br>`;
+      
+      grades.forEach(grade => {
         div.innerHTML +=
-          `<i style="background:${this.getColor(grades[i] + 1)}"></i> ` +
-          `${grades[i]}${grades[i + 1] ? `–${grades[i + 1]}` : '+'}<br>`;
-      }
+          `<i style="background:${this.getColor(grade)}"></i> ` +
+          `${grade < 0 ? grade : '+' + grade}<br>`;
+      });
       
-      div.innerHTML += `<i style="background:#f03b20"></i> Negative<br>`;
-      div.innerHTML += labels.join('<br>');
       return div;
     };
     
-    legend.addTo(this.map);
+    this.legend.addTo(this.map);
   }
 
-  showErrorMap() {
-    // 오류 발생 시 대체 콘텐츠 표시
-    this.map.setView([37.8, -96], 3);
-    L.marker([39.5, -98.35]).addTo(this.map)
-      .bindPopup('Data loading failed')
-      .openPopup();
+  showError() {
+    this.map.setView([39.5, -98.35], 4);
+    L.popup()
+      .setLatLng([39.5, -98.35])
+      .setContent('데이터를 불러오는 중 오류 발생')
+      .openOn(this.map);
   }
 }
 
 // 지도 초기화
 document.addEventListener('DOMContentLoaded', () => {
-  new StateMap('map');
+  new TruckCongestionMap('map');
 });
