@@ -34,42 +34,46 @@ class TruckCongestionMap {
   // Google Sheets 데이터 가져오는 함수 (여기에 추가!)
 async fetchSheetData() {
   try {
-    // 1. CSV 파일 경로 확인
-    const csvPath = window.location.href.includes('github.io') 
-      ? 'data/data.csv'  // GitHub Pages 배포 시
-      : '../data/data.csv';  // 로컬 개발 시
+    // 1. 동적 경로 생성
+    const basePath = window.location.href.includes('github.io') 
+      ? window.location.pathname.split('/').slice(0, 2).join('/')
+      : '';
+    const dataUrl = `${basePath}/data/data.json?t=${Date.now()}`;
 
     // 2. 데이터 로드
-    const response = await fetch(csvPath);
-    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+    const response = await fetch(dataUrl);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
     
-    const csvText = await response.text();
-    const rows = csvText.split('\n').filter(row => row.trim() !== '');
+    // 3. JSON 파싱
+    this.metricData = await response.json();
+    console.log("데이터 로드 성공:", Object.keys(this.metricData).length + "개 주");
     
-    // 3. 데이터 파싱
-    this.metricData = {};
-    const headers = rows[0].split(',');
-    
-    for (let i = 1; i < rows.length; i++) {
-      const values = rows[i].split(',');
-      const code = values[1]?.trim();
-      if (code) {
-        this.metricData[code] = {
-          name: values[0]?.trim(),
-          inboundDelay: parseFloat(values[2]) || 0,
-          inboundColor: parseInt(values[3]) || 0,
-          outboundDelay: parseFloat(values[4]) || 0,
-          outboundColor: parseInt(values[5]) || 0,
-          dwellInbound: parseFloat(values[6]) || 0,
-          dwellOutbound: parseFloat(values[8])?.trim() || 0  // Dwell Outbound는 9번째 컬럼
-        };
-      }
+    // 4. 필드 검증
+    const sampleState = this.metricData['TN'] || this.metricData[Object.keys(this.metricData)[0]];
+    if (!sampleState?.inboundDelay) {
+      throw new Error("데이터 구조 불일치: 필드 검증 실패");
     }
-    console.log('로드된 데이터 샘플:', this.metricData['TN']);  // 테네시 데이터 확인
+
   } catch (e) {
-    console.error('데이터 로드 실패:', e);
-    this.showError();
+    console.error("데이터 로드 실패:", e);
+    this.metricData = this.createFallbackData();
   }
+}
+
+createFallbackData() {
+  console.warn("임시 데이터 사용 중");
+  return {
+    "TN": {
+      name: "Tennessee",
+      inboundDelay: -3.08,
+      inboundColor: -1,
+      outboundDelay: -6.46,
+      outboundColor: -2,
+      dwellInbound: -5.56,
+      dwellOutbound: -1.55
+    },
+    // ... 다른 주 데이터
+  };
 }
 
   renderMap(geoJson) {
