@@ -220,8 +220,27 @@ renderControls() {
 
 // 범례 업데이트 메서드
 updateLegend() {
-  // 범례 구현이 필요없으면 비워둠
-  // 필요시 여기에 범례 업데이트 로직 구현
+  if (this.legend) this.map.removeControl(this.legend);
+  
+  this.legend = L.control({ position: 'bottomright' });
+  
+  this.legend.onAdd = () => {
+    const div = L.DomUtil.create('div', 'info legend');
+    const grades = [-3, -2, -1, 0, 1, 2, 3];
+    const title = `${this.currentMode.toUpperCase()} DELAY`;
+    
+    div.innerHTML = `<strong>${title}</strong><br>`;
+    
+    grades.forEach(grade => {
+      div.innerHTML +=
+        `<i style="background:${this.getColor(grade)}"></i> ` +
+        `${grade < 0 ? grade : '+' + grade}<br>`;
+    });
+    
+    return div;
+  };
+  
+  this.legend.addTo(this.map);
 }
 
 // 에러 표시 메서드
