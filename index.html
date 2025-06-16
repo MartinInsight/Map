@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>US Transportation Analytics</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <link rel="stylesheet" href="styles/main.css">
+</head>
+<body>
+    <div class="header">
+        <h1>US Transportation Analytics</h1>
+        <div class="controls">
+            <button id="toggle-mode">Toggle Mode</button>
+            <span id="mode-display">INBOUND</span>
+        </div>
+    </div>
+    <div id="map"></div>
+    <div class="legend">
+        <div class="legend-gradient"></div>
+        <span>-4</span>
+        <span>0</span>
+        <span>+4</span>
+    </div>
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script src="js/map.js"></script>
+</body>
+</html>
