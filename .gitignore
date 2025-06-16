@@ -1,5 +1,4 @@
 node_modules/
-.env
 data/data.csv
 
 # Byte-compiled / optimized / DLL files
