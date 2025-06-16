@@ -34,46 +34,45 @@ class TruckCongestionMap {
   // Google Sheets 데이터 가져오는 함수 (여기에 추가!)
 async fetchSheetData() {
   try {
-    // 1. 동적 경로 생성
-    const basePath = window.location.href.includes('github.io') 
-      ? window.location.pathname.split('/').slice(0, 2).join('/')
-      : '';
-    const dataUrl = `${basePath}/data/data.json?t=${Date.now()}`;
+    // 1. 동적 경로 생성 (GitHub Pages vs 로컬)
+    const isGitHub = window.location.href.includes('github.io');
+    const basePath = isGitHub ? '/Map' : '';
+    const dataUrl = `${basePath}/data/data.json?_=${Date.now()}`;
 
     // 2. 데이터 로드
     const response = await fetch(dataUrl);
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    if (!response.ok) throw new Error(`데이터 로드 실패: ${response.status}`);
     
     // 3. JSON 파싱
-    this.metricData = await response.json();
-    console.log("데이터 로드 성공:", Object.keys(this.metricData).length + "개 주");
-    
-    // 4. 필드 검증
-    const sampleState = this.metricData['TN'] || this.metricData[Object.keys(this.metricData)[0]];
-    if (!sampleState?.inboundDelay) {
-      throw new Error("데이터 구조 불일치: 필드 검증 실패");
+    const data = await response.json();
+    this.metricData = data;
+    console.log("주 데이터 로드 완료:", Object.keys(data).length + "개");
+
+    // 4. 필수 필드 검증
+    if (!data['TN']?.inboundDelay) {
+      throw new Error("데이터 구조 불일치");
     }
 
   } catch (e) {
-    console.error("데이터 로드 실패:", e);
-    this.metricData = this.createFallbackData();
+    console.error("에러 발생:", e);
+    this.useFallbackData();  // 임시 데이터 사용
   }
 }
 
-createFallbackData() {
-  console.warn("임시 데이터 사용 중");
-  return {
-    "TN": {
-      name: "Tennessee",
-      inboundDelay: -3.08,
+useFallbackData() {
+  this.metricData = {
+    "AL": {
+      name: "Alabama",
+      inboundDelay: -2.92,
       inboundColor: -1,
-      outboundDelay: -6.46,
-      outboundColor: -2,
-      dwellInbound: -5.56,
-      dwellOutbound: -1.55
+      outboundDelay: -2.59,
+      outboundColor: -1,
+      dwellInbound: -6.21,
+      dwellOutbound: 5.93
     },
     // ... 다른 주 데이터
   };
+  console.warn("임시 데이터 사용 중");
 }
 
   renderMap(geoJson) {
