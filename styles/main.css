@@ -48,8 +48,34 @@
   }
 
   /* 툴팁 스타일 */
-  .map-tooltip {
-    font-size: 14px;
-    line-height: 1.4;
-  }
+.map-tooltip {
+  font-family: Arial, sans-serif;
+  min-width: 200px;
+  padding: 10px;
+}
+
+.map-tooltip h4 {
+  margin: 0 0 10px 0;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 5px;
+}
+
+.map-tooltip .metric {
+  margin: 8px 0;
+}
+
+.map-tooltip .positive {
+  color: #2ecc71; /* 녹색 */
+  font-weight: bold;
+}
+
+.map-tooltip .negative {
+  color: #e74c3c; /* 빨강 */
+  font-weight: bold;
+}
+
+.map-tooltip strong {
+  display: block;
+  margin-bottom: 3px;
+}
 </style>
