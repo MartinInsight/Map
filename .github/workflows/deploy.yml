@@ -28,6 +28,11 @@ jobs:
           python scripts/fetch_data.py
           ls -la data/  # 파일 생성 확인
           cat data/data.csv  # 내용 확인 (디버깅용)
+
+      - name: Verify files
+        run: |
+          ls -R data
+          cat data/data.csv | head -n 5
       
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
