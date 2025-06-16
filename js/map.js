@@ -118,130 +118,94 @@ async fetchSheetData() {
     });
   }
 
+// js/map.js 수정 부분
 showTooltip(event, data) {
-  // 데이터 값 보정
   const formatValue = (val) => {
     const num = Number(val);
     return isNaN(num) ? 0 : Math.abs(num).toFixed(2);
   };
 
-  // INBOUND/OUTBOUND에 따라 필드 선택
   const isInbound = this.currentMode === 'inbound';
   const delay = isInbound ? data.inboundDelay : data.outboundDelay;
-  const dwell = data.dwellInbound; // Dwell Time은 항상 동일하게 표시
+  const dwell = isInbound ? data.dwellInbound : data.dwellOutbound;
 
-  // 방향 및 문구 설정
-  const getDirectionInfo = (value) => {
-    if (value >= 0) return { icon: '↑', text: 'above' };
-    return { icon: '↓', text: 'below' };
-  };
+  const delayInfo = delay >= 0 
+    ? { icon: '↑', text: 'above', color: 'positive' } 
+    : { icon: '↓', text: 'below', color: 'negative' };
+  
+  const dwellInfo = dwell >= 0 
+    ? { icon: '↑', text: 'above', color: 'positive' } 
+    : { icon: '↓', text: 'below', color: 'negative' };
 
-  const delayInfo = getDirectionInfo(delay);
-  const dwellInfo = getDirectionInfo(dwell);
-
-  // 툴팁 HTML 생성
   const content = `
     <div class="map-tooltip">
       <h4>${data.name || 'Unknown'}</h4>
       
-      <div class="metric-box ${delay >= 0 ? 'positive' : 'negative'}">
+      <div class="metric-box">
         <strong>Truck Movement</strong>
-        <p>
-          ${delayInfo.icon} ${formatValue(delay)}% ${delayInfo.text} 2 weeks moving average
+        <p class="${delayInfo.color}">
+          <b>${delayInfo.icon} ${formatValue(delay)}%</b> ${delayInfo.text} 2 weeks moving average
         </p>
       </div>
       
-      <div class="metric-box ${dwell >= 0 ? 'positive' : 'negative'}">
+      <div class="metric-box">
         <strong>Dwell Time</strong>
-        <p>
-          ${dwellInfo.icon} ${formatValue(dwell)}% ${dwellInfo.text} 2 weeks moving average
+        <p class="${dwellInfo.color}">
+          <b>${dwellInfo.icon} ${formatValue(dwell)}%</b> ${dwellInfo.text} 2 weeks moving average
         </p>
       </div>
     </div>
   `;
 
-  // 툴팁 생성
+  // 주의 중심 좌표 계산
+  const layer = event.target;
+  const center = layer.getBounds().getCenter();
+
   L.popup()
-    .setLatLng(event.latlng)
+    .setLatLng(center)
     .setContent(content)
     .openOn(this.map);
 }
 
-  hideTooltip() {
-    if (this.tooltip) this.map.closePopup(this.tooltip);
-  }
+addControls() {
+  // 모드 토글 버튼 + 리셋 버튼
+  const controlContainer = L.control({ position: 'topright' });
+  
+  controlContainer.onAdd = () => {
+    this.controlDiv = L.DomUtil.create('div', 'mode-control');
+    this.renderControls();
+    return this.controlDiv;
+  };
+  
+  controlContainer.addTo(this.map);
+}
 
-  zoomToState(feature) {
-    this.map.fitBounds(L.geoJSON(feature).getBounds(), { padding: [50, 50] });
-  }
-
-  addControls() {
-    // 모드 토글 버튼
-    const toggleControl = L.control({ position: 'topright' });
-    
-    toggleControl.onAdd = () => {
-      this.controlContainer = L.DomUtil.create('div', 'mode-control');
-      this.renderToggle();
-      return this.controlContainer;
-    };
-    
-    toggleControl.addTo(this.map);
-  }
-
-  renderToggle() {
-    this.controlContainer.innerHTML = `
-      <div class="toggle-container">
+renderControls() {
+  this.controlDiv.innerHTML = `
+    <div class="toggle-container">
+      <button class="reset-btn">Reset View</button>
+      <div class="toggle-wrapper">
         <button class="toggle-btn ${this.currentMode === 'inbound' ? 'active' : ''}" 
                 data-mode="inbound">INBOUND</button>
         <button class="toggle-btn ${this.currentMode === 'outbound' ? 'active' : ''}" 
                 data-mode="outbound">OUTBOUND</button>
       </div>
-    `;
+    </div>
+  `;
 
-    // 버튼 이벤트 바인딩
-    this.controlContainer.querySelectorAll('.toggle-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        this.currentMode = btn.dataset.mode;
-        this.renderToggle();
-        this.stateLayer.setStyle(feature => this.getStyle(feature));
-        this.updateLegend();
-      });
+  // 버튼 이벤트 바인딩
+  this.controlDiv.querySelectorAll('.toggle-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      this.currentMode = btn.dataset.mode;
+      this.renderControls();
+      this.stateLayer.setStyle(feature => this.getStyle(feature));
     });
-  }
+  });
 
-  updateLegend() {
-    // 기존 범례 제거
-    if (this.legend) this.map.removeControl(this.legend);
-    
-    // 새로운 범례 추가
-    this.legend = L.control({ position: 'bottomright' });
-    
-    this.legend.onAdd = () => {
-      const div = L.DomUtil.create('div', 'info legend');
-      const grades = [-3, -2, -1, 0, 1, 2, 3];
-      const title = `${this.currentMode.toUpperCase()} DELAY`;
-      
-      div.innerHTML = `<strong>${title}</strong><br>`;
-      
-      grades.forEach(grade => {
-        div.innerHTML +=
-          `<i style="background:${this.getColor(grade)}"></i> ` +
-          `${grade < 0 ? grade : '+' + grade}<br>`;
-      });
-      
-      return div;
-    };
-    
-    this.legend.addTo(this.map);
-  }
-
-  showError() {
-    this.map.setView([39.5, -98.35], 4);
-    L.popup()
-      .setLatLng([39.5, -98.35])
-      .setContent('데이터를 불러오는 중 오류 발생')
-      .openOn(this.map);
-  }
+  // 리셋 버튼 이벤트
+  this.controlDiv.querySelector('.reset-btn').addEventListener('click', () => {
+    this.map.setView([37.8, -96], 4);
+  });
 }
 
 // 지도 초기화
