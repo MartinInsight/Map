@@ -54,28 +54,37 @@
   padding: 10px;
 }
 
+/* 기존 스타일 아래에 추가 */
 .map-tooltip h4 {
   margin: 0 0 10px 0;
-  border-bottom: 1px solid #eee;
   padding-bottom: 5px;
+  border-bottom: 1px solid #eee;
+  font-size: 16px;
 }
 
-.map-tooltip .metric {
-  margin: 8px 0;
+.metric-box {
+  margin: 12px 0;
+  padding: 8px;
+  border-radius: 4px;
+  background-color: #f9f9f9;
 }
 
-.map-tooltip .positive {
-  color: #2ecc71; /* 녹색 */
-  font-weight: bold;
-}
-
-.map-tooltip .negative {
-  color: #e74c3c; /* 빨강 */
-  font-weight: bold;
-}
-
-.map-tooltip strong {
+.metric-box strong {
   display: block;
-  margin-bottom: 3px;
+  margin-bottom: 4px;
+  font-size: 14px;
+}
+
+.metric-box p {
+  margin: 5px 0 0 0;
+  font-size: 13px;
+}
+
+.positive {
+  color: #27ae60; /* 녹색 */
+}
+
+.negative {
+  color: #e74c3c; /* 빨강 */
 }
 </style>
