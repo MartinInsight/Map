@@ -34,45 +34,32 @@ class TruckCongestionMap {
   // Google Sheets 데이터 가져오는 함수 (여기에 추가!)
 async fetchSheetData() {
   try {
-    // 1. 동적 경로 생성 (GitHub Pages vs 로컬)
-    const isGitHub = window.location.href.includes('github.io');
-    const basePath = isGitHub ? '/Map' : '';
-    const dataUrl = `${basePath}/data/data.json?_=${Date.now()}`;
-
-    // 2. 데이터 로드
-    const response = await fetch(dataUrl);
-    if (!response.ok) throw new Error(`데이터 로드 실패: ${response.status}`);
+    const response = await fetch('data/data.json');
+    if (!response.ok) throw new Error("Failed to load data");
     
-    // 3. JSON 파싱
-    const data = await response.json();
-    this.metricData = data;
-    console.log("주 데이터 로드 완료:", Object.keys(data).length + "개");
-
-    // 4. 필수 필드 검증
-    if (!data['TN']?.inboundDelay) {
-      throw new Error("데이터 구조 불일치");
-    }
-
+    const rawData = await response.json();
+    
+    // 데이터 타입 강제 변환
+    this.metricData = Object.fromEntries(
+      Object.entries(rawData).map(([code, data]) => [
+        code,
+        {
+          name: data.name,
+          inboundDelay: Number(data.inboundDelay) || 0,
+          inboundColor: Number(data.inboundColor) || 0,
+          outboundDelay: Number(data.outboundDelay) || 0,
+          outboundColor: Number(data.outboundColor) || 0,
+          dwellInbound: Number(data.dwellInbound) || 0,
+          dwellOutbound: Number(data.dwellOutbound) || 0
+        }
+      ])
+    );
+    
+    console.log("데이터 변환 완료:", this.metricData['TN']);
   } catch (e) {
-    console.error("에러 발생:", e);
-    this.useFallbackData();  // 임시 데이터 사용
+    console.error("데이터 로드 실패:", e);
+    this.useFallbackData();
   }
-}
-
-useFallbackData() {
-  this.metricData = {
-    "AL": {
-      name: "Alabama",
-      inboundDelay: -2.92,
-      inboundColor: -1,
-      outboundDelay: -2.59,
-      outboundColor: -1,
-      dwellInbound: -6.21,
-      dwellOutbound: 5.93
-    },
-    // ... 다른 주 데이터
-  };
-  console.warn("임시 데이터 사용 중");
 }
 
   renderMap(geoJson) {
@@ -131,10 +118,16 @@ useFallbackData() {
     });
   }
 
-  showTooltip(event, data) {
-    const isInbound = this.currentMode === 'inbound';
-    const delay = isInbound ? data.inboundDelay : data.outboundDelay;
-    const dwell = isInbound ? data.dwellInbound : data.dwellOutbound;
+showTooltip(event, data) {
+  // 값 보정 로직 추가
+  const safeNumber = (val) => {
+    const num = Number(val);
+    return isNaN(num) ? 0 : num;
+  };
+
+  const isInbound = this.currentMode === 'inbound';
+  const delay = safeNumber(isInbound ? data.inboundDelay : data.outboundDelay);
+  const dwell = safeNumber(isInbound ? data.dwellInbound : data.dwellOutbound);
   
     // 방향 아이콘 결정
     const delayIcon = delay >= 0 ? '↑' : '↓';
