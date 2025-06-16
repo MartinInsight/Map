@@ -119,49 +119,53 @@ async fetchSheetData() {
   }
 
 showTooltip(event, data) {
-  // 값 보정 로직 추가
-  const safeNumber = (val) => {
+  // 데이터 값 보정
+  const formatValue = (val) => {
     const num = Number(val);
-    return isNaN(num) ? 0 : num;
+    return isNaN(num) ? 0 : Math.abs(num).toFixed(2);
   };
 
+  // INBOUND/OUTBOUND에 따라 필드 선택
   const isInbound = this.currentMode === 'inbound';
-  const delay = safeNumber(isInbound ? data.inboundDelay : data.outboundDelay);
-  const dwell = safeNumber(isInbound ? data.dwellInbound : data.dwellOutbound);
-  
-    // 방향 아이콘 결정
-    const delayIcon = delay >= 0 ? '↑' : '↓';
-    const dwellIcon = dwell >= 0 ? '↑' : '↓';
-    
-    // 값에 따른 설명 텍스트
-    const delayText = delay >= 0 ? "above" : "below";
-    const dwellText = dwell >= 0 ? "above" : "below";
-    
-    // 색상 클래스 (CSS에 추가 필요)
-    const delayClass = delay >= 0 ? "positive" : "negative";
-    const dwellClass = dwell >= 0 ? "positive" : "negative";
-  
-    L.popup()
-      .setLatLng(event.latlng)
-      .setContent(`
-        <div class="map-tooltip">
-          <h4>${data.name || 'Unknown'}</h4>
-          <div class="metric">
-            <strong>Truck Movement</strong>
-            <p class="${delayClass}">
-              ${delayIcon} ${Math.abs(delay).toFixed(2)}% ${delayText} 2 weeks moving average
-            </p>
-          </div>
-          <div class="metric">
-            <strong>Dwell Time</strong>
-            <p class="${dwellClass}">
-              ${dwellIcon} ${Math.abs(dwell).toFixed(2)}% ${dwellText} 2 weeks moving average
-            </p>
-          </div>
-        </div>
-      `)
-      .openOn(this.map);
-  }
+  const delay = isInbound ? data.inboundDelay : data.outboundDelay;
+  const dwell = data.dwellInbound; // Dwell Time은 항상 동일하게 표시
+
+  // 방향 및 문구 설정
+  const getDirectionInfo = (value) => {
+    if (value >= 0) return { icon: '↑', text: 'above' };
+    return { icon: '↓', text: 'below' };
+  };
+
+  const delayInfo = getDirectionInfo(delay);
+  const dwellInfo = getDirectionInfo(dwell);
+
+  // 툴팁 HTML 생성
+  const content = `
+    <div class="map-tooltip">
+      <h4>${data.name || 'Unknown'}</h4>
+      
+      <div class="metric-box ${delay >= 0 ? 'positive' : 'negative'}">
+        <strong>Truck Movement</strong>
+        <p>
+          ${delayInfo.icon} ${formatValue(delay)}% ${delayInfo.text} 2 weeks moving average
+        </p>
+      </div>
+      
+      <div class="metric-box ${dwell >= 0 ? 'positive' : 'negative'}">
+        <strong>Dwell Time</strong>
+        <p>
+          ${dwellInfo.icon} ${formatValue(dwell)}% ${dwellInfo.text} 2 weeks moving average
+        </p>
+      </div>
+    </div>
+  `;
+
+  // 툴팁 생성
+  L.popup()
+    .setLatLng(event.latlng)
+    .setContent(content)
+    .openOn(this.map);
+}
 
   hideTooltip() {
     if (this.tooltip) this.map.closePopup(this.tooltip);
