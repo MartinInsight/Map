@@ -35,10 +35,9 @@ class TruckCongestionMap {
     }
   }
 
-processMetricData(rawData) {
-  this.metricData = Object.fromEntries(
-    Object.entries(rawData).map(([code, data]) => {
-      return [
+  processMetricData(rawData) {
+    this.metricData = Object.fromEntries(
+      Object.entries(rawData).map(([code, data]) => [
         code,
         {
           name: data.name,
@@ -49,10 +48,9 @@ processMetricData(rawData) {
           dwellInbound: Number(data.dwellInbound) || 0,
           dwellOutbound: Number(data.dwellOutbound) || 0
         }
-      ];
-    }
-  );
-}
+      ]
+    );
+  }
 
   useFallbackData() {
     console.warn("Using fallback data");
