@@ -29,10 +29,12 @@ jobs:
           ls -la data/  # 파일 생성 확인
           cat data/data.csv  # 내용 확인 (디버깅용)
 
-      - name: Verify files
+      - name: Verify JSON file
         run: |
-          ls -R data
-          cat data/data.csv | head -n 5
+          echo "파일 내용 샘플:"
+          jq -r '.["TN"]' data/data.json
+          echo -e "\n파일 크기:"
+          ls -lh data/data.json
       
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
