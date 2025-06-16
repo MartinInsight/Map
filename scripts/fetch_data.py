@@ -1,6 +1,6 @@
 import os
 import pandas as pd
-import gspread
+import json
 from google.oauth2 import service_account
 
 def fetch_sheet():
@@ -10,20 +10,34 @@ def fetch_sheet():
             eval(os.environ['GOOGLE_CREDENTIAL_JSON']),
             scopes=['https://www.googleapis.com/auth/spreadsheets']
         )
-        gc = gspread.authorize(creds)
         
-        # 데이터 로드 (정확한 시트 이름과 범위 지정)
-        sheet = gc.open_by_key(os.environ['SPREADSHEET_ID'])
-        worksheet = sheet.worksheet('CONGESTION_TRUCK')
-        data = worksheet.get_all_values()
+        # 데이터 로드
+        sheet_id = os.environ['SPREADSHEET_ID']
+        url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/gviz/tq?tqx=out:json"
+        response = pd.read_json(url, storage_options={"token": creds})
+        data = [r['c'] for r in response['table']['rows']]
         
-        # CSV 저장 (헤더 포함)
-        df = pd.DataFrame(data[1:], columns=data[0])
+        # JSON으로 변환
+        result = {}
+        for row in data:
+            if len(row) >= 9:  # 컬럼 수 확인
+                code = row[1]['v']
+                result[code] = {
+                    'name': row[0]['v'],
+                    'inboundDelay': row[2]['v'],
+                    'inboundColor': row[3]['v'],
+                    'outboundDelay': row[4]['v'],
+                    'outboundColor': row[5]['v'],
+                    'dwellInbound': row[6]['v'],
+                    'dwellOutbound': row[8]['v']
+                }
+        
+        # JSON 저장
         os.makedirs('data', exist_ok=True)
-        output_path = os.path.join('data', 'data.csv')
-        df.to_csv(output_path, index=False, encoding='utf-8')
-        print(f"✅ 저장 위치: {os.path.abspath(output_path)}")
-        print("✅ 데이터 저장 완료:", df.head(2))
+        with open('data/data.json', 'w', encoding='utf-8') as f:
+            json.dump(result, f, ensure_ascii=False, indent=2)
+        
+        print("✅ JSON 저장 완료")
         
     except Exception as e:
         print(f"❌ 오류 발생: {str(e)}")
