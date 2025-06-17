@@ -183,6 +183,32 @@ html, body {
   font-size: 14px;
 }
 
+/* RAIL TOOLTIP 스타일 - 5단계 */
+.rail-tooltip .very-low {
+  color: #2ecc71; /* 연녹색 */
+  font-weight: bold;
+}
+
+.rail-tooltip .low {
+  color: #27ae60; /* 초록색 */
+  font-weight: bold;
+}
+
+.rail-tooltip .average {
+  color: #3498db; /* 파랑 */
+  font-weight: bold;
+}
+
+.rail-tooltip .high {
+  color: #e67e22; /* 주황 */
+  font-weight: bold;
+}
+
+.rail-tooltip .very-high {
+  color: #e74c3c; /* 빨강 */
+  font-weight: bold;
+}
+
 .congestion-very-low { color: #4575b4; }
 .congestion-low { color: #74add1; }
 .congestion-average { color: #abd9e9; }
