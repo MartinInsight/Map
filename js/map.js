@@ -117,7 +117,8 @@ async fetchSheetData() {
     });
   }
 
-  showTooltip(event, data) {
+// js/map.js (수정된 부분)
+showTooltip(event, data) {
     const formatValue = (val) => {
       const num = Number(val);
       return isNaN(num) ? 0 : Math.abs(num).toFixed(2);
