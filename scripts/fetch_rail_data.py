@@ -16,7 +16,7 @@ def fetch_rail_data():
         
         # 데이터 로드
         sheet = gc.open_by_key(os.environ['SPREADSHEET_ID'])
-        worksheet = sheet.worksheet('CONGESTION_RAILD')
+        worksheet = sheet.worksheet('CONGESTION_RAIL')
         records = worksheet.get_all_records()
         
         # 데이터 처리
