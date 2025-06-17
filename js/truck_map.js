@@ -230,7 +230,3 @@ class TruckCongestionMap {
     }
   }
 }
-
-document.addEventListener('DOMContentLoaded', () => {
-  new TruckCongestionMap('map');
-});
