@@ -115,11 +115,11 @@ class TruckCongestionMap {
   bindEvents(feature, layer) {
     const stateCode = feature.id;
     const data = this.metricData?.[stateCode] || {};
-  
+    
     layer.on({
-      mouseover: (e) => this.showTooltip(e, data, feature),
-      mouseout: this.hideTooltip.bind(this),
-      click: this.zoomToState.bind(this, feature)
+      mouseover: (e) => this.showTooltip(e, data),
+      mouseout: () => this.hideTooltip(),
+      click: () => this.zoomToState(feature)
     });
   }
 
@@ -142,38 +142,31 @@ class TruckCongestionMap {
         <div class="metric-box">
           <strong>Truck Movement</strong>
           <p class="${delay >= 0 ? 'positive' : 'negative'}">
-            <span class="highlight">${delay >= 0 ? '↑' : '↓'} ${formatValue(delay)}%</span> ${delay >= 0 ? 'above' : 'below'} 2 weeks moving average
+            <strong>${delay >= 0 ? '↑' : '↓'} ${formatValue(delay)}% ${delay >= 0 ? 'above' : 'below'} 2 weeks moving average</strong>
           </p>
         </div>
         <div class="metric-box">
           <strong>Dwell Time</strong>
           <p class="${dwell >= 0 ? 'positive' : 'negative'}">
-            <span class="highlight">${dwell >= 0 ? '↑' : '↓'} ${formatValue(dwell)}%</span> ${dwell >= 0 ? 'above' : 'below'} 2 weeks moving average
+            <strong>${dwell >= 0 ? '↑' : '↓'} ${formatValue(dwell)}% ${dwell >= 0 ? 'above' : 'below'} 2 weeks moving average</strong>
           </p>
         </div>
       </div>
     `;
   
-    const center = event.latlng;
-  
-    if (this.tooltip) this.map.removeLayer(this.tooltip);
-  
-    this.tooltip = L.tooltip({
-      permanent: true,
-      direction: 'top',
+    L.popup({
+      autoClose: false,
+      closeButton: false,
       className: 'custom-tooltip',
-      offset: [0, -10]
+      offset: L.point(0, -10)
     })
-      .setLatLng(center)
+      .setLatLng(event.latlng)
       .setContent(content)
-      .addTo(this.map);
+      .openOn(this.map);
   }
-  
+
   hideTooltip() {
-    if (this.tooltip) {
-      this.map.removeLayer(this.tooltip);
-      this.tooltip = null;
-    }
+    this.map.closePopup();
   }
   
   zoomToState(feature) {
@@ -194,14 +187,18 @@ class TruckCongestionMap {
   }
 
   renderControls() {
-  this.controlDiv.innerHTML = `
-    <button class="reset-btn" id="reset-view">🔄 Reset View</button>
-    <div class="toggle-wrapper">
-      <button class="toggle-btn ${this.currentMode === 'inbound' ? 'active' : ''}" data-mode="inbound">INBOUND</button>
-      <button class="toggle-btn ${this.currentMode === 'outbound' ? 'active' : ''}" data-mode="outbound">OUTBOUND</button>
-    </div>
-  `;
-  
+    this.controlDiv.innerHTML = `
+      <div class="toggle-container">
+        <div class="toggle-wrapper">
+          <button class="toggle-btn ${this.currentMode === 'inbound' ? 'active' : ''}" 
+                  data-mode="inbound">INBOUND</button>
+          <button class="toggle-btn ${this.currentMode === 'outbound' ? 'active' : ''}" 
+                  data-mode="outbound">OUTBOUND</button>
+        </div>
+        <button class="reset-btn" id="reset-view">Reset View</button>
+      </div>
+    `;
+
     this.controlDiv.querySelectorAll('.toggle-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         this.currentMode = btn.dataset.mode;
@@ -211,19 +208,19 @@ class TruckCongestionMap {
         }
       });
     });
-  
+
     this.controlDiv.querySelector('#reset-view').addEventListener('click', () => {
       this.map.setView([37.8, -96], 4);
     });
   }
 
   updateLegend() {
+    // 범례를 표시하지 않음
     if (this.legend) {
       this.map.removeControl(this.legend);
-      this.legend = null;
     }
   }
-} // ← 클래스 종료
+}
 
 document.addEventListener('DOMContentLoaded', () => {
   new TruckCongestionMap('map');
