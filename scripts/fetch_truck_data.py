@@ -12,7 +12,7 @@ def safe_convert_number(val):
     except:
         return None
 
-def fetch_sheet():
+def fetch_truck_data(): 
     try:
         # 인증 설정
         creds_dict = eval(os.environ['GOOGLE_CREDENTIAL_JSON'])
@@ -59,4 +59,4 @@ def fetch_sheet():
         return False
 
 if __name__ == "__main__":
-    fetch_sheet()
+    fetch_truck_data()
