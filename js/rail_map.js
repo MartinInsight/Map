@@ -1,4 +1,3 @@
-// js/railMap.js
 class RailCongestionMap {
   constructor(mapElementId) {
     this.map = L.map(mapElementId).setView([37.8, -96], 4);
