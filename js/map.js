@@ -1,80 +1,86 @@
+// js/map.js (전체 수정 버전)
 class TruckCongestionMap {
   constructor(mapElementId) {
     this.map = L.map(mapElementId).setView([37.8, -96], 4);
     this.stateLayer = null;
     this.currentMode = 'inbound';
     this.metricData = null;
+    this.initialized = false;
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© OpenStreetMap'
     }).addTo(this.map);
 
     this.addControls();
-    this.loadData();
+    this.initializeMap();
   }
 
-  async loadData() {
+  async initializeMap() {
     try {
-      // 1. GeoJSON 로드
-      const geoJsonResp = await fetch('data/us-states.json');
-      const geoJson = await geoJsonResp.json();
-
-      // 2. Google Sheets 데이터 로드 (추가된 부분)
-      await this.fetchSheetData();
-
-      // 3. 지도 렌더링
+      const [geoJson, sheetData] = await Promise.all([
+        fetch('data/us-states.json').then(res => res.json()),
+        this.fetchSheetData()
+      ]);
+      
+      this.metricData = sheetData;
       this.renderMap(geoJson);
-    } catch (e) {
-      console.error("Error:", e);
+      this.initialized = true;
+    } catch (error) {
+      console.error("Initialization failed:", error);
       this.showError();
     }
   }
 
-  // Google Sheets 데이터 가져오는 함수 (여기에 추가!)
-async fetchSheetData() {
-  try {
-    const response = await fetch('data/data.json');
-    if (!response.ok) throw new Error("Failed to load data");
-    
-    const rawData = await response.json();
-    
-    // 데이터 타입 강제 변환
-    this.metricData = Object.fromEntries(
-      Object.entries(rawData).map(([code, data]) => [
-        code,
-        {
-          name: data.name,
-          inboundDelay: Number(data.inboundDelay) || 0,
-          inboundColor: Number(data.inboundColor) || 0,
-          outboundDelay: Number(data.outboundDelay) || 0,
-          outboundColor: Number(data.outboundColor) || 0,
-          dwellInbound: Number(data.dwellInbound) || 0,
-          dwellOutbound: Number(data.dwellOutbound) || 0
-        }
-      ])
-    );
-    
-    console.log("데이터 변환 완료:", this.metricData['TN']);
-  } catch (e) {
-    console.error("데이터 로드 실패:", e);
-    this.useFallbackData();
+  async fetchSheetData() {
+    try {
+      const response = await fetch('data/data.json');
+      if (!response.ok) throw new Error("Failed to load data");
+      
+      const rawData = await response.json();
+      return Object.fromEntries(
+        Object.entries(rawData).map(([code, data]) => [
+          code,
+          {
+            name: data.name,
+            inboundDelay: Number(data.inboundDelay) || 0,
+            inboundColor: Number(data.inboundColor) || 0,
+            outboundDelay: Number(data.outboundDelay) || 0,
+            outboundColor: Number(data.outboundColor) || 0,
+            dwellInbound: Number(data.dwellInbound) || 0,
+            dwellOutbound: Number(data.dwellOutbound) || 0
+          }
+        ])
+      );
+    } catch (e) {
+      console.error("Data loading failed:", e);
+      return this.useFallbackData();
+    }
   }
-}
+
+  useFallbackData() {
+    console.warn("Using fallback data");
+    return {
+      'TN': {
+        name: 'Tennessee',
+        inboundDelay: 0,
+        inboundColor: 0,
+        outboundDelay: 0,
+        outboundColor: 0,
+        dwellInbound: 0,
+        dwellOutbound: 0
+      }
+    };
+  }
 
   renderMap(geoJson) {
-    // 기존 레이어 제거
     if (this.stateLayer) {
       this.map.removeLayer(this.stateLayer);
     }
 
-    // 주별 폴리곤 렌더링
     this.stateLayer = L.geoJSON(geoJson, {
       style: (feature) => this.getStyle(feature),
       onEachFeature: (feature, layer) => this.bindEvents(feature, layer)
     }).addTo(this.map);
-
-    // 범례 업데이트
-    this.updateLegend();
   }
 
   getStyle(feature) {
@@ -118,7 +124,9 @@ async fetchSheetData() {
   }
 
 // js/map.js (수정된 부분)
-showTooltip(event, data) {
+  showTooltip(event, data) {
+    if (!this.initialized) return;
+
     const formatValue = (val) => {
       const num = Number(val);
       return isNaN(num) ? 0 : Math.abs(num).toFixed(2);
@@ -128,39 +136,25 @@ showTooltip(event, data) {
     const delay = isInbound ? data.inboundDelay : data.outboundDelay;
     const dwell = data.dwellInbound;
 
-    const delayInfo = {
-      icon: delay >= 0 ? '↑' : '↓',
-      text: delay >= 0 ? 'above' : 'below',
-      colorClass: delay >= 0 ? 'positive' : 'negative'
-    };
-    
-    const dwellInfo = {
-      icon: dwell >= 0 ? '↑' : '↓',
-      text: dwell >= 0 ? 'above' : 'below',
-      colorClass: dwell >= 0 ? 'positive' : 'negative'
-    };
-
     const content = `
       <div class="map-tooltip">
         <h4>${data.name || 'Unknown'}</h4>
-        
         <div class="metric-box">
           <strong>Truck Movement</strong>
-          <p class="${delayInfo.colorClass}">
-            <strong>${delayInfo.icon} ${formatValue(delay)}% ${delayInfo.text} 2 weeks moving average</strong>
+          <p class="${delay >= 0 ? 'positive' : 'negative'}">
+            <strong>${delay >= 0 ? '↑' : '↓'} ${formatValue(delay)}% ${delay >= 0 ? 'above' : 'below'} 2 weeks moving average</strong>
           </p>
         </div>
-        
         <div class="metric-box">
           <strong>Dwell Time</strong>
-          <p class="${dwellInfo.colorClass}">
-            <strong>${dwellInfo.icon} ${formatValue(dwell)}% ${dwellInfo.text} 2 weeks moving average</strong>
+          <p class="${dwell >= 0 ? 'positive' : 'negative'}">
+            <strong>${dwell >= 0 ? '↑' : '↓'} ${formatValue(dwell)}% ${dwell >= 0 ? 'above' : 'below'} 2 weeks moving average</strong>
           </p>
         </div>
       </div>
     `;
 
-    L.popup()
+    L.popup({ autoClose: false })
       .setLatLng(event.latlng)
       .setContent(content)
       .openOn(this.map);
