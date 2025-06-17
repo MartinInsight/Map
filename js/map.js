@@ -118,8 +118,8 @@ class TruckCongestionMap {
     
     layer.on({
       mouseover: (e) => this.showTooltip(e, data),
-      mouseout: () => this.hideTooltip(),
-      click: () => this.zoomToState(feature)
+      mouseout: this.hideTooltip.bind(this),
+      click: this.zoomToState.bind(this, feature)
     });
   }
 
