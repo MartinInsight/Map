@@ -61,17 +61,23 @@ class RailCongestionMap {
   }
 
   createPopupContent(data) {
+    // 데이터가 없을 경우 기본값 설정
+    const company = data.company || 'Unknown';
+    const date = data.date ? new Date(data.date).toLocaleString() : 'N/A';
+    const score = data.congestion_score !== undefined ? data.congestion_score : 'N/A';
+    const level = data.congestion_level || 'Unknown';
+  
     return `
       <div class="rail-tooltip">
-        <h4>${data.location}</h4>
-        <p><strong>Company:</strong> ${data.company}</p>
+        <h4>${data.location || 'Unknown Location'}</h4>
+        <p><strong>Company:</strong> ${company}</p>
         <p><strong>Congestion Level:</strong> 
-          <span class="congestion-${data.congestion_level.toLowerCase().replace(' ', '-')}">
-            ${data.congestion_level}
+          <span class="congestion-${level.toLowerCase().replace(' ', '-')}">
+            ${level}
           </span>
         </p>
-        <p><strong>Score:</strong> ${data.congestion_score}</p>
-        <p><small>Last updated: ${data.date}</small></p>
+        <p><strong>Score:</strong> ${score}</p>
+        <p><small>Last updated: ${date}</small></p>
       </div>
     `;
   }
