@@ -27,11 +27,11 @@ def fetch_rail_data():
             print(f"- {ws.title}")
         
         try:
-            worksheet = sheet.worksheet('CONGESTION_RAILD')
-            print("✅ CONGESTION_RAILD 시트 찾음")
+            worksheet = sheet.worksheet('CONGESTION_RAIL')
+            print("✅ CONGESTION_RAIL 시트 찾음")
         except gspread.exceptions.WorksheetNotFound:
             available_sheets = [ws.title for ws in sheet.worksheets()]
-            raise Exception(f"❌ CONGESTION_RAILD 시트를 찾을 수 없습니다. 사용 가능한 시트: {available_sheets}")
+            raise Exception(f"❌ CONGESTION_RAIL 시트를 찾을 수 없습니다. 사용 가능한 시트: {available_sheets}")
         
         records = worksheet.get_all_records()
         print(f"📝 레코드 개수: {len(records)}")
