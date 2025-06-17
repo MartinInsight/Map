@@ -1,4 +1,3 @@
-// js/map.js (전체 수정 버전)
 class TruckCongestionMap {
   constructor(mapElementId) {
     this.map = L.map(mapElementId).setView([37.8, -96], 4);
