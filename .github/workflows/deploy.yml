@@ -47,13 +47,16 @@ jobs:
           GOOGLE_CREDENTIAL_JSON: ${{ secrets.GOOGLE_CREDENTIAL_JSON }}
         run: |
           python scripts/fetch_rail_data.py
-          echo "Rail data file:"
-          ls -la data/us-rail.json || echo "Rail data file not found"
-          echo -e "\nRail data sample:"
+          echo "생성된 파일 확인:"
+          ls -la data/
+          echo -e "\nRail 데이터 샘플:"
           if [ -f "data/us-rail.json" ]; then
             jq '.[0]' data/us-rail.json
+            echo -e "\n생성된 데이터 개수:"
+            jq 'length' data/us-rail.json
           else
-            echo "No rail data file exists"
+            echo "Rail 데이터 파일이 생성되지 않았습니다"
+            exit 1
           fi
 
       - name: Verify JSON files
