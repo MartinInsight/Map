@@ -1,13 +1,48 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>US Truck Congestion Map</title>
+    <title>US Transportation Congestion Map</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <link rel="stylesheet" href="styles/main.css"/>
 </head>
 <body>
-    <div id="map"></div>
+    <div class="tab-container">
+        <button class="tab-button active" data-tab="trucking">TRUCKING CONGESTION</button>
+        <button class="tab-button" data-tab="rail">RAIL CONGESTION</button>
+    </div>
+    
+    <div id="trucking-map" class="map-container active"></div>
+    <div id="rail-map" class="map-container"></div>
+    
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="js/map.js"></script>
+    <script src="js/railMap.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const truckingMap = new TruckCongestionMap('trucking-map');
+            const railMap = new RailCongestionMap('rail-map');
+            
+            // 탭 전환 로직
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.addEventListener('click', () => {
+                    // 탭 버튼 활성화
+                    document.querySelectorAll('.tab-button').forEach(btn => 
+                        btn.classList.remove('active'));
+                    button.classList.add('active');
+                    
+                    // 지도 컨테이너 전환
+                    document.querySelectorAll('.map-container').forEach(container => 
+                        container.classList.remove('active'));
+                    document.getElementById(`${button.dataset.tab}-map`).classList.add('active');
+                    
+                    // 지도 리사이즈
+                    setTimeout(() => {
+                        if(button.dataset.tab === 'trucking') truckingMap.map.invalidateSize();
+                        else railMap.map.invalidateSize();
+                    }, 100);
+                });
+            });
+        });
+    </script>
 </body>
 </html>
