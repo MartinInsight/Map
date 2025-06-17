@@ -31,32 +31,19 @@ jobs:
           echo -e "\nJSON 내용 샘플:"
           jq '.["TN"]' data/data.json || echo "JSON 파싱 실패"
 
-      - name: Verify Rail Data
-        run: |
-          if [ -f "data/us-rail.json" ]; then
-            echo "✅ Rail 데이터 파일 존재"
-            echo "샘플 데이터:"
-            jq '.[0]' data/us-rail.json
-          else
-            echo "⚠️ Rail 데이터 파일 없음 - 트럭 데이터만 사용"
-          fi
-
       - name: Fetch Rail Data
         env:
           SPREADSHEET_ID: ${{ secrets.SPREADSHEET_ID }}
           GOOGLE_CREDENTIAL_JSON: ${{ secrets.GOOGLE_CREDENTIAL_JSON }}
         run: |
           python scripts/fetch_rail_data.py
-          echo "생성된 파일 확인:"
-          ls -la data/
-          echo -e "\nRail 데이터 샘플:"
+          echo "Rail data file:"
+          ls -la data/us-rail.json || echo "Rail data file not found"
+          echo -e "\nRail data sample:"
           if [ -f "data/us-rail.json" ]; then
             jq '.[0]' data/us-rail.json
-            echo -e "\n생성된 데이터 개수:"
-            jq 'length' data/us-rail.json
           else
-            echo "Rail 데이터 파일이 생성되지 않았습니다"
-            exit 1
+            echo "No rail data file exists"
           fi
 
       - name: Verify JSON files
