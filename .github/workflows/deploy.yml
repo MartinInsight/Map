@@ -20,7 +20,7 @@ jobs:
       - name: Create data directory
         run: mkdir -p data
       
-      - name: Fetch Google Sheets data
+      - name: Fetch Trucking data
         env:
           SPREADSHEET_ID: ${{ secrets.SPREADSHEET_ID }}
           GOOGLE_CREDENTIAL_JSON: ${{ secrets.GOOGLE_CREDENTIAL_JSON }}
@@ -30,6 +30,22 @@ jobs:
           ls -la data/
           echo -e "\nJSON 내용 샘플:"
           jq '.["TN"]' data/data.json || echo "JSON 파싱 실패"
+
+      - name: Fetch Trucking Data
+        env:
+          SPREADSHEET_ID: ${{ secrets.SPREADSHEET_ID }}
+          GOOGLE_CREDENTIAL_JSON: ${{ secrets.GOOGLE_CREDENTIAL_JSON }}
+        run: |
+          python scripts/fetch_data.py
+      
+      - name: Fetch Rail Data
+        env:
+          SPREADSHEET_ID: ${{ secrets.SPREADSHEET_ID }}
+          GOOGLE_CREDENTIAL_JSON: ${{ secrets.GOOGLE_CREDENTIAL_JSON }}
+        run: |
+          python scripts/fetch_rail_data.py
+          echo "Rail data sample:"
+          jq '.[0]' data/us-rail.json || echo "No rail data"
 
       - name: Verify JSON file
         run: |
