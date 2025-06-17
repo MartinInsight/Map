@@ -61,21 +61,28 @@ class RailCongestionMap {
   }
 
   createPopupContent(data) {
-    // 데이터가 없을 경우 기본값 처리 강화
+    // 데이터가 없을 경우 기본값 처리
     const formatField = (value, defaultValue = 'N/A') => 
       value !== undefined && value !== null && value !== '' ? value : defaultValue;
+  
+    // 혼잡도 지표 계산 (Dwell Time / Average)
+    const ratio = data.congestion_score / (data.average || 1);
+    const ratioText = ratio.toFixed(2);
+    const ratioClass = ratio >= 1.2 ? 'high' : ratio <= 0.8 ? 'low' : 'normal';
   
     return `
       <div class="rail-tooltip">
         <h4>${formatField(data.location, 'Unknown Location')}</h4>
         <p><strong>Company:</strong> ${formatField(data.company)}</p>
+        <p><strong>Dwell Time:</strong> ${formatField(data.congestion_score)} hours</p>
+        <p><strong>Ratio (Dwell/Avg):</strong> 
+          <span class="${ratioClass}">${ratioText}x</span>
+        </p>
         <p><strong>Congestion Level:</strong> 
           <span class="congestion-${data.congestion_level?.toLowerCase()?.replace(' ', '-') || 'average'}">
             ${formatField(data.congestion_level)}
           </span>
         </p>
-        <p><strong>Dwell Time:</strong> ${formatField(data.congestion_score)} hours</p>
-        <p><small>Last updated: ${formatField(data.date)}</small></p>
       </div>
     `;
   }
