@@ -8,14 +8,15 @@ html, body {
 #map {
   height: 100vh;
   width: 100vw;
-  position: fixed;  -- 보통은 필요 없고, 필요하면 유지 */
+  /* position: fixed;  필요 시 사용하세요 */
 }
 
 /* 툴팁 위치 고정 */
 .leaflet-tooltip {
-  transform: translate(-50%, 0) !important;
+  transform: translate(-50%, -100%) !important; /* 툴팁을 마커 위쪽 중앙에 고정 */
   left: 50% !important;
-  margin-top: 15px !important;
+  margin-top: 0 !important;
+  pointer-events: none; /* 툴팁 마우스 이벤트 무시 */
 }
 
 /* 툴팁 스타일 */
@@ -24,6 +25,10 @@ html, body {
   min-width: 220px;
   padding: 15px;
   text-align: center;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  color: #000;
 }
 
 .map-tooltip h4 {
@@ -43,7 +48,6 @@ html, body {
 .map-tooltip .metric-box p {
   margin: 0;
   font-size: 14px;
-  color: #000;
 }
 
 .map-tooltip .highlight {
@@ -60,7 +64,8 @@ html, body {
 
 /* 커스텀 팝업 툴팁 중앙 정렬 */
 .custom-tooltip {
-  transform: translate(-50%, -50%) !important;
+  transform: translate(-50%, -100%) !important; /* 툴팁 위치 위쪽 중앙 */
+  pointer-events: none;
 }
 
 /* 모드 컨트롤 (버튼 감싸는 div) */
@@ -72,39 +77,72 @@ html, body {
   background: transparent;
 }
 
-/* 토글 버튼 래퍼 - 흰 박스 없애고 그림자만 남김 */
+/* 토글 버튼 wrapper */
 .toggle-wrapper {
   display: flex;
-  gap: 6px;
+  border-radius: 0; /* 전체 둥글기 제거 */
+  overflow: hidden;
+  border: 1px solid #ccc;
+  height: 36px; /* 버튼 높이 통일 */
 }
 
-/* 버튼 스타일 */
-.toggle-btn, #reset-view {
-  border: none;
-  padding: 6px 14px;
+/* 토글 버튼 기본 스타일 */
+.toggle-btn {
+  border-radius: 0; /* 둥글기 없음 */
+  padding: 6px 12px;
   background-color: white;
   box-shadow: 0 2px 5px rgba(0,0,0,0.15);
-  border-radius: 6px;
   cursor: pointer;
   font-weight: bold;
-  transition: background-color 0.3s ease;
+  transition: background-color 0.2s ease;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%; /* wrapper 높이와 동일 */
+  line-height: normal;
 }
 
-/* 토글 활성화 상태 */
+/* 좌측 버튼 둥글기 + 구분선 */
+.toggle-btn:first-child {
+  border-top-left-radius: 6px;
+  border-bottom-left-radius: 6px;
+  border-right: 1px solid #ccc;
+}
+
+/* 우측 버튼 둥글기 */
+.toggle-btn:last-child {
+  border-top-right-radius: 6px;
+  border-bottom-right-radius: 6px;
+}
+
+/* 토글 버튼 활성화 상태 */
 .toggle-btn.active {
   background-color: #4caf50;
   color: white;
 }
 
-/* 버튼 호버 효과 */
-.toggle-btn:hover, #reset-view:hover {
+/* 토글 및 리셋 버튼 호버 효과 */
+.toggle-btn:hover:not(.active),
+#reset-view:hover {
   background-color: #f0f0f0;
 }
 
-/* reset 버튼도 토글 버튼과 같은 스타일로 통일 */
+/* 리셋 뷰 버튼 스타일 통일 */
 #reset-view {
   font-weight: 600;
   font-size: 14px;
+  padding: 6px 12px;
+  background-color: white;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+  border-radius: 6px;
+  cursor: pointer;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  line-height: normal;
 }
 
 /* 범례 숨김 */
