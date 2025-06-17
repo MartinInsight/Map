@@ -6,12 +6,12 @@ html, body {
 }
 
 #map {
-  height: 100vh; /* 뷰포트 전체 높이 */
-  width: 100vw; /* 뷰포트 전체 너비 */
-  position: fixed; /* 고정 위치 */
+  height: 100vh;
+  width: 100vw;
+  position: fixed;  -- 보통은 필요 없고, 필요하면 유지 */
 }
 
-/* 툴팁 위치 고정 추가 */
+/* 툴팁 위치 고정 */
 .leaflet-tooltip {
   transform: translate(-50%, 0) !important;
   left: 50% !important;
@@ -58,10 +58,12 @@ html, body {
   color: #d73027; /* 빨강 */
 }
 
+/* 커스텀 팝업 툴팁 중앙 정렬 */
 .custom-tooltip {
   transform: translate(-50%, -50%) !important;
 }
 
+/* 모드 컨트롤 (버튼 감싸는 div) */
 .mode-control {
   display: flex;
   gap: 10px;
@@ -70,41 +72,39 @@ html, body {
   background: transparent;
 }
 
+/* 토글 버튼 래퍼 - 흰 박스 없애고 그림자만 남김 */
 .toggle-wrapper {
   display: flex;
-  border-radius: 999px;
-  overflow: hidden;
-  border: 1px solid #ccc;
+  gap: 6px;
 }
 
-.toggle-btn {
+/* 버튼 스타일 */
+.toggle-btn, #reset-view {
   border: none;
-  padding: 6px 12px;
+  padding: 6px 14px;
   background-color: white;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  box-shadow: 0 2px 5px rgba(0,0,0,0.15);
   border-radius: 6px;
   cursor: pointer;
   font-weight: bold;
-  transition: 0.2s;
+  transition: background-color 0.3s ease;
 }
 
+/* 토글 활성화 상태 */
 .toggle-btn.active {
   background-color: #4caf50;
   color: white;
 }
 
-.reset-btn {
-  padding: 8px 14px;
-  border: none;
-  background: #eee;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 600;
-  font-size: 14px;
+/* 버튼 호버 효과 */
+.toggle-btn:hover, #reset-view:hover {
+  background-color: #f0f0f0;
 }
 
-.reset-btn:hover {
-  background: #e0e0e0;
+/* reset 버튼도 토글 버튼과 같은 스타일로 통일 */
+#reset-view {
+  font-weight: 600;
+  font-size: 14px;
 }
 
 /* 범례 숨김 */
