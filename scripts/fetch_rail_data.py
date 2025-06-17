@@ -6,6 +6,8 @@ from google.oauth2 import service_account
 
 def fetch_rail_data():
     try:
+        print("🔵 Rail 데이터 수집 시작")
+        
         # 인증 설정
         creds_dict = eval(os.environ['GOOGLE_CREDENTIAL_JSON'])
         creds = service_account.Credentials.from_service_account_info(
@@ -13,14 +15,26 @@ def fetch_rail_data():
             scopes=['https://www.googleapis.com/auth/spreadsheets']
         )
         gc = gspread.authorize(creds)
+        print("✅ Google 인증 성공")
         
-        # 데이터 로드 부분 수정
+        # 데이터 로드
         sheet = gc.open_by_key(os.environ['SPREADSHEET_ID'])
+        print(f"📊 시트 제목: {sheet.title}")
+        
+        # 사용 가능한 워크시트 목록 출력
+        print("📋 사용 가능한 워크시트:")
+        for ws in sheet.worksheets():
+            print(f"- {ws.title}")
+        
         try:
-            worksheet = sheet.worksheet('CONGESTION_RAIL')
+            worksheet = sheet.worksheet('CONGESTION_RAILD')
+            print("✅ CONGESTION_RAILD 시트 찾음")
         except gspread.exceptions.WorksheetNotFound:
             available_sheets = [ws.title for ws in sheet.worksheets()]
-            raise Exception(f"CONGESTION_RAIL 시트를 찾을 수 없습니다. 사용 가능한 시트: {available_sheets}")
+            raise Exception(f"❌ CONGESTION_RAILD 시트를 찾을 수 없습니다. 사용 가능한 시트: {available_sheets}")
+        
+        records = worksheet.get_all_records()
+        print(f"📝 레코드 개수: {len(records)}")
         
         # 데이터 처리
         result = []
@@ -41,16 +55,17 @@ def fetch_rail_data():
         # JSON 저장
         output_dir = os.path.join(os.path.dirname(__file__), '../data')
         os.makedirs(output_dir, exist_ok=True)
-        print(f"저장 디렉토리 확인: {output_dir}, 존재 여부: {os.path.exists(output_dir)}")
+        output_path = os.path.join(output_dir, 'us-rail.json')
         
         with open(output_path, 'w', encoding='utf-8') as f:
             json.dump(result, f, indent=2)
             
-        print("✅ Rail data saved:", output_path)
+        print(f"✅ Rail 데이터 저장 완료: {output_path}")
+        print(f"🔄 생성된 데이터 개수: {len(result)}")
         return True
         
     except Exception as e:
-        print(f"❌ Rail data error: {str(e)}")
+        print(f"❌ 심각한 오류: {str(e)}")
         return False
 
 if __name__ == "__main__":
