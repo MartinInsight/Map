@@ -61,33 +61,24 @@ class RailCongestionMap {
   }
 
   createPopupContent(data) {
-    const ratio = data.average ? (data.congestion_score / data.average).toFixed(2) : 'N/A';
-    const ratioClass = data.average ? 
-      (data.congestion_score / data.average >= 1.2 ? 'high' : 
-       data.congestion_score / data.average <= 0.8 ? 'low' : 'normal') : 'normal';
-
+    // 데이터가 없을 경우 기본값 설정
+    const company = data.company || 'Unknown';
+    const date = data.date ? new Date(data.date).toLocaleString() : 'N/A';
+    const score = data.congestion_score !== undefined ? data.congestion_score : 'N/A';
+    const level = data.congestion_level || 'Unknown';
+  
     return `
       <div class="rail-tooltip">
-        <h4>${data.location || 'Unknown'}</h4>
-        <p><strong>Company:</strong> ${data.company || 'Unknown'}</p>
-        <p><strong>Dwell Time:</strong> ${data.congestion_score || 'N/A'} hours</p>
-        <p><strong>Ratio (Dwell/Avg):</strong> 
-          <span class="${ratioClass}">${ratio}x</span>
-        </p>
-        <p><strong>Level:</strong> 
-          <span class="congestion-${(data.congestion_level || 'average').toLowerCase().replace(' ', '-')}">
-            ${data.congestion_level || 'Average'}
+        <h4>${data.location || 'Unknown Location'}</h4>
+        <p><strong>Company:</strong> ${company}</p>
+        <p><strong>Congestion Level:</strong> 
+          <span class="congestion-${level.toLowerCase().replace(' ', '-')}">
+            ${level}
           </span>
         </p>
+        <p><strong>Score:</strong> ${score}</p>
+        <p><small>Last updated: ${date}</small></p>
       </div>
     `;
-  }
-
-  showError() {
-    const container = this.map.getContainer();
-    const errorDiv = document.createElement('div');
-    errorDiv.className = 'map-error';
-    errorDiv.innerHTML = '<p>Rail 데이터를 불러올 수 없습니다</p>';
-    container.appendChild(errorDiv);
   }
 }
