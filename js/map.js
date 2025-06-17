@@ -122,6 +122,12 @@ class TruckCongestionMap {
     });
   }
 
+    zoomToState(feature) {
+    const bounds = L.geoJSON(feature).getBounds();
+    this.map.fitBounds(bounds);
+  }
+}
+
 // js/map.js (수정된 부분)
   showTooltip(event, data) {
     // 기존 팝업 닫기
