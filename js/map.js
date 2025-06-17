@@ -222,12 +222,13 @@ showTooltip(event, data) {
     });
   }
 
-updateLegend() {
-  if (this.legend) {
-    this.map.removeControl(this.legend);
-    this.legend = null;
+  updateLegend() {
+    if (this.legend) {
+      this.map.removeControl(this.legend);
+      this.legend = null;
+    }
   }
-}
+} // ← 클래스 종료
 
 document.addEventListener('DOMContentLoaded', () => {
   new TruckCongestionMap('map');
