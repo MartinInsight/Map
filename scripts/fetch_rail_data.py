@@ -38,35 +38,29 @@ def fetch_rail_data():
         
         # 데이터 처리
         result = []
-        
         for row in records:
-            # 위도/경도 체크
-            if not all([row.get('Latitude'), row.get('Longitude')]):
-                print(f"⚠️ 위도/경도가 없는 행 스킵: {row}")
-                continue
-        
-            # 회사명 체크
-            if not row.get('Company'):
-                print(f"⚠️ 회사명이 없는 행: {row.get('Location', 'Unknown Location')}")
-        
-            # 숫자 형식 검증
             try:
-                lat = float(row['Latitude'])
-                lng = float(row['Longitude'])
-                score = float(row.get('Congestion Score', 0))
-            except ValueError as e:
-                print(f"⚠️ 숫자 변환 오류: {e}, 행 데이터: {row}")
+                # 필수 필드 확인
+                if not all([row.get('Latitude'), row.get('Longitude'), row.get('Railroad')]):
+                    continue
+                    
+                # 데이터 정제
+                location = row.get('Location', '') or row.get('Yard', '')
+                if not location:
+                    continue
+                    
+                result.append({
+                    'date': row.get('Date', '').strip(),
+                    'company': row.get('Railroad', '').strip(),
+                    'location': location.strip(),
+                    'lat': float(row['Latitude']),
+                    'lng': float(row['Longitude']),
+                    'congestion_score': float(row.get('Dwell Time', 0)),
+                    'congestion_level': row.get('Category', 'Average').strip()
+                })
+            except Exception as e:
+                print(f"⚠️ 데이터 처리 오류 건너뜀 - 행: {row}, 오류: {str(e)}")
                 continue
-                
-        result.append({
-            'date': row.get('Timestamp', '').strip() or 'N/A',  # 빈 값 처리
-            'company': row.get('Company', '').strip() or 'Unknown',  # 빈 값 처리
-            'location': row.get('Location', '').strip() or 'Unknown',
-            'lat': float(row.get('Latitude', 0)),  # 기본값 0
-            'lng': float(row.get('Longitude', 0)),
-            'congestion_score': float(row.get('Congestion Score', 0)),
-            'congestion_level': row.get('Congestion Level', '').strip() or 'Average'  # 기본값 Average
-        })
         
         # JSON 저장
         output_dir = os.path.join(os.path.dirname(__file__), '../data')
@@ -74,7 +68,7 @@ def fetch_rail_data():
         output_path = os.path.join(output_dir, 'us-rail.json')
         
         with open(output_path, 'w', encoding='utf-8') as f:
-            json.dump(result, f, indent=2)
+            json.dump(result, f, indent=2, ensure_ascii=False, default=str)
             
         print(f"✅ Rail 데이터 저장 완료: {output_path}")
         print(f"🔄 생성된 데이터 개수: {len(result)}")
@@ -85,4 +79,11 @@ def fetch_rail_data():
         return False
 
 if __name__ == "__main__":
-    fetch_rail_data()
+    if fetch_rail_data():
+        print("\n🔍 생성된 데이터 샘플:")
+        try:
+            with open('../data/us-rail.json', 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                print(json.dumps(data[:3], indent=2, ensure_ascii=False))  # 처음 3개 항목 출력
+        except Exception as e:
+            print(f"생성된 파일 확인 오류: {str(e)}")
