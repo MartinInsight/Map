@@ -38,35 +38,19 @@ def fetch_rail_data():
         
         # 데이터 처리
         result = []
-        
         for row in records:
-            # 위도/경도 체크
-            if not all([row.get('Latitude'), row.get('Longitude')]):
-                print(f"⚠️ 위도/경도가 없는 행 스킵: {row}")
-                continue
-        
-            # 회사명 체크
-            if not row.get('Company'):
-                print(f"⚠️ 회사명이 없는 행: {row.get('Location', 'Unknown Location')}")
-        
-            # 숫자 형식 검증
-            try:
-                lat = float(row['Latitude'])
-                lng = float(row['Longitude'])
-                score = float(row.get('Congestion Score', 0))
-            except ValueError as e:
-                print(f"⚠️ 숫자 변환 오류: {e}, 행 데이터: {row}")
+            if not row.get('Latitude') or not row.get('Longitude'):
                 continue
                 
-        result.append({
-            'date': row.get('Timestamp', '').strip() or 'N/A',  # 빈 값 처리
-            'company': row.get('Company', '').strip() or 'Unknown',  # 빈 값 처리
-            'location': row.get('Location', '').strip() or 'Unknown',
-            'lat': float(row.get('Latitude', 0)),  # 기본값 0
-            'lng': float(row.get('Longitude', 0)),
-            'congestion_score': float(row.get('Congestion Score', 0)),
-            'congestion_level': row.get('Congestion Level', '').strip() or 'Average'  # 기본값 Average
-        })
+            result.append({
+                'date': row.get('Date', '').strip() or 'N/A',
+                'company': row.get('Railroad', '').strip() or 'Unknown',  # Railroad 열 사용
+                'location': row.get('Location', '').strip() or row.get('Yard', '').strip() or 'Unknown',
+                'lat': float(row.get('Latitude', 0)),
+                'lng': float(row.get('Longitude', 0)),
+                'congestion_score': float(row.get('Dwell Time', 0)),  # Dwell Time을 congestion_score로
+                'congestion_level': row.get('Category', '').strip() or 'Average'  # Category 열 사용
+            })
         
         # JSON 저장
         output_dir = os.path.join(os.path.dirname(__file__), '../data')
