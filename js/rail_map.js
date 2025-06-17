@@ -61,24 +61,21 @@ class RailCongestionMap {
   }
 
   createPopupContent(data) {
-    // 데이터가 없을 경우 기본값 설정
-    const company = data.company || 'Unknown';
-    const date = data.date ? new Date(data.date).toLocaleString() : 'N/A';
-    const score = data.congestion_score !== undefined ? data.congestion_score : 'N/A';
-    const level = data.congestion_level || 'Unknown';
+    // 데이터가 없을 경우 기본값 처리 강화
+    const formatField = (value, defaultValue = 'N/A') => 
+      value !== undefined && value !== null && value !== '' ? value : defaultValue;
   
     return `
       <div class="rail-tooltip">
-        <h4>${data.location || 'Unknown Location'}</h4>
-        <p><strong>Company:</strong> ${company}</p>
+        <h4>${formatField(data.location, 'Unknown Location')}</h4>
+        <p><strong>Company:</strong> ${formatField(data.company)}</p>
         <p><strong>Congestion Level:</strong> 
-          <span class="congestion-${level.toLowerCase().replace(' ', '-')}">
-            ${level}
+          <span class="congestion-${data.congestion_level?.toLowerCase()?.replace(' ', '-') || 'average'}">
+            ${formatField(data.congestion_level)}
           </span>
         </p>
-        <p><strong>Score:</strong> ${score}</p>
-        <p><small>Last updated: ${date}</small></p>
+        <p><strong>Dwell Time:</strong> ${formatField(data.congestion_score)} hours</p>
+        <p><small>Last updated: ${formatField(data.date)}</small></p>
       </div>
     `;
   }
-}
