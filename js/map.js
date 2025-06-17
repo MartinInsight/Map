@@ -141,14 +141,24 @@ class TruckCongestionMap {
         <h4>${data.name || 'Unknown'}</h4>
         <div class="metric-box">
           <strong>Truck Movement</strong>
-          <p class="${delay >= 0 ? 'positive' : 'negative'}">
-            <strong>${delay >= 0 ? '↑' : '↓'} ${formatValue(delay)}% ${delay >= 0 ? 'above' : 'below'} 2 weeks moving average</strong>
+          <p>
+            <span class="${delay >= 0 ? 'positive' : 'negative'}">
+              ${delay >= 0 ? '↑' : '↓'} ${formatValue(delay)}%
+            </span>
+            <span class="normal-text">
+              ${delay >= 0 ? ' above ' : ' below '}2 weeks moving average
+            </span>
           </p>
         </div>
         <div class="metric-box">
           <strong>Dwell Time</strong>
-          <p class="${dwell >= 0 ? 'positive' : 'negative'}">
-            <strong>${dwell >= 0 ? '↑' : '↓'} ${formatValue(dwell)}% ${dwell >= 0 ? 'above' : 'below'} 2 weeks moving average</strong>
+          <p>
+            <span class="${dwell >= 0 ? 'positive' : 'negative'}">
+              ${dwell >= 0 ? '↑' : '↓'} ${formatValue(dwell)}%
+            </span>
+            <span class="normal-text">
+              ${dwell >= 0 ? ' above ' : ' below '}2 weeks moving average
+            </span>
           </p>
         </div>
       </div>
