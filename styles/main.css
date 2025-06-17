@@ -6,17 +6,16 @@ html, body {
 }
 
 #map {
-  height: 100vh;
-  width: 100vw;
-  /* position: fixed;  필요 시 사용하세요 */
+  height: 100vh; /* 뷰포트 전체 높이 */
+  width: 100vw; /* 뷰포트 전체 너비 */
+  position: fixed; /* 고정 위치 */
 }
 
-/* 툴팁 위치 고정 */
+/* 툴팁 위치 고정 추가 */
 .leaflet-tooltip {
-  transform: translate(-50%, -100%) !important; /* 툴팁을 마커 위쪽 중앙에 고정 */
+  transform: translate(-50%, 0) !important;
   left: 50% !important;
-  margin-top: 0 !important;
-  pointer-events: none; /* 툴팁 마우스 이벤트 무시 */
+  margin-top: 15px !important;
 }
 
 /* 툴팁 스타일 */
@@ -25,124 +24,100 @@ html, body {
   min-width: 220px;
   padding: 15px;
   text-align: center;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-  color: #000;
 }
 
 .map-tooltip h4 {
-  margin-bottom: 10px;
-  font-size: 16px;
+  margin: 0 0 25px 0;  /* Oregon과 Truck Movement 간격 넓게 */
+  font-size: 18px;
+  font-weight: bold;
+  color: #333;
 }
 
-.map-tooltip .metric-box {
-  margin-bottom: 8px;
+.metric-box {
+  margin: 25px 0 15px 0;  /* Truck Movement와 Metric 값 간격 조정 */
 }
 
-.map-tooltip .metric-box strong {
+.metric-box strong {
   display: block;
-  margin-bottom: 4px;
+  margin-bottom: 8px;  /* Truck Movement와 Dwell Time 간격 조정 */
+  font-size: 16px;
+  font-weight: bold;
 }
 
-.map-tooltip .metric-box p {
+.metric-box p {
   margin: 0;
   font-size: 14px;
-}
-
-.map-tooltip .highlight {
   font-weight: bold;
 }
 
-.map-tooltip .positive .highlight {
-  color: #1a9850; /* 초록 */
+.metric-box .positive {
+  color: #27ae60 !important;
 }
 
-.map-tooltip .negative .highlight {
-  color: #d73027; /* 빨강 */
+.metric-box .negative {
+  color: #e74c3c !important;
 }
 
-/* 커스텀 팝업 툴팁 중앙 정렬 */
-.custom-tooltip {
-  transform: translate(-50%, -100%) !important; /* 툴팁 위치 위쪽 중앙 */
-  pointer-events: none;
-}
-
-/* 모드 컨트롤 (버튼 감싸는 div) */
-.mode-control {
+/* 컨트롤 패널 스타일 개선 */
+.toggle-container {
   display: flex;
-  gap: 10px;
   align-items: center;
-  margin: 10px;
-  background: transparent;
+  gap: 10px;
+  margin-left: 10px;
 }
 
-/* 토글 버튼 wrapper */
 .toggle-wrapper {
   display: flex;
-  border-radius: 0; /* 전체 둥글기 제거 */
+  border-radius: 20px;
   overflow: hidden;
-  border: 1px solid #ccc;
-  height: 36px; /* 버튼 높이 통일 */
+  background: #f0f0f0;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  height: 40px;
 }
 
-/* 토글 버튼 기본 스타일 */
 .toggle-btn {
-  border-radius: 0; /* 둥글기 없음 */
-  padding: 6px 12px;
-  background-color: white;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+  padding: 0 20px;
+  border: none;
+  background: transparent;
   cursor: pointer;
   font-weight: bold;
-  transition: background-color 0.2s ease;
-  border: none;
+  font-size: 14px;
+  transition: all 0.3s;
+  min-width: 100px;
+  text-align: center;
+  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 100%; /* wrapper 높이와 동일 */
-  line-height: normal;
 }
 
-/* 좌측 버튼 둥글기 + 구분선 */
-.toggle-btn:first-child {
-  border-top-left-radius: 6px;
-  border-bottom-left-radius: 6px;
-  border-right: 1px solid #ccc;
-}
-
-/* 우측 버튼 둥글기 */
-.toggle-btn:last-child {
-  border-top-right-radius: 6px;
-  border-bottom-right-radius: 6px;
-}
-
-/* 토글 버튼 활성화 상태 */
 .toggle-btn.active {
-  background-color: #4caf50;
+  background: #00657E;
   color: white;
 }
 
-/* 토글 및 리셋 버튼 호버 효과 */
-.toggle-btn:hover:not(.active),
-#reset-view:hover {
-  background-color: #f0f0f0;
+.toggle-btn.active {
+  background: #00657E;
+  color: white;
 }
 
-/* 리셋 뷰 버튼 스타일 통일 */
-#reset-view {
-  font-weight: 600;
-  font-size: 14px;
-  padding: 6px 12px;
-  background-color: white;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.15);
-  border-radius: 6px;
+.reset-btn {
+  padding: 0 15px;
+  background: #f0f0f0;
+  border: none;
+  border-radius: 20px;
   cursor: pointer;
-  height: 36px;
+  font-weight: bold;
+  font-size: 14px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: none;
-  line-height: normal;
+}
+
+.reset-btn:hover {
+  background: #e0e0e0;
 }
 
 /* 범례 숨김 */
