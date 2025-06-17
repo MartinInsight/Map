@@ -33,6 +33,11 @@ html, body {
   color: #333;
 }
 
+.normal-text {
+  color: black;
+  font-weight: normal;
+}
+
 .metric-box {
   margin: 25px 0 15px 0;  /* Truck Movement와 Metric 값 간격 조정 */
 }
