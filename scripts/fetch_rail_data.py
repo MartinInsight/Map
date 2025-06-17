@@ -63,9 +63,10 @@ def fetch_rail_data():
                 continue
         
         # JSON 저장
-        output_dir = os.path.join(os.path.dirname(__file__), '../data')
+        output_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../data'))
         os.makedirs(output_dir, exist_ok=True)
         output_path = os.path.join(output_dir, 'us-rail.json')
+        print(f"🛠️ 출력 경로: {output_path}")  # 경로 확인용
         
         with open(output_path, 'w', encoding='utf-8') as f:
             json.dump(result, f, indent=2, ensure_ascii=False, default=str)
