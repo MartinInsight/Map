@@ -27,27 +27,27 @@ html, body {
 }
 
 .map-tooltip h4 {
-  margin: 0 0 25px 0;  /* Oregon과 Truck Movement 간격 넓게 */
-  font-size: 18px;
-  font-weight: bold;
+  margin: 0 0 20px 0;  /* Oregon과 Truck Movement 간격 넓게 */
+  font-size: 14px;
+  font-weight: regular;
   color: #333;
 }
 
 .metric-box {
-  margin: 25px 0 15px 0;  /* Truck Movement와 Metric 값 간격 조정 */
+  margin: 20px 0 15px 0;  /* Truck Movement와 Metric 값 간격 조정 */
 }
 
 .metric-box strong {
   display: block;
-  margin-bottom: 8px;  /* Truck Movement와 Dwell Time 간격 조정 */
-  font-size: 16px;
-  font-weight: bold;
+  margin-bottom: 4px;  /* Truck Movement와 Dwell Time 간격 조정 */
+  font-size: 14px;
+  font-weight: regular;
 }
 
 .metric-box p {
   margin: 0;
   font-size: 14px;
-  font-weight: bold;
+  font-weight: regular;
 }
 
 .metric-box .positive {
