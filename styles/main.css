@@ -27,93 +27,81 @@ html, body {
 }
 
 .map-tooltip h4 {
-  margin: 0 0 20px 0;  /* Oregon과 Truck Movement 간격 넓게 */
-  font-size: 14px;
-  font-weight: regular;
-  color: #333;
+  margin-bottom: 10px;
+  font-size: 16px;
 }
 
-.metric-box {
-  margin: 20px 0 15px 0;  /* Truck Movement와 Metric 값 간격 조정 */
+.map-tooltip .metric-box {
+  margin-bottom: 8px;
 }
 
-.metric-box strong {
+.map-tooltip .metric-box strong {
   display: block;
-  margin-bottom: 4px;  /* Truck Movement와 Dwell Time 간격 조정 */
-  font-size: 14px;
-  font-weight: regular;
+  margin-bottom: 4px;
 }
 
-.metric-box p {
+.map-tooltip .metric-box p {
   margin: 0;
   font-size: 14px;
-  font-weight: regular;
+  color: #000;
 }
 
-.metric-box .positive {
-  color: #27ae60 !important;
+.map-tooltip .highlight {
+  font-weight: bold;
 }
 
-.metric-box .negative {
-  color: #e74c3c !important;
+.map-tooltip .positive .highlight {
+  color: #1a9850; /* 초록 */
 }
 
-/* 컨트롤 패널 스타일 개선 */
-.toggle-container {
+.map-tooltip .negative .highlight {
+  color: #d73027; /* 빨강 */
+}
+
+.custom-tooltip {
+  transform: translate(-50%, -50%) !important;
+}
+
+.mode-control {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-left: 10px;
+  gap: 8px;
+  background: white;
+  padding: 6px 8px;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
 }
 
 .toggle-wrapper {
   display: flex;
-  border-radius: 20px;
+  border-radius: 999px;
   overflow: hidden;
-  background: #f0f0f0;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-  height: 40px;
+  border: 1px solid #ccc;
 }
 
 .toggle-btn {
-  padding: 0 20px;
+  padding: 8px 16px;
   border: none;
-  background: transparent;
+  background: #f1f1f1;
   cursor: pointer;
-  font-weight: bold;
+  font-weight: 600;
   font-size: 14px;
-  transition: all 0.3s;
-  min-width: 100px;
-  text-align: center;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  color: #333;
 }
 
 .toggle-btn.active {
   background: #00657E;
-  color: white;
-}
-
-.toggle-btn.active {
-  background: #00657E;
-  color: white;
+  color: #fff;
 }
 
 .reset-btn {
-  padding: 0 15px;
-  background: #f0f0f0;
+  padding: 8px 14px;
   border: none;
-  border-radius: 20px;
+  background: #eee;
+  border-radius: 8px;
   cursor: pointer;
-  font-weight: bold;
+  font-weight: 600;
   font-size: 14px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
 .reset-btn:hover {
