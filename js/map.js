@@ -142,25 +142,29 @@ class TruckCongestionMap {
         <div class="metric-box">
           <strong>Truck Movement</strong>
           <p class="${delay >= 0 ? 'positive' : 'negative'}">
-            <strong>${delay >= 0 ? '↑' : '↓'} ${formatValue(delay)}% ${delay >= 0 ? 'above' : 'below'} 2 weeks moving average</strong>
+            <span class="highlight">${delay >= 0 ? '↑' : '↓'} ${formatValue(delay)}%</span> ${delay >= 0 ? 'above' : 'below'} 2 weeks moving average
           </p>
         </div>
         <div class="metric-box">
           <strong>Dwell Time</strong>
           <p class="${dwell >= 0 ? 'positive' : 'negative'}">
-            <strong>${dwell >= 0 ? '↑' : '↓'} ${formatValue(dwell)}% ${dwell >= 0 ? 'above' : 'below'} 2 weeks moving average</strong>
+            <span class="highlight">${dwell >= 0 ? '↑' : '↓'} ${formatValue(dwell)}%</span> ${dwell >= 0 ? 'above' : 'below'} 2 weeks moving average
           </p>
         </div>
       </div>
     `;
   
+    const layer = event.target;
+    const bounds = layer.getBounds ? layer.getBounds() : null;
+    const center = bounds ? bounds.getCenter() : event.latlng;
+  
     L.popup({
       autoClose: false,
       closeButton: false,
       className: 'custom-tooltip',
-      offset: L.point(0, -10)
+      offset: L.point(0, 0)
     })
-      .setLatLng(event.latlng)
+      .setLatLng(center)
       .setContent(content)
       .openOn(this.map);
   }
@@ -188,17 +192,13 @@ class TruckCongestionMap {
 
   renderControls() {
     this.controlDiv.innerHTML = `
-      <div class="toggle-container">
-        <div class="toggle-wrapper">
-          <button class="toggle-btn ${this.currentMode === 'inbound' ? 'active' : ''}" 
-                  data-mode="inbound">INBOUND</button>
-          <button class="toggle-btn ${this.currentMode === 'outbound' ? 'active' : ''}" 
-                  data-mode="outbound">OUTBOUND</button>
-        </div>
-        <button class="reset-btn" id="reset-view">Reset View</button>
+      <button class="reset-btn" id="reset-view">Reset View</button>
+      <div class="toggle-wrapper">
+        <button class="toggle-btn ${this.currentMode === 'inbound' ? 'active' : ''}" data-mode="inbound">INBOUND</button>
+        <button class="toggle-btn ${this.currentMode === 'outbound' ? 'active' : ''}" data-mode="outbound">OUTBOUND</button>
       </div>
     `;
-
+  
     this.controlDiv.querySelectorAll('.toggle-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         this.currentMode = btn.dataset.mode;
@@ -208,17 +208,16 @@ class TruckCongestionMap {
         }
       });
     });
-
+  
     this.controlDiv.querySelector('#reset-view').addEventListener('click', () => {
       this.map.setView([37.8, -96], 4);
     });
   }
 
-  updateLegend() {
-    // 범례를 표시하지 않음
-    if (this.legend) {
-      this.map.removeControl(this.legend);
-    }
+updateLegend() {
+  if (this.legend) {
+    this.map.removeControl(this.legend);
+    this.legend = null;
   }
 }
 
