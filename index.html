@@ -18,20 +18,14 @@
     <script src="js/truck_map.js"></script>
     <script src="js/rail_map.js"></script>
     <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      // 지도 컨테이너 존재 확인
-      if (!document.getElementById('trucking-map') || !document.getElementById('rail-map')) {
-        console.error('지도 컨테이너를 찾을 수 없습니다');
-        return;
-      }
-    
-                  try {
-                    const truckingMap = new TruckCongestionMap('trucking-map');
-                    const railMap = new RailCongestionMap('rail-map');
-                    
-                    // 탭 전환 로직
-                    document.querySelectorAll('.tab-button').forEach(button => {
-                      button.addEventListener('click', () => {
+        document.addEventListener('DOMContentLoaded', () => {
+            // 지도 초기화 지연 (CSS 로딩 완료 후)
+            setTimeout(() => {
+                const truckingMap = new TruckCongestionMap('trucking-map');
+                const railMap = new RailCongestionMap('rail-map');
+                
+                document.querySelectorAll('.tab-button').forEach(button => {
+                    button.addEventListener('click', () => {
                         document.querySelectorAll('.tab-button').forEach(btn => 
                             btn.classList.remove('active'));
                         button.classList.add('active');
