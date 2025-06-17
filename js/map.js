@@ -118,122 +118,98 @@ async fetchSheetData() {
     });
   }
 
-showTooltip(event, data) {
-  // 데이터 값 보정
-  const formatValue = (val) => {
-    const num = Number(val);
-    return isNaN(num) ? 0 : Math.abs(num).toFixed(2);
-  };
+  showTooltip(event, data) {
+    const formatValue = (val) => {
+      const num = Number(val);
+      return isNaN(num) ? 0 : Math.abs(num).toFixed(2);
+    };
 
-  // INBOUND/OUTBOUND에 따라 필드 선택
-  const isInbound = this.currentMode === 'inbound';
-  const delay = isInbound ? data.inboundDelay : data.outboundDelay;
-  const dwell = data.dwellInbound; // Dwell Time은 항상 동일하게 표시
+    const isInbound = this.currentMode === 'inbound';
+    const delay = isInbound ? data.inboundDelay : data.outboundDelay;
+    const dwell = data.dwellInbound;
 
-  // 방향 및 문구 설정
-  const getDirectionInfo = (value) => {
-    if (value >= 0) return { icon: '↑', text: 'above' };
-    return { icon: '↓', text: 'below' };
-  };
-
-  const delayInfo = getDirectionInfo(delay);
-  const dwellInfo = getDirectionInfo(dwell);
-
-  // 툴팁 HTML 생성
-  const content = `
-    <div class="map-tooltip">
-      <h4>${data.name || 'Unknown'}</h4>
-      
-      <div class="metric-box ${delay >= 0 ? 'positive' : 'negative'}">
-        <strong>Truck Movement</strong>
-        <p>
-          ${delayInfo.icon} ${formatValue(delay)}% ${delayInfo.text} 2 weeks moving average
-        </p>
-      </div>
-      
-      <div class="metric-box ${dwell >= 0 ? 'positive' : 'negative'}">
-        <strong>Dwell Time</strong>
-        <p>
-          ${dwellInfo.icon} ${formatValue(dwell)}% ${dwellInfo.text} 2 weeks moving average
-        </p>
-      </div>
-    </div>
-  `;
-
-  // 툴팁 생성
-  L.popup()
-    .setLatLng(event.latlng)
-    .setContent(content)
-    .openOn(this.map);
-}
-
-  hideTooltip() {
-    if (this.tooltip) this.map.closePopup(this.tooltip);
-  }
-
-  zoomToState(feature) {
-    this.map.fitBounds(L.geoJSON(feature).getBounds(), { padding: [50, 50] });
-  }
-
-  addControls() {
-    // 모드 토글 버튼
-    const toggleControl = L.control({ position: 'topright' });
-    
-    toggleControl.onAdd = () => {
-      this.controlContainer = L.DomUtil.create('div', 'mode-control');
-      this.renderToggle();
-      return this.controlContainer;
+    const delayInfo = {
+      icon: delay >= 0 ? '↑' : '↓',
+      text: delay >= 0 ? 'above' : 'below',
+      colorClass: delay >= 0 ? 'positive' : 'negative'
     };
     
-    toggleControl.addTo(this.map);
-  }
+    const dwellInfo = {
+      icon: dwell >= 0 ? '↑' : '↓',
+      text: dwell >= 0 ? 'above' : 'below',
+      colorClass: dwell >= 0 ? 'positive' : 'negative'
+    };
 
-  renderToggle() {
-    this.controlContainer.innerHTML = `
-      <div class="toggle-container">
-        <button class="toggle-btn ${this.currentMode === 'inbound' ? 'active' : ''}" 
-                data-mode="inbound">INBOUND</button>
-        <button class="toggle-btn ${this.currentMode === 'outbound' ? 'active' : ''}" 
-                data-mode="outbound">OUTBOUND</button>
+    const content = `
+      <div class="map-tooltip">
+        <h4>${data.name || 'Unknown'}</h4>
+        
+        <div class="metric-box">
+          <strong>Truck Movement</strong>
+          <p class="${delayInfo.colorClass}">
+            <strong>${delayInfo.icon} ${formatValue(delay)}% ${delayInfo.text} 2 weeks moving average</strong>
+          </p>
+        </div>
+        
+        <div class="metric-box">
+          <strong>Dwell Time</strong>
+          <p class="${dwellInfo.colorClass}">
+            <strong>${dwellInfo.icon} ${formatValue(dwell)}% ${dwellInfo.text} 2 weeks moving average</strong>
+          </p>
+        </div>
       </div>
     `;
 
-    // 버튼 이벤트 바인딩
-    this.controlContainer.querySelectorAll('.toggle-btn').forEach(btn => {
+    L.popup()
+      .setLatLng(event.latlng)
+      .setContent(content)
+      .openOn(this.map);
+  }
+
+  addControls() {
+    const controlContainer = L.control({ position: 'topright' });
+    
+    controlContainer.onAdd = () => {
+      this.controlDiv = L.DomUtil.create('div', 'mode-control');
+      this.renderControls();
+      return this.controlDiv;
+    };
+    
+    controlContainer.addTo(this.map);
+  }
+
+  renderControls() {
+    this.controlDiv.innerHTML = `
+      <div class="toggle-container">
+        <div class="toggle-wrapper">
+          <button class="toggle-btn ${this.currentMode === 'inbound' ? 'active' : ''}" 
+                  data-mode="inbound">INBOUND</button>
+          <button class="toggle-btn ${this.currentMode === 'outbound' ? 'active' : ''}" 
+                  data-mode="outbound">OUTBOUND</button>
+        </div>
+        <button class="reset-btn" id="reset-view">Reset View</button>
+      </div>
+    `;
+
+    this.controlDiv.querySelectorAll('.toggle-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         this.currentMode = btn.dataset.mode;
-        this.renderToggle();
+        this.renderControls();
         this.stateLayer.setStyle(feature => this.getStyle(feature));
-        this.updateLegend();
       });
+    });
+
+    this.controlDiv.querySelector('#reset-view').addEventListener('click', () => {
+      this.map.setView([37.8, -96], 4);
     });
   }
 
+  // 범례 업데이트 함수 제거 또는 비활성화
   updateLegend() {
-    // 기존 범례 제거
+    // 범례를 표시하지 않음
     if (this.legend) this.map.removeControl(this.legend);
-    
-    // 새로운 범례 추가
-    this.legend = L.control({ position: 'bottomright' });
-    
-    this.legend.onAdd = () => {
-      const div = L.DomUtil.create('div', 'info legend');
-      const grades = [-3, -2, -1, 0, 1, 2, 3];
-      const title = `${this.currentMode.toUpperCase()} DELAY`;
-      
-      div.innerHTML = `<strong>${title}</strong><br>`;
-      
-      grades.forEach(grade => {
-        div.innerHTML +=
-          `<i style="background:${this.getColor(grade)}"></i> ` +
-          `${grade < 0 ? grade : '+' + grade}<br>`;
-      });
-      
-      return div;
-    };
-    
-    this.legend.addTo(this.map);
   }
+}
 
   showError() {
     this.map.setView([39.5, -98.35], 4);
