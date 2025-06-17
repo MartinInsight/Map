@@ -31,6 +31,22 @@ jobs:
           echo -e "\nJSON 내용 샘플:"
           jq '.["TN"]' data/data.json || echo "JSON 파싱 실패"
 
+      - name: Verify Rail Data
+        run: |
+          echo "Rail data validation:"
+          python -c "
+          import json
+          try:
+            with open('data/us-rail.json', 'r') as f:
+              data = json.load(f)
+              print(f'✅ 유효한 JSON 데이터 (총 {len(data)}개 항목)')
+              print('샘플 데이터:')
+              print(json.dumps(data[0], indent=2))
+          except Exception as e:
+            print(f'❌ JSON 검증 실패: {str(e)}')
+            exit(1)
+          "
+
       - name: Fetch Rail Data
         env:
           SPREADSHEET_ID: ${{ secrets.SPREADSHEET_ID }}
