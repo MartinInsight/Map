@@ -5,13 +5,12 @@ class TruckCongestionMap {
     this.currentMode = 'inbound';
     this.metricData = null;
 
-    // 지도 초기화
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© OpenStreetMap'
     }).addTo(this.map);
 
     this.addControls();
-    this.loadData(); // 데이터 로드 시작
+    this.loadData();
   }
 
   async loadData() {
@@ -195,7 +194,9 @@ async fetchSheetData() {
       btn.addEventListener('click', () => {
         this.currentMode = btn.dataset.mode;
         this.renderControls();
-        this.stateLayer.setStyle(feature => this.getStyle(feature));
+        if (this.stateLayer) {
+          this.stateLayer.setStyle(feature => this.getStyle(feature));
+        }
       });
     });
 
@@ -204,23 +205,14 @@ async fetchSheetData() {
     });
   }
 
-  // 범례 업데이트 함수 제거 또는 비활성화
   updateLegend() {
     // 범례를 표시하지 않음
-    if (this.legend) this.map.removeControl(this.legend);
+    if (this.legend) {
+      this.map.removeControl(this.legend);
+    }
   }
 }
 
-  showError() {
-    this.map.setView([39.5, -98.35], 4);
-    L.popup()
-      .setLatLng([39.5, -98.35])
-      .setContent('데이터를 불러오는 중 오류 발생')
-      .openOn(this.map);
-  }
-}
-
-// 지도 초기화
 document.addEventListener('DOMContentLoaded', () => {
   new TruckCongestionMap('map');
 });
