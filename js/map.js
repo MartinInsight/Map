@@ -154,7 +154,7 @@ class TruckCongestionMap {
       </div>
     `;
   
-    const center = L.geoJSON(feature).getBounds().getCenter();
+    const center = event.latlng;
   
     if (this.tooltip) this.map.removeLayer(this.tooltip);
   
