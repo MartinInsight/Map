@@ -50,12 +50,12 @@ def fetch_rail_data():
                     continue
                     
                 result.append({
-                    'date': row.get('Date', '').strip(),
                     'company': row.get('Railroad', '').strip(),
-                    'location': location.strip(),
-                    'lat': float(row['Latitude']),
-                    'lng': float(row['Longitude']),
+                    'location': row.get('Location', '').strip() or row.get('Yard', '').strip(),
+                    'lat': float(row.get('Latitude', 0)),
+                    'lng': float(row.get('Longitude', 0)),
                     'congestion_score': float(row.get('Dwell Time', 0)),
+                    'average': float(row.get('Average', 0)),  # Average 값 추가
                     'congestion_level': row.get('Category', 'Average').strip()
                 })
             except Exception as e:
