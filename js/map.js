@@ -126,16 +126,16 @@ class TruckCongestionMap {
 // js/map.js (수정된 부분)
   showTooltip(event, data) {
     if (!this.initialized) return;
-
+  
     const formatValue = (val) => {
       const num = Number(val);
       return isNaN(num) ? 0 : Math.abs(num).toFixed(2);
     };
-
+  
     const isInbound = this.currentMode === 'inbound';
     const delay = isInbound ? data.inboundDelay : data.outboundDelay;
-    const dwell = data.dwellInbound;
-
+    const dwell = isInbound ? data.dwellInbound : data.dwellOutbound;
+  
     const content = `
       <div class="map-tooltip">
         <h4>${data.name || 'Unknown'}</h4>
@@ -153,11 +153,25 @@ class TruckCongestionMap {
         </div>
       </div>
     `;
-
-    L.popup({ autoClose: false })
+  
+    L.popup({
+      autoClose: false,
+      closeButton: false,
+      className: 'custom-tooltip',
+      offset: L.point(0, -10)
+    })
       .setLatLng(event.latlng)
       .setContent(content)
       .openOn(this.map);
+  }
+
+  hideTooltip() {
+    this.map.closePopup();
+  }
+  
+  zoomToState(feature) {
+    const bounds = L.geoJSON(feature).getBounds();
+    this.map.fitBounds(bounds);
   }
 
   addControls() {
