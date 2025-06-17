@@ -37,8 +37,14 @@ jobs:
           GOOGLE_CREDENTIAL_JSON: ${{ secrets.GOOGLE_CREDENTIAL_JSON }}
         run: |
           python scripts/fetch_rail_data.py
-          echo "Rail data sample:"
-          jq '.[0]' data/us-rail.json || echo "No rail data"
+          echo "Rail data file:"
+          ls -la data/us-rail.json || echo "Rail data file not found"
+          echo -e "\nRail data sample:"
+          if [ -f "data/us-rail.json" ]; then
+            jq '.[0]' data/us-rail.json
+          else
+            echo "No rail data file exists"
+          fi
 
       - name: Verify JSON files
         run: |
