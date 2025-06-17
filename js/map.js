@@ -1,17 +1,18 @@
+// js/map.js (전체 수정 버전)
 class TruckCongestionMap {
   constructor(mapElementId) {
     this.map = L.map(mapElementId).setView([37.8, -96], 4);
     this.stateLayer = null;
     this.currentMode = 'inbound';
     this.metricData = null;
-    this.currentPopup = null; // 현재 열린 팝업 추적용
+    this.initialized = false;
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© OpenStreetMap'
     }).addTo(this.map);
 
     this.addControls();
-    this.loadData();
+    this.initializeMap();
   }
 
   async initializeMap() {
@@ -122,18 +123,9 @@ class TruckCongestionMap {
     });
   }
 
-    zoomToState(feature) {
-    const bounds = L.geoJSON(feature).getBounds();
-    this.map.fitBounds(bounds);
-  }
-}
-
 // js/map.js (수정된 부분)
   showTooltip(event, data) {
-    // 기존 팝업 닫기
-    if (this.currentPopup) {
-      this.map.closePopup(this.currentPopup);
-    }
+    if (!this.initialized) return;
 
     const formatValue = (val) => {
       const num = Number(val);
@@ -162,18 +154,10 @@ class TruckCongestionMap {
       </div>
     `;
 
-    this.currentPopup = L.popup()
+    L.popup({ autoClose: false })
       .setLatLng(event.latlng)
       .setContent(content)
       .openOn(this.map);
-  }
-
-  // hideTooltip 메서드 추가 (빈 함수로 추가하여 오류 방지)
-  hideTooltip() {
-    if (this.currentPopup) {
-      this.map.closePopup(this.currentPopup);
-      this.currentPopup = null;
-    }
   }
 
   addControls() {
