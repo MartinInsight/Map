@@ -124,50 +124,58 @@ class TruckCongestionMap {
   }
 
 // js/map.js (수정된 부분)
-  showTooltip(event, data) {
-    if (!this.initialized) return;
-  
-    const formatValue = (val) => {
-      const num = Number(val);
-      return isNaN(num) ? 0 : Math.abs(num).toFixed(2);
-    };
-  
-    const isInbound = this.currentMode === 'inbound';
-    const delay = isInbound ? data.inboundDelay : data.outboundDelay;
-    const dwell = isInbound ? data.dwellInbound : data.dwellOutbound;
-  
-    const content = `
-      <div class="map-tooltip">
-        <h4>${data.name || 'Unknown'}</h4>
-        <div class="metric-box">
-          <strong>Truck Movement</strong>
-          <p class="${delay >= 0 ? 'positive' : 'negative'}">
-            <span class="highlight">${delay >= 0 ? '↑' : '↓'} ${formatValue(delay)}%</span> ${delay >= 0 ? 'above' : 'below'} 2 weeks moving average
-          </p>
-        </div>
-        <div class="metric-box">
-          <strong>Dwell Time</strong>
-          <p class="${dwell >= 0 ? 'positive' : 'negative'}">
-            <span class="highlight">${dwell >= 0 ? '↑' : '↓'} ${formatValue(dwell)}%</span> ${dwell >= 0 ? 'above' : 'below'} 2 weeks moving average
-          </p>
-        </div>
+showTooltip(event, data) {
+  if (!this.initialized) return;
+
+  const formatValue = (val) => {
+    const num = Number(val);
+    return isNaN(num) ? 0 : Math.abs(num).toFixed(2);
+  };
+
+  const isInbound = this.currentMode === 'inbound';
+  const delay = isInbound ? data.inboundDelay : data.outboundDelay;
+  const dwell = isInbound ? data.dwellInbound : data.dwellOutbound;
+
+  const content = `
+    <div class="map-tooltip">
+      <h4>${data.name || 'Unknown'}</h4>
+      <div class="metric-box">
+        <strong>Truck Movement</strong>
+        <p class="${delay >= 0 ? 'positive' : 'negative'}">
+          <span class="highlight">${delay >= 0 ? '↑' : '↓'} ${formatValue(delay)}%</span> ${delay >= 0 ? 'above' : 'below'} 2 weeks moving average
+        </p>
       </div>
-    `;
-  
-    const layer = event.target;
-    const bounds = layer.getBounds ? layer.getBounds() : null;
-    const center = bounds ? bounds.getCenter() : event.latlng;
-  
-    L.popup({
-      autoClose: false,
-      closeButton: false,
-      className: 'custom-tooltip',
-      offset: L.point(0, 0)
-    })
-      .setLatLng(center)
-      .setContent(content)
-      .openOn(this.map);
+      <div class="metric-box">
+        <strong>Dwell Time</strong>
+        <p class="${dwell >= 0 ? 'positive' : 'negative'}">
+          <span class="highlight">${dwell >= 0 ? '↑' : '↓'} ${formatValue(dwell)}%</span> ${dwell >= 0 ? 'above' : 'below'} 2 weeks moving average
+        </p>
+      </div>
+    </div>
+  `;
+
+  const layer = event.target;
+  let center = event.latlng;
+
+  if (layer && typeof layer.getBounds === 'function') {
+    try {
+      const bounds = layer.getBounds();
+      center = bounds.getCenter();
+    } catch (e) {
+      console.warn("getBounds() 실패, fallback to event.latlng");
+    }
   }
+
+  L.popup({
+    autoClose: false,
+    closeButton: false,
+    className: 'custom-tooltip',
+    offset: L.point(0, 0)
+  })
+    .setLatLng(center)
+    .setContent(content)
+    .openOn(this.map);
+}
 
   hideTooltip() {
     this.map.closePopup();
