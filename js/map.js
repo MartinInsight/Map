@@ -124,61 +124,56 @@ class TruckCongestionMap {
   }
 
 // js/map.js (수정된 부분)
-showTooltip(event, data) {
-  if (!this.initialized) return;
-
-  const formatValue = (val) => {
-    const num = Number(val);
-    return isNaN(num) ? 0 : Math.abs(num).toFixed(2);
-  };
-
-  const isInbound = this.currentMode === 'inbound';
-  const delay = isInbound ? data.inboundDelay : data.outboundDelay;
-  const dwell = isInbound ? data.dwellInbound : data.dwellOutbound;
-
-  const content = `
-    <div class="map-tooltip">
-      <h4>${data.name || 'Unknown'}</h4>
-      <div class="metric-box">
-        <strong>Truck Movement</strong>
-        <p class="${delay >= 0 ? 'positive' : 'negative'}">
-          <span class="highlight">${delay >= 0 ? '↑' : '↓'} ${formatValue(delay)}%</span> ${delay >= 0 ? 'above' : 'below'} 2 weeks moving average
-        </p>
+  showTooltip(event, data) {
+    if (!this.initialized) return;
+  
+    const formatValue = (val) => {
+      const num = Number(val);
+      return isNaN(num) ? 0 : Math.abs(num).toFixed(2);
+    };
+  
+    const isInbound = this.currentMode === 'inbound';
+    const delay = isInbound ? data.inboundDelay : data.outboundDelay;
+    const dwell = isInbound ? data.dwellInbound : data.dwellOutbound;
+  
+    const content = `
+      <div class="map-tooltip">
+        <h4>${data.name || 'Unknown'}</h4>
+        <div class="metric-box">
+          <strong>Truck Movement</strong>
+          <p class="${delay >= 0 ? 'positive' : 'negative'}">
+            <span class="highlight">${delay >= 0 ? '↑' : '↓'} ${formatValue(delay)}%</span> ${delay >= 0 ? 'above' : 'below'} 2 weeks moving average
+          </p>
+        </div>
+        <div class="metric-box">
+          <strong>Dwell Time</strong>
+          <p class="${dwell >= 0 ? 'positive' : 'negative'}">
+            <span class="highlight">${dwell >= 0 ? '↑' : '↓'} ${formatValue(dwell)}%</span> ${dwell >= 0 ? 'above' : 'below'} 2 weeks moving average
+          </p>
+        </div>
       </div>
-      <div class="metric-box">
-        <strong>Dwell Time</strong>
-        <p class="${dwell >= 0 ? 'positive' : 'negative'}">
-          <span class="highlight">${dwell >= 0 ? '↑' : '↓'} ${formatValue(dwell)}%</span> ${dwell >= 0 ? 'above' : 'below'} 2 weeks moving average
-        </p>
-      </div>
-    </div>
-  `;
-
-  const layer = event.target;
-  let center = event.latlng;
-
-  if (layer && typeof layer.getBounds === 'function') {
-    try {
-      const bounds = layer.getBounds();
-      center = bounds.getCenter();
-    } catch (e) {
-      console.warn("getBounds() 실패, fallback to event.latlng");
-    }
+    `;
+  
+    const center = event.target.getBounds?.()?.getCenter?.() || event.latlng;
+  
+    if (this.tooltip) this.map.removeLayer(this.tooltip);
+  
+    this.tooltip = L.tooltip({
+      permanent: true,
+      direction: 'top',
+      className: 'custom-tooltip',
+      offset: [0, -10]
+    })
+      .setLatLng(center)
+      .setContent(content)
+      .addTo(this.map);
   }
-
-  L.popup({
-    autoClose: false,
-    closeButton: false,
-    className: 'custom-tooltip',
-    offset: L.point(0, 0)
-  })
-    .setLatLng(center)
-    .setContent(content)
-    .openOn(this.map);
-}
-
+  
   hideTooltip() {
-    this.map.closePopup();
+    if (this.tooltip) {
+      this.map.removeLayer(this.tooltip);
+      this.tooltip = null;
+    }
   }
   
   zoomToState(feature) {
@@ -199,13 +194,13 @@ showTooltip(event, data) {
   }
 
   renderControls() {
-    this.controlDiv.innerHTML = `
-      <button class="reset-btn" id="reset-view">Reset View</button>
-      <div class="toggle-wrapper">
-        <button class="toggle-btn ${this.currentMode === 'inbound' ? 'active' : ''}" data-mode="inbound">INBOUND</button>
-        <button class="toggle-btn ${this.currentMode === 'outbound' ? 'active' : ''}" data-mode="outbound">OUTBOUND</button>
-      </div>
-    `;
+  this.controlDiv.innerHTML = `
+    <button class="reset-btn" id="reset-view">🔄 Reset View</button>
+    <div class="toggle-wrapper">
+      <button class="toggle-btn ${this.currentMode === 'inbound' ? 'active' : ''}" data-mode="inbound">INBOUND</button>
+      <button class="toggle-btn ${this.currentMode === 'outbound' ? 'active' : ''}" data-mode="outbound">OUTBOUND</button>
+    </div>
+  `;
   
     this.controlDiv.querySelectorAll('.toggle-btn').forEach(btn => {
       btn.addEventListener('click', () => {
