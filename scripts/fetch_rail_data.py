@@ -14,10 +14,13 @@ def fetch_rail_data():
         )
         gc = gspread.authorize(creds)
         
-        # 데이터 로드
+        # 데이터 로드 부분 수정
         sheet = gc.open_by_key(os.environ['SPREADSHEET_ID'])
-        worksheet = sheet.worksheet('CONGESTION_RAIL')
-        records = worksheet.get_all_records()
+        try:
+            worksheet = sheet.worksheet('CONGESTION_RAIL')
+        except gspread.exceptions.WorksheetNotFound:
+            available_sheets = [ws.title for ws in sheet.worksheets()]
+            raise Exception(f"CONGESTION_RAIL 시트를 찾을 수 없습니다. 사용 가능한 시트: {available_sheets}")
         
         # 데이터 처리
         result = []
@@ -38,7 +41,7 @@ def fetch_rail_data():
         # JSON 저장
         output_dir = os.path.join(os.path.dirname(__file__), '../data')
         os.makedirs(output_dir, exist_ok=True)
-        output_path = os.path.join(output_dir, 'us-rail.json')
+        print(f"저장 디렉토리 확인: {output_dir}, 존재 여부: {os.path.exists(output_dir)}")
         
         with open(output_path, 'w', encoding='utf-8') as f:
             json.dump(result, f, indent=2)
