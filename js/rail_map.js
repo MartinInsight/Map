@@ -61,24 +61,28 @@ class RailCongestionMap {
   }
 
   createPopupContent(data) {
-    // 데이터가 없을 경우 기본값 설정
-    const company = data.company || 'Unknown';
-    const date = data.date ? new Date(data.date).toLocaleString() : 'N/A';
-    const score = data.congestion_score !== undefined ? data.congestion_score : 'N/A';
-    const level = data.congestion_level || 'Unknown';
+    // 데이터가 없을 경우 기본값 처리
+    const formatField = (value, defaultValue = 'N/A') => 
+      value !== undefined && value !== null && value !== '' ? value : defaultValue;
+  
+    // 혼잡도 지표 계산 (Dwell Time / Average)
+    const ratio = data.congestion_score / (data.average || 1);
+    const ratioText = ratio.toFixed(2);
+    const ratioClass = ratio >= 1.2 ? 'high' : ratio <= 0.8 ? 'low' : 'normal';
   
     return `
       <div class="rail-tooltip">
-        <h4>${data.location || 'Unknown Location'}</h4>
-        <p><strong>Company:</strong> ${company}</p>
+        <h4>${formatField(data.location, 'Unknown Location')}</h4>
+        <p><strong>Company:</strong> ${formatField(data.company)}</p>
+        <p><strong>Dwell Time:</strong> ${formatField(data.congestion_score)} hours</p>
+        <p><strong>Ratio (Dwell/Avg):</strong> 
+          <span class="${ratioClass}">${ratioText}x</span>
+        </p>
         <p><strong>Congestion Level:</strong> 
-          <span class="congestion-${level.toLowerCase().replace(' ', '-')}">
-            ${level}
+          <span class="congestion-${data.congestion_level?.toLowerCase()?.replace(' ', '-') || 'average'}">
+            ${formatField(data.congestion_level)}
           </span>
         </p>
-        <p><strong>Score:</strong> ${score}</p>
-        <p><small>Last updated: ${date}</small></p>
       </div>
     `;
   }
-}
