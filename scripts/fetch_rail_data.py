@@ -41,32 +41,31 @@ def fetch_rail_data():
         for row in records:
             try:
                 # 필수 필드 확인
-                if not all(key in row for key in ['Latitude', 'Longitude', 'Railroad', 'Dwell Time', 'Average']):
+                if not all([row.get('Latitude'), row.get('Longitude'), row.get('Railroad')]):
                     continue
                     
-                # 값 유효성 검사
-                dwell_time = row['Dwell Time']
-                if not dwell_time or str(dwell_time).strip() == '':
+                # 데이터 정제
+                location = row.get('Location', '') or row.get('Yard', '')
+                if not location:
                     continue
                     
                 result.append({
-                    'company': str(row['Railroad']).strip(),
-                    'location': str(row.get('Location', row.get('Yard', ''))).strip(),
+                    'date': row.get('Date', '').strip(),
+                    'company': row.get('Railroad', '').strip(),
+                    'location': location.strip(),
                     'lat': float(row['Latitude']),
                     'lng': float(row['Longitude']),
-                    'congestion_score': float(dwell_time),
-                    'average': float(row['Average']),
-                    'congestion_level': str(row.get('Category', 'Average')).strip()
+                    'congestion_score': float(row.get('Dwell Time', 0)),
+                    'congestion_level': row.get('Category', 'Average').strip()
                 })
             except Exception as e:
-                print(f"⚠️ 데이터 생략 - 행: {row.get('Yard', 'Unknown')}, 오류: {str(e)}")
+                print(f"⚠️ 데이터 처리 오류 건너뜀 - 행: {row}, 오류: {str(e)}")
                 continue
         
         # JSON 저장
-        output_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../data'))
+        output_dir = os.path.join(os.path.dirname(__file__), '../data')
         os.makedirs(output_dir, exist_ok=True)
         output_path = os.path.join(output_dir, 'us-rail.json')
-        print(f"🛠️ 출력 경로: {output_path}")  # 경로 확인용
         
         with open(output_path, 'w', encoding='utf-8') as f:
             json.dump(result, f, indent=2, ensure_ascii=False, default=str)
