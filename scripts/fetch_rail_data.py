@@ -41,25 +41,25 @@ def fetch_rail_data():
         for row in records:
             try:
                 # 필수 필드 확인
-                if not all([row.get('Latitude'), row.get('Longitude'), row.get('Railroad')]):
+                if not all(key in row for key in ['Latitude', 'Longitude', 'Railroad', 'Dwell Time', 'Average']):
                     continue
                     
-                # 데이터 정제
-                location = row.get('Location', '') or row.get('Yard', '')
-                if not location:
+                # 값 유효성 검사
+                dwell_time = row['Dwell Time']
+                if not dwell_time or str(dwell_time).strip() == '':
                     continue
                     
                 result.append({
-                    'company': row.get('Railroad', '').strip(),
-                    'location': row.get('Location', '').strip() or row.get('Yard', '').strip(),
-                    'lat': float(row.get('Latitude', 0)),
-                    'lng': float(row.get('Longitude', 0)),
-                    'congestion_score': float(row.get('Dwell Time', 0)),
-                    'average': float(row.get('Average', 0)),  # Average 값 추가
-                    'congestion_level': row.get('Category', 'Average').strip()
+                    'company': str(row['Railroad']).strip(),
+                    'location': str(row.get('Location', row.get('Yard', ''))).strip(),
+                    'lat': float(row['Latitude']),
+                    'lng': float(row['Longitude']),
+                    'congestion_score': float(dwell_time),
+                    'average': float(row['Average']),
+                    'congestion_level': str(row.get('Category', 'Average')).strip()
                 })
             except Exception as e:
-                print(f"⚠️ 데이터 처리 오류 건너뜀 - 행: {row}, 오류: {str(e)}")
+                print(f"⚠️ 데이터 생략 - 행: {row.get('Yard', 'Unknown')}, 오류: {str(e)}")
                 continue
         
         # JSON 저장
