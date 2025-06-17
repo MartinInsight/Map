@@ -115,9 +115,9 @@ class TruckCongestionMap {
   bindEvents(feature, layer) {
     const stateCode = feature.id;
     const data = this.metricData?.[stateCode] || {};
-    
+  
     layer.on({
-      mouseover: (e) => this.showTooltip(e, data),
+      mouseover: (e) => this.showTooltip(e, data, feature),
       mouseout: this.hideTooltip.bind(this),
       click: this.zoomToState.bind(this, feature)
     });
@@ -154,7 +154,7 @@ class TruckCongestionMap {
       </div>
     `;
   
-    const center = event.target.getBounds?.()?.getCenter?.() || event.latlng;
+    const center = L.geoJSON(feature).getBounds().getCenter();
   
     if (this.tooltip) this.map.removeLayer(this.tooltip);
   
