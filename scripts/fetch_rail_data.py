@@ -42,15 +42,15 @@ def fetch_rail_data():
             if not row.get('Latitude') or not row.get('Longitude'):
                 continue
                 
-            result.append({
-                'date': row.get('Timestamp', ''),
-                'company': row.get('Company', 'Unknown'),
-                'location': row.get('Location', 'Unknown'),
-                'lat': float(row['Latitude']),
-                'lng': float(row['Longitude']),
-                'congestion_score': float(row.get('Congestion Score', 0)),
-                'congestion_level': row.get('Congestion Level', 'Average')
-            })
+        result.append({
+            'date': row.get('Timestamp', '').strip() or 'N/A',  # 빈 값 처리
+            'company': row.get('Company', '').strip() or 'Unknown',  # 빈 값 처리
+            'location': row.get('Location', '').strip() or 'Unknown',
+            'lat': float(row.get('Latitude', 0)),  # 기본값 0
+            'lng': float(row.get('Longitude', 0)),
+            'congestion_score': float(row.get('Congestion Score', 0)),
+            'congestion_level': row.get('Congestion Level', '').strip() or 'Average'  # 기본값 Average
+        })
         
         # JSON 저장
         output_dir = os.path.join(os.path.dirname(__file__), '../data')
