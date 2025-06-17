@@ -38,8 +38,24 @@ def fetch_rail_data():
         
         # 데이터 처리
         result = []
+        
         for row in records:
-            if not row.get('Latitude') or not row.get('Longitude'):
+            # 위도/경도 체크
+            if not all([row.get('Latitude'), row.get('Longitude')]):
+                print(f"⚠️ 위도/경도가 없는 행 스킵: {row}")
+                continue
+        
+            # 회사명 체크
+            if not row.get('Company'):
+                print(f"⚠️ 회사명이 없는 행: {row.get('Location', 'Unknown Location')}")
+        
+            # 숫자 형식 검증
+            try:
+                lat = float(row['Latitude'])
+                lng = float(row['Longitude'])
+                score = float(row.get('Congestion Score', 0))
+            except ValueError as e:
+                print(f"⚠️ 숫자 변환 오류: {e}, 행 데이터: {row}")
                 continue
                 
         result.append({
