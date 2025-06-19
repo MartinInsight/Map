@@ -169,7 +169,7 @@ html, body {
 /* rail-tooltip 색상 클래스 추가 (원 색상과 동일하게 설정) */
 .rail-tooltip .congestion-very-high { color: #d73027; } /* 진한 빨강 */
 .rail-tooltip .congestion-high { color: #fdae61; }     /* 주황색 */
-.rail-tooltip .congestion-average { color: #abd9e9; }  /* 매우 연한 파랑 */
+.rail-tooltip .congestion-average { color: #b0b0b0; }  /* 회색 */
 .rail-tooltip .congestion-low { color: #74add1; }      /* 연한 파랑 */
 .rail-tooltip .congestion-very-low { color: #4575b4; } /* 진한 파랑 */
 
