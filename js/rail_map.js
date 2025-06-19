@@ -1,8 +1,10 @@
+// js/rail_map.js
 class RailCongestionMap {
   constructor(mapElementId) {
     this.map = L.map(mapElementId).setView([37.8, -96], 4);
     this.markers = [];
     this.currentData = null;
+    this.lastUpdated = null;
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© OpenStreetMap'
@@ -15,9 +17,34 @@ class RailCongestionMap {
     try {
       const response = await fetch('data/us-rail.json');
       this.currentData = await response.json();
+      if (this.currentData.length > 0) {
+        this.lastUpdated = this.currentData[0].date;
+      }
       this.renderMarkers();
+      this.addLastUpdatedText();
     } catch (error) {
       console.error("Failed to load rail data:", error);
+    }
+  }
+
+  addLastUpdatedText() {
+    if (this.lastUpdated) {
+      const date = new Date(this.lastUpdated);
+      const formattedDate = `${date.getMonth()+1}-${date.getDate()}-${date.getFullYear()}`;
+      
+      const infoControl = L.control({position: 'topleft'});
+      
+      infoControl.onAdd = () => {
+        const div = L.DomUtil.create('div', 'last-updated-info');
+        div.innerHTML = `<strong>Last Updated:</strong> ${formattedDate}`;
+        div.style.backgroundColor = 'white';
+        div.style.padding = '5px 10px';
+        div.style.borderRadius = '5px';
+        div.style.boxShadow = '0 0 5px rgba(0,0,0,0.2)';
+        return div;
+      };
+      
+      infoControl.addTo(this.map);
     }
   }
 
@@ -49,13 +76,13 @@ class RailCongestionMap {
   }
 
   getColor(level) {
-    // 혼잡도 수준에 따른 색상
+    // 혼잡도 수준에 따른 색상 (새로운 색상 스키마)
     const colors = {
-      'Very Low': '#4575b4',
-      'Low': '#74add1',
-      'Average': '#abd9e9',
-      'High': '#fdae61',
-      'Very High': '#d73027'
+      'Very Low': '#4575b4',    // 진한 파랑
+      'Low': '#74add1',         // 연한 파랑
+      'Average': '#999999',     // 회색
+      'High': '#fdae61',       // 연한 빨강
+      'Very High': '#d73027'    // 진한 빨강
     };
     return colors[level] || '#999';
   }
@@ -63,9 +90,8 @@ class RailCongestionMap {
   createPopupContent(data) {
     // 데이터가 없을 경우 기본값 설정
     const company = data.company || 'Unknown';
-    const date = data.date ? new Date(data.date).toLocaleString() : 'N/A';
-    const score = data.congestion_score !== undefined ? data.congestion_score : 'N/A';
     const level = data.congestion_level || 'Unknown';
+    const dwellTime = data.congestion_score !== undefined ? data.congestion_score.toFixed(1) : 'N/A';
   
     return `
       <div class="rail-tooltip">
@@ -76,8 +102,7 @@ class RailCongestionMap {
             ${level}
           </span>
         </p>
-        <p><strong>Score:</strong> ${score}</p>
-        <p><small>Last updated: ${date}</small></p>
+        <p><strong>Dwell Time:</strong> ${dwellTime} hours</p>
       </div>
     `;
   }
