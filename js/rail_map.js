@@ -49,14 +49,12 @@ class RailCongestionMap {
   }
 
   renderMarkers() {
-    // 기존 마커 제거
     this.markers.forEach(marker => this.map.removeLayer(marker));
     this.markers = [];
 
-    // 새 마커 추가
     this.currentData.forEach(item => {
       const marker = L.circleMarker([item.lat, item.lng], {
-        radius: this.getRadius(item.congestion_score),
+        radius: this.getRadiusByIndicator(item.indicator), // Indicator로 크기 결정
         fillColor: this.getColor(item.congestion_level),
         color: "#000",
         weight: 1,
@@ -70,28 +68,32 @@ class RailCongestionMap {
     });
   }
 
-  getRadius(score) {
-    // 점수에 따라 원 크기 조정 (5-20px 범위)
-    return Math.max(5, Math.min(20, 5 + score));
+  getRadiusByIndicator(indicator) {
+    // Indicator 값에 따른 원 크기 (명확한 5단계 구분)
+    if (indicator > 2) return 20;    // 제일 큼
+    if (indicator > 1) return 16;    // 중간 큼
+    if (indicator > -1) return 12;   // 중간
+    if (indicator > -2) return 8;    // 중간 작음
+    return 5;                        // 제일 작음
   }
 
   getColor(level) {
-    // 혼잡도 수준에 따른 색상 (새로운 색상 스키마)
+    // 혼잡도 수준에 따른 색상 (명확한 구분)
     const colors = {
       'Very Low': '#4575b4',    // 진한 파랑
-      'Low': '#74add1',         // 연한 파랑
+      'Low': '#a6bddb',         // 중간 파랑 (연한 파랑과 구분)
       'Average': '#999999',     // 회색
-      'High': '#fdae61',       // 연한 빨강
+      'High': '#fd8d3c',        // 주황색 (연한 빨강과 구분)
       'Very High': '#d73027'    // 진한 빨강
     };
     return colors[level] || '#999';
   }
 
   createPopupContent(data) {
-    // 데이터가 없을 경우 기본값 설정
     const company = data.company || 'Unknown';
     const level = data.congestion_level || 'Unknown';
     const dwellTime = data.congestion_score !== undefined ? data.congestion_score.toFixed(1) : 'N/A';
+    const indicator = data.indicator !== undefined ? data.indicator.toFixed(2) : 'N/A';
   
     return `
       <div class="rail-tooltip">
@@ -103,6 +105,7 @@ class RailCongestionMap {
           </span>
         </p>
         <p><strong>Dwell Time:</strong> ${dwellTime} hours</p>
+        <p><strong>Indicator:</strong> ${indicator}</p>
       </div>
     `;
   }
