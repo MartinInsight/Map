@@ -98,15 +98,14 @@ class TruckCongestionMap {
   }
 
   getColor(value) {
-    // 색상 그래디언트 (-3 ~ 3)
     const colors = {
-      '-3': '#d73027',  // 진한 빨강
+      '-3': '#d73027',
       '-2': '#f46d43',
-      '-1': '#fdae61',  // 연한 빨강
-      '0': '#ffffbf',   // 중립
-      '1': '#a6d96a',   // 연한 초록
+      '-1': '#fdae61',
+      '0': '#ffffbf',
+      '1': '#a6d96a',
       '2': '#66bd63',
-      '3': '#1a9850'    // 진한 초록
+      '3': '#1a9850'
     };
     return colors[value] || '#cccccc';
   }
@@ -122,7 +121,6 @@ class TruckCongestionMap {
     });
   }
 
-// js/map.js (수정된 부분)
   showTooltip(event, data) {
     if (!this.initialized) return;
   
@@ -136,26 +134,26 @@ class TruckCongestionMap {
     const dwell = isInbound ? data.dwellInbound : data.dwellOutbound;
   
     const content = `
-      <div class="map-tooltip">
+      <div class="truck-tooltip">
         <h4>${data.name || 'Unknown'}</h4>
-        <div class="metric-box">
+        <div class="truck-metric-box">
           <strong>Truck Movement</strong>
           <p>
-            <span class="${delay >= 0 ? 'positive' : 'negative'}">
+            <span class="${delay >= 0 ? 'truck-positive' : 'truck-negative'}">
               ${delay >= 0 ? '↑' : '↓'} ${formatValue(delay)}%
             </span>
-            <span class="normal-text">
+            <span class="truck-normal-text">
               ${delay >= 0 ? ' above ' : ' below '}2 weeks moving average
             </span>
           </p>
         </div>
-        <div class="metric-box">
+        <div class="truck-metric-box">
           <strong>Dwell Time</strong>
           <p>
-            <span class="${dwell >= 0 ? 'positive' : 'negative'}">
+            <span class="${dwell >= 0 ? 'truck-positive' : 'truck-negative'}">
               ${dwell >= 0 ? '↑' : '↓'} ${formatValue(dwell)}%
             </span>
-            <span class="normal-text">
+            <span class="truck-normal-text">
               ${dwell >= 0 ? ' above ' : ' below '}2 weeks moving average
             </span>
           </p>
@@ -166,7 +164,7 @@ class TruckCongestionMap {
     L.popup({
       autoClose: false,
       closeButton: false,
-      className: 'custom-tooltip',
+      className: 'truck-popup-container',
       offset: L.point(0, -10)
     })
       .setLatLng(event.latlng)
@@ -187,7 +185,7 @@ class TruckCongestionMap {
     const controlContainer = L.control({ position: 'topright' });
     
     controlContainer.onAdd = () => {
-      this.controlDiv = L.DomUtil.create('div', 'mode-control');
+      this.controlDiv = L.DomUtil.create('div', 'truck-control-container');
       this.renderControls();
       return this.controlDiv;
     };
@@ -197,18 +195,18 @@ class TruckCongestionMap {
 
   renderControls() {
     this.controlDiv.innerHTML = `
-      <div class="toggle-container">
-        <div class="toggle-wrapper">
-          <button class="toggle-btn ${this.currentMode === 'inbound' ? 'active' : ''}" 
+      <div class="truck-toggle-container">
+        <div class="truck-toggle-wrapper">
+          <button class="truck-toggle-btn ${this.currentMode === 'inbound' ? 'truck-active' : ''}" 
                   data-mode="inbound">INBOUND</button>
-          <button class="toggle-btn ${this.currentMode === 'outbound' ? 'active' : ''}" 
+          <button class="truck-toggle-btn ${this.currentMode === 'outbound' ? 'truck-active' : ''}" 
                   data-mode="outbound">OUTBOUND</button>
         </div>
-        <button class="reset-btn" id="reset-view">Reset View</button>
+        <button class="truck-reset-btn" id="truck-reset-view">Reset View</button>
       </div>
     `;
 
-    this.controlDiv.querySelectorAll('.toggle-btn').forEach(btn => {
+    this.controlDiv.querySelectorAll('.truck-toggle-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         this.currentMode = btn.dataset.mode;
         this.renderControls();
@@ -218,13 +216,12 @@ class TruckCongestionMap {
       });
     });
 
-    this.controlDiv.querySelector('#reset-view').addEventListener('click', () => {
+    this.controlDiv.querySelector('#truck-reset-view').addEventListener('click', () => {
       this.map.setView([37.8, -96], 4);
     });
   }
 
   updateLegend() {
-    // 범례를 표시하지 않음
     if (this.legend) {
       this.map.removeControl(this.legend);
     }
