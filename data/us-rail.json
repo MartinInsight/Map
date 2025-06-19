@@ -6,6 +6,7 @@
     "lat": 34.8957957,
     "lng": -117.0172826,
     "congestion_score": 25.5,
+    "indicator": -1.556991594,
     "congestion_level": "Low"
   },
   {
@@ -15,6 +16,7 @@
     "lat": 39.7392358,
     "lng": -104.990251,
     "congestion_score": 28.0,
+    "indicator": -0.8897918835,
     "congestion_level": "Average"
   },
   {
@@ -24,6 +26,7 @@
     "lat": 32.7554883,
     "lng": -97.3307658,
     "congestion_score": 30.6,
+    "indicator": 0.5557391888,
     "congestion_level": "Average"
   },
   {
@@ -33,6 +36,7 @@
     "lat": 40.9478158,
     "lng": -90.3712395,
     "congestion_score": 27.3,
+    "indicator": -0.9529455353,
     "congestion_level": "Average"
   },
   {
@@ -42,6 +46,7 @@
     "lat": 39.0997265,
     "lng": -94.5785667,
     "congestion_score": 27.5,
+    "indicator": -1.469947176,
     "congestion_level": "Low"
   },
   {
@@ -51,6 +56,7 @@
     "lat": 40.813616,
     "lng": -96.7025955,
     "congestion_score": 25.2,
+    "indicator": -1.183236754,
     "congestion_level": "Low"
   },
   {
@@ -60,6 +66,7 @@
     "lat": 35.1495343,
     "lng": -90.0489801,
     "congestion_score": 16.6,
+    "indicator": -0.8978914613,
     "congestion_level": "Average"
   },
   {
@@ -69,6 +76,7 @@
     "lat": 45.128403,
     "lng": -93.259694,
     "congestion_score": 26.6,
+    "indicator": -0.9399364328,
     "congestion_level": "Average"
   },
   {
@@ -78,6 +86,7 @@
     "lat": 46.2305049,
     "lng": -119.0922316,
     "congestion_score": 24.2,
+    "indicator": -0.9688885683,
     "congestion_level": "Average"
   },
   {
@@ -87,6 +96,7 @@
     "lat": 36.1539816,
     "lng": -95.992775,
     "congestion_score": 23.1,
+    "indicator": -0.667985154,
     "congestion_level": "Average"
   },
   {
@@ -96,6 +106,7 @@
     "lat": 30.4514677,
     "lng": -91.1871466,
     "congestion_score": 18.31,
+    "indicator": 1.031086965,
     "congestion_level": "High"
   },
   {
@@ -105,6 +116,7 @@
     "lat": 40.1164204,
     "lng": -88.2433829,
     "congestion_score": 12.32,
+    "indicator": -1.395188538,
     "congestion_level": "Low"
   },
   {
@@ -114,6 +126,7 @@
     "lat": 43.7730448,
     "lng": -88.4470508,
     "congestion_score": 18.72,
+    "indicator": -0.7371868459,
     "congestion_level": "Average"
   },
   {
@@ -123,6 +136,7 @@
     "lat": 30.2193468,
     "lng": -91.0065088,
     "congestion_score": 18.92,
+    "indicator": 0.9326911464,
     "congestion_level": "Average"
   },
   {
@@ -132,6 +146,7 @@
     "lat": 32.2987573,
     "lng": -90.1848103,
     "congestion_score": 11.94,
+    "indicator": 0.05658338982,
     "congestion_level": "Average"
   },
   {
@@ -141,6 +156,7 @@
     "lat": 41.5933696,
     "lng": -87.3464271,
     "congestion_score": 20.71,
+    "indicator": -0.8200531071,
     "congestion_level": "Average"
   },
   {
@@ -150,6 +166,7 @@
     "lat": 43.8561002,
     "lng": -79.3370188,
     "congestion_score": 13.31,
+    "indicator": 1.048808836,
     "congestion_level": "High"
   },
   {
@@ -159,6 +176,7 @@
     "lat": 35.1495343,
     "lng": -90.0489801,
     "congestion_score": 19.09,
+    "indicator": -0.7694034604,
     "congestion_level": "Average"
   },
   {
@@ -168,6 +186,7 @@
     "lat": 46.7471638,
     "lng": -92.2254695,
     "congestion_score": 6.96,
+    "indicator": -0.8362293452,
     "congestion_level": "Average"
   },
   {
@@ -177,6 +196,7 @@
     "lat": 44.5235792,
     "lng": -89.574563,
     "congestion_score": 22.04,
+    "indicator": 0.4988998191,
     "congestion_level": "Average"
   },
   {
@@ -186,6 +206,7 @@
     "lat": 41.9550296,
     "lng": -87.9400657,
     "congestion_score": 24.77,
+    "indicator": 1.124013518,
     "congestion_level": "High"
   },
   {
@@ -195,6 +216,7 @@
     "lat": 47.769723,
     "lng": -99.935404,
     "congestion_score": 16.17,
+    "indicator": 1.040774369,
     "congestion_level": "High"
   },
   {
@@ -204,6 +226,7 @@
     "lat": 32.2987573,
     "lng": -90.1848103,
     "congestion_score": 46.65,
+    "indicator": 0.9090298626,
     "congestion_level": "Average"
   },
   {
@@ -213,6 +236,7 @@
     "lat": 39.0997265,
     "lng": -94.5785667,
     "congestion_score": 36.05,
+    "indicator": -1.091384019,
     "congestion_level": "Low"
   },
   {
@@ -222,6 +246,7 @@
     "lat": 27.5035613,
     "lng": -99.5075519,
     "congestion_score": 1.56,
+    "indicator": 1.459106689,
     "congestion_level": "High"
   },
   {
@@ -231,6 +256,7 @@
     "lat": 32.3610377,
     "lng": -88.6991015,
     "congestion_score": 18.63,
+    "indicator": -0.3275910722,
     "congestion_level": "Average"
   },
   {
@@ -240,6 +266,7 @@
     "lat": 41.4875323,
     "lng": -90.6379164,
     "congestion_score": 23.07,
+    "indicator": -0.4811142555,
     "congestion_level": "Average"
   },
   {
@@ -249,6 +276,7 @@
     "lat": 29.9725656,
     "lng": -90.1399969,
     "congestion_score": 51.79,
+    "indicator": 0.7651447404,
     "congestion_level": "Average"
   },
   {
@@ -258,6 +286,7 @@
     "lat": 32.5251516,
     "lng": -93.7501789,
     "congestion_score": 58.26,
+    "indicator": -0.8689804755,
     "congestion_level": "Average"
   },
   {
@@ -267,6 +296,7 @@
     "lat": 44.9537029,
     "lng": -93.0899578,
     "congestion_score": 21.27,
+    "indicator": -1.476271126,
     "congestion_level": "Low"
   },
   {
@@ -276,6 +306,7 @@
     "lat": 39.2903848,
     "lng": -76.6121893,
     "congestion_score": 10.98,
+    "indicator": -1.53146345,
     "congestion_level": "Low"
   },
   {
@@ -285,6 +316,7 @@
     "lat": 41.8781136,
     "lng": -87.6297982,
     "congestion_score": 14.77,
+    "indicator": 1.185861638,
     "congestion_level": "High"
   },
   {
@@ -294,6 +326,7 @@
     "lat": 39.1031182,
     "lng": -84.5120196,
     "congestion_score": 20.97,
+    "indicator": -1.034050548,
     "congestion_level": "Low"
   },
   {
@@ -303,6 +336,7 @@
     "lat": 39.768403,
     "lng": -86.158068,
     "congestion_score": 24.06,
+    "indicator": -0.6041007439,
     "congestion_level": "Average"
   },
   {
@@ -312,6 +346,7 @@
     "lat": 30.3321838,
     "lng": -81.655651,
     "congestion_score": 18.92,
+    "indicator": -0.3284974976,
     "congestion_level": "Average"
   },
   {
@@ -321,6 +356,7 @@
     "lat": 38.2526647,
     "lng": -85.7584557,
     "congestion_score": 25.54,
+    "indicator": -0.4451561216,
     "congestion_level": "Average"
   },
   {
@@ -330,6 +366,7 @@
     "lat": 36.1626638,
     "lng": -86.7816016,
     "congestion_score": 26.33,
+    "indicator": -0.4915778888,
     "congestion_level": "Average"
   },
   {
@@ -339,6 +376,7 @@
     "lat": 42.5319998,
     "lng": -73.7985008,
     "congestion_score": 29.56,
+    "indicator": 1.016264062,
     "congestion_level": "High"
   },
   {
@@ -348,6 +386,7 @@
     "lat": 41.6528052,
     "lng": -83.5378674,
     "congestion_score": 21.2,
+    "indicator": -0.9967895873,
     "congestion_level": "Average"
   },
   {
@@ -357,6 +396,7 @@
     "lat": 31.2135511,
     "lng": -82.3540178,
     "congestion_score": 26.15,
+    "indicator": -0.09048491818,
     "congestion_level": "Average"
   },
   {
@@ -366,6 +406,7 @@
     "lat": 33.7489954,
     "lng": -84.3879824,
     "congestion_score": 17.1,
+    "indicator": 0.1219364859,
     "congestion_level": "Average"
   },
   {
@@ -375,6 +416,7 @@
     "lat": 41.2736647,
     "lng": -82.8415763,
     "congestion_score": 27.6,
+    "indicator": -0.4964306851,
     "congestion_level": "Average"
   },
   {
@@ -384,6 +426,7 @@
     "lat": 33.5185892,
     "lng": -86.8103567,
     "congestion_score": 28.3,
+    "indicator": -0.59870778,
     "congestion_level": "Average"
   },
   {
@@ -393,6 +436,7 @@
     "lat": 35.0456297,
     "lng": -85.3096801,
     "congestion_score": 28.4,
+    "indicator": -0.4267809281,
     "congestion_level": "Average"
   },
   {
@@ -402,6 +446,7 @@
     "lat": 40.4406248,
     "lng": -79.9958864,
     "congestion_score": 28.9,
+    "indicator": 0.1624223416,
     "congestion_level": "Average"
   },
   {
@@ -411,6 +456,7 @@
     "lat": 39.8403147,
     "lng": -88.9548001,
     "congestion_score": 40.8,
+    "indicator": 2.444117824,
     "congestion_level": "Very High"
   },
   {
@@ -420,6 +466,7 @@
     "lat": 41.6819935,
     "lng": -85.9766671,
     "congestion_score": 23.5,
+    "indicator": -0.9257407069,
     "congestion_level": "Average"
   },
   {
@@ -429,6 +476,7 @@
     "lat": 40.3028161,
     "lng": -76.8928454,
     "congestion_score": 9.5,
+    "indicator": -1.682158495,
     "congestion_level": "Low"
   },
   {
@@ -438,6 +486,7 @@
     "lat": 32.8406946,
     "lng": -83.6324022,
     "congestion_score": 29.4,
+    "indicator": -0.007361776581,
     "congestion_level": "Average"
   },
   {
@@ -447,6 +496,7 @@
     "lat": 37.2739515,
     "lng": -79.9510329,
     "congestion_score": 32.3,
+    "indicator": -0.4551631882,
     "congestion_level": "Average"
   },
   {
@@ -456,6 +506,7 @@
     "lat": 41.8653429,
     "lng": -87.8721439,
     "congestion_score": 22.4,
+    "indicator": -1.094449846,
     "congestion_level": "Low"
   },
   {
@@ -465,6 +516,7 @@
     "lat": 32.7554883,
     "lng": -97.3307658,
     "congestion_score": 21.4,
+    "indicator": -1.056433344,
     "congestion_level": "Low"
   },
   {
@@ -474,6 +526,7 @@
     "lat": 29.7983826,
     "lng": -95.3079662,
     "congestion_score": 21.2,
+    "indicator": -1.265081853,
     "congestion_level": "Low"
   },
   {
@@ -483,6 +536,7 @@
     "lat": 30.5590803,
     "lng": -91.555945,
     "congestion_score": 22.5,
+    "indicator": -0.9073135089,
     "congestion_level": "Average"
   },
   {
@@ -492,6 +546,7 @@
     "lat": 34.769536,
     "lng": -92.2670941,
     "congestion_score": 24.4,
+    "indicator": 0.02928012344,
     "congestion_level": "Average"
   },
   {
@@ -501,6 +556,7 @@
     "lat": 41.1402759,
     "lng": -100.7601454,
     "congestion_score": 19.3,
+    "indicator": -1.831021173,
     "congestion_level": "Low"
   },
   {
@@ -510,6 +566,7 @@
     "lat": 34.2284312,
     "lng": -92.0031955,
     "congestion_score": 24.5,
+    "indicator": -0.6181817193,
     "congestion_level": "Average"
   },
   {
@@ -519,6 +576,7 @@
     "lat": 38.7521235,
     "lng": -121.2880059,
     "congestion_score": 19.8,
+    "indicator": -1.560233869,
     "congestion_level": "Low"
   },
   {
@@ -528,6 +586,7 @@
     "lat": 31.90796865,
     "lng": -106.7478105,
     "congestion_score": 15.7,
+    "indicator": -1.262610211,
     "congestion_level": "Low"
   },
   {
@@ -537,6 +596,7 @@
     "lat": 34.0669931,
     "lng": -117.3529857,
     "congestion_score": 19.9,
+    "indicator": -1.342471778,
     "congestion_level": "Low"
   }
 ]
