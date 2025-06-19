@@ -3,7 +3,6 @@ class RailCongestionMap {
   constructor(mapElementId) {
     this.map = L.map(mapElementId).setView([37.8, -96], 4);
     this.markers = [];
-    this.clusterGroups = []; // 클러스터 그룹 저장용
     this.currentData = null;
     this.lastUpdated = null;
 
@@ -11,8 +10,6 @@ class RailCongestionMap {
       attribution: '© OpenStreetMap'
     }).addTo(this.map);
 
-    // 줌 변경 시 원 재배치 이벤트 추가
-    this.map.on('zoomend', () => this.handleZoomChange());
     this.loadData();
   }
 
@@ -51,119 +48,26 @@ class RailCongestionMap {
     }
   }
 
-    renderMarkers() {
-      this.clearExistingMarkers();
-      
-      if (this.map.getZoom() <= 7) { // 저확대 시 클러스터링
-        this.createClusteredMarkers();
-      } else { // 고확대 시 개별 표시
-        this.createIndividualMarkers();
-      }
-    }
-  
-    clearExistingMarkers() {
-      this.markers.forEach(marker => this.map.removeLayer(marker));
-      this.clusterGroups.forEach(group => this.map.removeLayer(group));
-      this.markers = [];
-      this.clusterGroups = [];
-    }
-  
-    createClusteredMarkers() {
-      const locationGroups = this.groupByLocation(this.currentData);
-      
-      locationGroups.forEach(group => {
-        const topLevelItem = this.findTopLevelItem(group.items);
-        const marker = this.createClusterMarker(group.location, topLevelItem, group.count);
-        
-        this.clusterGroups.push(marker);
-        marker.addTo(this.map);
+  renderMarkers() {
+    this.markers.forEach(marker => this.map.removeLayer(marker));
+    this.markers = [];
+
+    this.currentData.forEach(item => {
+      const marker = L.circleMarker([item.lat, item.lng], {
+        radius: this.getRadiusByIndicator(item.indicator), // Indicator로 크기 결정
+        fillColor: this.getColor(item.congestion_level),
+        color: "#000",
+        weight: 1,
+        opacity: 1,
+        fillOpacity: 0.8
       });
-    }
-  
-    groupByLocation(data) {
-      const groups = {};
-      data.forEach(item => {
-        const key = `${item.lat}_${item.lng}`;
-        if (!groups[key]) {
-          groups[key] = { location: [item.lat, item.lng], items: [], count: 0 };
-        }
-        groups[key].items.push(item);
-        groups[key].count++;
-      });
-      return Object.values(groups);
-    }
-  
-    findTopLevelItem(items) {
-      const levelOrder = ['Very High', 'High', 'Average', 'Low', 'Very Low'];
-      return items.reduce((topItem, current) => 
-        levelOrder.indexOf(current.congestion_level) < levelOrder.indexOf(topItem.congestion_level) 
-          ? current : topItem
-      );
-    }
-  
-    createClusterMarker(location, topItem, count) {
-      const marker = L.circleMarker(location, {
-        radius: this.getRadiusByIndicator(topItem.indicator) * 1.2, // 20% 확대
-        fillColor: this.getColor(topItem.congestion_level),
-        color: "#fff",
-        weight: 2,
-        fillOpacity: 0.9
-      });
-  
-      // 겹친 수 표시
-      marker.bindTooltip(count.toString(), {
-        permanent: true,
-        className: 'cluster-count-label',
-        direction: 'center'
-      });
-  
-      // 확대된 툴팁
-      marker.bindPopup(this.createClusterPopupContent(topItem, count));
-      return marker;
-    }
-  
-    createClusterPopupContent(topItem, count) {
-      return `
-        <div class="cluster-tooltip">
-          <h4>${topItem.location} (${count} locations)</h4>
-          <div class="top-item">
-            <p><strong>Highest Level:</strong> 
-              <span style="color: ${this.getColor(topItem.congestion_level, true)}">
-                ${topItem.congestion_level}
-              </span>
-            </p>
-            <p><strong>Dwell Time:</strong> ${topItem.congestion_score?.toFixed(1)}h</p>
-          </div>
-          <div class="all-items">
-            ${this.createAllItemsList(topItem)}
-          </div>
-        </div>
-      `;
-    }
-  
-    createAllItemsList(topItem) {
-      // 같은 위치의 모든 아이템 리스트 생성
-      return `<p>Additional data available when zoomed in</p>`;
-    }
-  
-    createIndividualMarkers() {
-      this.currentData.forEach(item => {
-        const marker = L.circleMarker([item.lat, item.lng], {
-          radius: this.getRadiusByIndicator(item.indicator),
-          fillColor: this.getColor(item.congestion_level),
-          color: "#000",
-          weight: 1,
-          fillOpacity: 0.8
-        });
-        marker.bindPopup(this.createPopupContent(item));
-        marker.addTo(this.map);
-        this.markers.push(marker);
-      });
-    }
-  
-    handleZoomChange() {
-      this.renderMarkers();
-    }
+
+      marker.bindPopup(this.createPopupContent(item));
+      marker.addTo(this.map);
+      this.markers.push(marker);
+    });
+  }
+
   getRadiusByIndicator(indicator) {
     // Indicator 값에 따른 원 크기 (명확한 5단계 구분)
     if (indicator > 2) return 20;    // 제일 큼
