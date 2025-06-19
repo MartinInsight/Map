@@ -32,7 +32,7 @@ class RailCongestionMap {
       const date = new Date(this.lastUpdated);
       const formattedDate = `${date.getMonth()+1}-${date.getDate()}-${date.getFullYear()}`;
       
-      const infoControl = L.control({position: 'topleft'});
+      const infoControl = L.control({ position: 'bottomleft' });
       
       infoControl.onAdd = () => {
         const div = L.DomUtil.create('div', 'last-updated-info');
