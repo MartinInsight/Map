@@ -69,6 +69,7 @@ def fetch_rail_data():
                     'lat': float(row['Latitude']),
                     'lng': float(row['Longitude']),
                     'congestion_score': float(row.get('Dwell Time', 0)),
+                    'indicator': float(row.get('Indicator', 0)),  # Indicator 값 추가
                     'congestion_level': category
                 })
             except Exception as e:
