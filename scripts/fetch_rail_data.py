@@ -48,19 +48,32 @@ def fetch_rail_data():
                 location = row.get('Location', '') or row.get('Yard', '')
                 if not location:
                     continue
-                    
-                result.append({
-                    'date': row.get('Date', '').strip(),
-                    'company': row.get('Railroad', '').strip(),
-                    'location': location.strip(),
-                    'lat': float(row['Latitude']),
-                    'lng': float(row['Longitude']),
-                    'congestion_score': float(row.get('Dwell Time', 0)),
-                    'congestion_level': row.get('Category', 'Average').strip()
-                })
-            except Exception as e:
-                print(f"⚠️ 데이터 처리 오류 건너뜀 - 행: {row}, 오류: {str(e)}")
-                continue
+        
+        # Indicator 값에 따라 혼잡도 레벨 결정
+        indicator = float(row.get('Indicator', 0))
+        if indicator > 2:
+            category = 'Very High'
+        elif 1 < indicator <= 2:
+            category = 'High'
+        elif -1 < indicator <= 1:
+            category = 'Average'
+        elif -2 < indicator <= -1:
+            category = 'Low'
+        else:
+            category = 'Very Low'
+            
+        result.append({
+            'date': row.get('Date', '').strip(),
+            'company': row.get('Railroad', '').strip(),
+            'location': location.strip(),
+            'lat': float(row['Latitude']),
+            'lng': float(row['Longitude']),
+            'congestion_score': float(row.get('Dwell Time', 0)),
+            'congestion_level': category
+        })
+    except Exception as e:
+        print(f"⚠️ 데이터 처리 오류 건너뜀 - 행: {row}, 오류: {str(e)}")
+        continue
         
         # JSON 저장
         output_dir = os.path.join(os.path.dirname(__file__), '../data')
