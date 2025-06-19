@@ -6,12 +6,17 @@
     <link rel="stylesheet" href="styles/main.css"/>
 </head>
 <body>
-    <div class="tab-container">
-        <button class="tab-button active" data-tab="trucking">TRUCKING CONGESTION</button>
-        <button class="tab-button" data-tab="rail">RAIL CONGESTION</button>
+    <div id="tab-container" class="transport-tab-container">
+      <button class="transport-tab truck-tab active" data-map="truck">Truck</button>
+      <button class="transport-tab rail-tab" data-map="rail">Rail</button>
     </div>
     
-    <div id="trucking-map" class="map-container active" style="height:100vh; width:100vw;"></div>
+    <div id="map-container">
+      <div id="truck-map" class="transport-map active"></div>
+      <div id="rail-map" class="transport-map"></div>
+    </div>
+    
+    <div id="truck-map" class="map-container active" style="height:100vh; width:100vw;"></div>
     <div id="rail-map" class="map-container" style="height:100vh; width:100vw;"></div>
     
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -21,7 +26,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             // 지도 초기화 지연 (CSS 로딩 완료 후)
             setTimeout(() => {
-                const truckingMap = new TruckCongestionMap('trucking-map');
+                const truckMap = new TruckCongestionMap('truck-map');
                 const railMap = new RailCongestionMap('rail-map');
                 
                 document.querySelectorAll('.tab-button').forEach(button => {
@@ -35,8 +40,8 @@
                         document.getElementById(`${button.dataset.tab}-map`).classList.add('active');
                         
                         setTimeout(() => {
-                            if(button.dataset.tab === 'trucking') {
-                                truckingMap.map.invalidateSize();
+                            if(button.dataset.tab === 'truck') {
+                                truckMap.map.invalidateSize();
                             } else {
                                 railMap.map.invalidateSize();
                             }
