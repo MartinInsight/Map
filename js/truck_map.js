@@ -5,13 +5,15 @@ class TruckCongestionMap {
     this.currentMode = 'inbound';
     this.metricData = null;
     this.initialized = false;
+    this.controlDiv = null;
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© OpenStreetMap'
     }).addTo(this.map);
 
+    this.addControls();
     this.initializeMap();
-    this.setupTabSwitching(); // 탭 전환 핸들러 추가
+    this.setupTabSwitching();
   }
 
   async initializeMap() {
@@ -203,6 +205,15 @@ class TruckCongestionMap {
       });
     });
   }
+    
+  addControls() {
+    const controlContainer = L.control({ position: 'topright' });
+    
+    controlContainer.onAdd = () => {
+      this.controlDiv = L.DomUtil.create('div', 'truck-control-container');
+      this.renderControls();
+      return this.controlDiv;
+    };
     
     controlContainer.addTo(this.map);
   }
