@@ -1,54 +1,74 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
   <title>US Transportation Congestion Map</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="stylesheet" href="styles/main.css" />
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+    }
+    #truck-map, #rail-map {
+      height: 100vh;
+      width: 100vw;
+    }
+    .transport-map {
+      display: none;
+    }
+    .transport-map.active {
+      display: block;
+    }
+  </style>
 </head>
 <body>
   <!-- 탭 버튼 -->
   <div id="tab-container" class="transport-tab-container">
-    <button class="transport-tab active" data-map="truck">Truck</button>
-    <button class="transport-tab" data-map="rail">Rail</button>
+    <button class="transport-tab truck-tab active" data-map="truck">Truck</button>
+    <button class="transport-tab rail-tab" data-map="rail">Rail</button>
   </div>
 
-  <!-- 지도 컨테이너 -->
-  <div id="map-container">
-    <div id="truck-map" class="transport-map active" style="height: 100vh; width: 100vw;"></div>
-    <div id="rail-map" class="transport-map" style="height: 100vh; width: 100vw;"></div>
-  </div>
+  <!-- 지도 영역 -->
+  <div id="truck-map" class="transport-map active"></div>
+  <div id="rail-map" class="transport-map"></div>
 
-  <!-- 스크립트 -->
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- 스크립트 로딩 -->
+  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
   <script src="js/truck_map.js"></script>
   <script src="js/rail_map.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      const truckMap = new TruckCongestionMap('truck-map');
-      const railMap = new RailCongestionMap('rail-map');
+      // 약간의 지연 후 지도 초기화 (Leaflet 초기 렌더링 오류 방지)
+      setTimeout(() => {
+        const truckMap = new TruckCongestionMap('truck-map');
+        const railMap = new RailCongestionMap('rail-map');
 
-      document.querySelectorAll('.transport-tab').forEach(button => {
-        button.addEventListener('click', () => {
-          // 탭 스타일
-          document.querySelectorAll('.transport-tab').forEach(btn => btn.classList.remove('active'));
-          button.classList.add('active');
+        document.querySelectorAll('.transport-tab').forEach(tab => {
+          tab.addEventListener('click', () => {
+            // 모든 탭 비활성화
+            document.querySelectorAll('.transport-tab').forEach(t => t.classList.remove('active'));
+            // 현재 탭 활성화
+            tab.classList.add('active');
 
-          // 맵 뷰 전환
-          const selected = button.dataset.map;
-          document.querySelectorAll('.transport-map').forEach(m => m.classList.remove('active'));
-          document.getElementById(`${selected}-map`).classList.add('active');
+            // 모든 지도 숨기기
+            document.querySelectorAll('.transport-map').forEach(m => m.classList.remove('active'));
+            const selectedMapId = tab.dataset.map + '-map';
+            const selectedMap = document.getElementById(selectedMapId);
+            selectedMap.classList.add('active');
 
-          // Leaflet 크기 재계산
-          setTimeout(() => {
-            if (selected === 'truck') {
-              truckMap.map.invalidateSize();
-            } else {
-              railMap.map.invalidateSize();
-            }
-          }, 100);
+            // 지도 크기 재계산
+            setTimeout(() => {
+              if (tab.dataset.map === 'truck') {
+                truckMap.map.invalidateSize();
+              } else {
+                railMap.map.invalidateSize();
+              }
+            }, 50);
+          });
         });
-      });
+      }, 100);
     });
   </script>
 </body>
