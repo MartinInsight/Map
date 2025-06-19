@@ -166,26 +166,34 @@ html, body {
   display: block;
 }
 
-/* rail-tooltip 색상 클래스 추가 (원 색상과 동일하게 설정) */
-.rail-tooltip .congestion-very-high { color: #d73027; } /* 진한 빨강 */
-.rail-tooltip .congestion-high { color: #fdae61; }     /* 주황색 */
-.rail-tooltip .congestion-average { color: #b0b0b0; }  /* 회색 */
-.rail-tooltip .congestion-low { color: #74add1; }      /* 연한 파랑 */
-.rail-tooltip .congestion-very-low { color: #4575b4; } /* 진한 파랑 */
+/* rail-tooltip 색상 클래스 - 텍스트용 진한 색상으로 통일 */
+.rail-tooltip .congestion-very-high { color: #0047ad; }
+.rail-tooltip .congestion-high { color: #699be3; }
+.rail-tooltip .congestion-average { color: #acb1b9; }
+.rail-tooltip .congestion-low { color: #df988c; }
+.rail-tooltip .congestion-very-low { color: #cb3a28; }
 
-/* 기존 .rail-tooltip 스타일 유지 */
+/* rail-tooltip 기본 스타일 최적화 */
 .rail-tooltip {
   font-family: Arial, sans-serif;
   min-width: 200px;
-  padding: 10px;
+  padding: 12px;
+  border-radius: 6px;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.2);
 }
 .rail-tooltip h4 {
-  margin: 0 0 10px 0;
+  margin: 0 0 12px 0;
   font-size: 16px;
+  color: #333;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 8px;
 }
 .rail-tooltip p {
-  margin: 5px 0;
+  margin: 8px 0;
   font-size: 14px;
+}
+.rail-tooltip strong {
+  color: #555;
 }
 
 /* 범례 숨김 */
