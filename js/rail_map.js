@@ -77,36 +77,32 @@ class RailCongestionMap {
     return 5;                        // 제일 작음
   }
 
-  getColor(level) {
-    // 혼잡도 수준에 따른 색상 (명확한 구분)
-    const colors = {
-      'Very Low': '#4575b4',    // 진한 파랑
-      'Low': '#a6bddb',         // 중간 파랑 (연한 파랑과 구분)
-      'Average': '#999999',     // 회색
-      'High': '#fd8d3c',        // 주황색 (연한 빨강과 구분)
-      'Very High': '#d73027'    // 진한 빨강
-    };
-    return colors[level] || '#999';
-  }
+getColor(level) {
+  // 원 색상과 툴팁 텍스트 색상을 완전히 동일하게 설정
+  const colors = {
+    'Very Low': '#4575b4',    // 진한 파랑
+    'Low': '#74add1',         // 연한 파랑 (명확한 구분)
+    'Average': '#abd9e9',     // 매우 연한 파랑 (회색 대신)
+    'High': '#fdae61',        // 주황색
+    'Very High': '#d73027'    // 진한 빨강
+  };
+  return colors[level] || '#999';
+}
 
-  createPopupContent(data) {
-    const company = data.company || 'Unknown';
-    const level = data.congestion_level || 'Unknown';
-    const dwellTime = data.congestion_score !== undefined ? data.congestion_score.toFixed(1) : 'N/A';
-    const indicator = data.indicator !== undefined ? data.indicator.toFixed(2) : 'N/A';
-  
-    return `
-      <div class="rail-tooltip">
-        <h4>${data.location || 'Unknown Location'}</h4>
-        <p><strong>Company:</strong> ${company}</p>
-        <p><strong>Congestion Level:</strong> 
-          <span class="congestion-${level.toLowerCase().replace(' ', '-')}">
-            ${level}
-          </span>
-        </p>
-        <p><strong>Dwell Time:</strong> ${dwellTime} hours</p>
-        <p><strong>Indicator:</strong> ${indicator}</p>
-      </div>
-    `;
-  }
+createPopupContent(data) {
+  const level = data.congestion_level || 'Unknown';
+  const color = this.getColor(level); // 원 색상을 가져와 텍스트에 적용
+
+  return `
+    <div class="rail-tooltip">
+      <h4>${data.location || 'Unknown Location'}</h4>
+      <p><strong>Company:</strong> ${data.company || 'Unknown'}</p>
+      <p><strong>Congestion Level:</strong> 
+        <span style="color: ${color}"> <!-- 원 색상과 동일하게 적용 -->
+          ${level}
+        </span>
+      </p>
+      <p><strong>Dwell Time:</strong> ${data.congestion_score?.toFixed(1) || 'N/A'} hours</p>
+    </div>
+  `;
 }
