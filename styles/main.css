@@ -19,14 +19,14 @@ html, body {
 }
 
 /* 툴팁 스타일 */
-.trucking-tooltip {
+.truck-tooltip {
   font-family: Arial, sans-serif;
   min-width: 220px;
   padding: 15px;
   text-align: center;
 }
 
-.trucking-tooltip h4 {
+.truck-tooltip h4 {
   margin: 0 0 25px 0;
   font-size: 18px;
   font-weight: bold;
