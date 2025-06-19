@@ -167,11 +167,11 @@ html, body {
 }
 
 /* rail-tooltip 색상 클래스 - 텍스트용 진한 색상으로 통일 */
-.rail-tooltip .congestion-very-high { color: #0047ad; }
-.rail-tooltip .congestion-high { color: #699be3; }
-.rail-tooltip .congestion-average { color: #acb1b9; }
-.rail-tooltip .congestion-low { color: #df988c; }
-.rail-tooltip .congestion-very-low { color: #cb3a28; }
+.rail-tooltip .congestion-very-high { color: #9e2d1f; }
+.rail-tooltip .congestion-high { color: #ae766d; }
+.rail-tooltip .congestion-average { color: #868a90; }
+.rail-tooltip .congestion-low { color: #5278b0; }
+.rail-tooltip .congestion-very-low { color: #003786; }
 
 /* rail-tooltip 기본 스타일 최적화 */
 .rail-tooltip {
