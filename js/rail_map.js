@@ -82,7 +82,7 @@ class RailCongestionMap {
     const colors = {
       'Very Low': '#4575b4',    // 진한 파랑
       'Low': '#74add1',         // 연한 파랑 (명확한 구분)
-      'Average': '#abd9e9',     // 매우 연한 파랑 (회색 대신)
+      'Average': '#b0b0b0',     // 회색
       'High': '#fdae61',        // 주황색
       'Very High': '#d73027'    // 진한 빨강
     };
