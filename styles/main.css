@@ -196,30 +196,6 @@ html, body {
   color: #555;
 }
 
-/* 클러스터 카운트 라벨 */
-.cluster-count-label {
-  background: transparent !important;
-  border: none !important;
-  color: white !important;
-  font-weight: bold !important;
-  font-size: 14px !important;
-  text-shadow: 0 0 3px rgba(0,0,0,0.8);
-}
-
-/* 확대된 툴팁 스타일 */
-.cluster-tooltip {
-  max-height: 300px;
-  overflow-y: auto;
-}
-.cluster-tooltip .top-item {
-  padding-bottom: 10px;
-  border-bottom: 1px solid #eee;
-}
-.cluster-tooltip .all-items {
-  max-height: 150px;
-  overflow-y: auto;
-}
-
 /* 범례 숨김 */
 .legend {
   display: none !important;
