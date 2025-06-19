@@ -2,13 +2,7 @@ html, body {
   height: 100%;
   margin: 0;
   padding: 0;
-  overflow: hidden; /* 스크롤바 방지 */
-}
-
-#map {
-  height: 100vh; /* 뷰포트 전체 높이 */
-  width: 100vw; /* 뷰포트 전체 너비 */
-  position: fixed; /* 고정 위치 */
+  overflow: hidden;
 }
 
 /* 상단 탭 스타일 */
@@ -26,11 +20,12 @@ html, body {
 }
 
 .transport-tab {
-  padding: 10px 20px;
+  padding: 10px 25px;
   border: none;
   background: #f0f0f0;
   cursor: pointer;
   font-weight: bold;
+  font-size: 14px;
   transition: all 0.3s;
 }
 
@@ -39,7 +34,7 @@ html, body {
   color: white;
 }
 
-/* 맵 컨테이너 스타일 */
+/* 맵 컨테이너 */
 .transport-map {
   position: fixed;
   top: 0;
@@ -53,169 +48,51 @@ html, body {
   display: block;
 }
 
-/* 툴팁 위치 고정 추가 */
-.leaflet-tooltip {
-  transform: translate(-50%, 0) !important;
-  left: 50% !important;
-  margin-top: 15px !important;
-}
-
-/* 툴팁 스타일 */
+/* ===== TRUCK 관련 스타일 ===== */
 .truck-tooltip {
   font-family: Arial, sans-serif;
   min-width: 220px;
   padding: 15px;
+  background: white;
+  border-radius: 6px;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.2);
   text-align: center;
 }
 
 .truck-tooltip h4 {
-  margin: 0 0 25px 0;
-  font-size: 18px;
-  font-weight: bold;
-  color: #333;
-}
-
-.normal-text {
-  color: black;
-  font-weight: normal;
-}
-
-.metric-box {
-  margin: 25px 0 15px 0;  /* Truck Movement와 Metric 값 간격 조정 */
-}
-
-.metric-box strong {
-  display: block;
-  margin-bottom: 8px;  /* Truck Movement와 Dwell Time 간격 조정 */
+  margin: 0 0 15px 0;
   font-size: 16px;
   font-weight: bold;
+  color: #333;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 8px;
 }
 
-.metric-box p {
-  margin: 0;
+.truck-metric-box {
+  margin: 15px 0;
+}
+
+.truck-metric-box strong {
+  display: block;
+  margin-bottom: 5px;
   font-size: 14px;
-  font-weight: bold;
+  color: #555;
 }
 
-.metric-box .positive {
+.truck-metric-box p {
+  margin: 0;
+  font-size: 13px;
+}
+
+.truck-positive {
   color: #27ae60 !important;
 }
 
-.metric-box .negative {
+.truck-negative {
   color: #e74c3c !important;
 }
 
-/* 컨트롤 패널 스타일 개선 */
-.toggle-container {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-left: 10px;
-}
-
-.toggle-wrapper {
-  display: flex;
-  border-radius: 20px;
-  overflow: hidden;
-  background: #f0f0f0;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-  height: 40px;
-}
-
-.toggle-btn {
-  padding: 0 20px;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  font-weight: bold;
-  font-size: 14px;
-  transition: all 0.3s;
-  min-width: 100px;
-  text-align: center;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.toggle-btn.active {
-  background: #00657E;
-  color: white;
-}
-
-.toggle-btn.active {
-  background: #00657E;
-  color: white;
-}
-
-.reset-btn {
-  padding: 0 15px;
-  background: #f0f0f0;
-  border: none;
-  border-radius: 20px;
-  cursor: pointer;
-  font-weight: bold;
-  font-size: 14px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.reset-btn:hover {
-  background: #e0e0e0;
-}
-
-/* 기존 스타일에 추가 */
-.tab-container {
-  position: fixed;
-  top: 10px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 1000;
-  display: flex;
-  background: white;
-  border-radius: 20px;
-  overflow: hidden;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-}
-
-.tab-button {
-  padding: 10px 20px;
-  border: none;
-  background: #f0f0f0;
-  cursor: pointer;
-  font-weight: bold;
-  transition: all 0.3s;
-}
-
-.tab-button.active {
-  background: #00657E;
-  color: white;
-}
-
-.map-container {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  display: none;
-}
-
-.map-container.active {
-  display: block;
-}
-
-/* rail-tooltip 색상 클래스 - 텍스트용 진한 색상으로 통일 */
-.rail-tooltip .congestion-very-high { color: #6b1414; }
-.rail-tooltip .congestion-high { color: #7c4616; }
-.rail-tooltip .congestion-average { color: #5e5e5e; }
-.rail-tooltip .congestion-low { color: #30557b; }
-.rail-tooltip .congestion-very-low { color: #002860; }
-
-/* rail-tooltip 기본 스타일 최적화 */
+/* ===== RAIL 관련 스타일 ===== */
 .rail-tooltip {
   font-family: Arial, sans-serif;
   min-width: 200px;
@@ -242,7 +119,68 @@ html, body {
   color: #555;
 }
 
-/* 범례 숨김 */
-.legend {
-  display: none !important;
+/* 공통 툴팁 위치 */
+.leaflet-tooltip {
+  transform: translate(-50%, 0) !important;
+  left: 50% !important;
+  margin-top: 15px !important;
+}
+
+/* 컨트롤 패널 (트럭 맵용) */
+.truck-control-container {
+  position: absolute;
+  top: 60px;
+  right: 10px;
+  z-index: 1000;
+}
+
+.truck-toggle-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.truck-toggle-wrapper {
+  display: flex;
+  border-radius: 20px;
+  overflow: hidden;
+  background: #f0f0f0;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  height: 40px;
+}
+
+.truck-toggle-btn {
+  padding: 0 15px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 13px;
+  transition: all 0.3s;
+  min-width: 80px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.truck-toggle-btn.active {
+  background: #00657E;
+  color: white;
+}
+
+.truck-reset-btn {
+  padding: 0 15px;
+  background: #f0f0f0;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 13px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  height: 40px;
+}
+
+.truck-reset-btn:hover {
+  background: #e0e0e0;
 }
