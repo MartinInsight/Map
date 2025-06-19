@@ -166,28 +166,27 @@ html, body {
   display: block;
 }
 
-/* Rail 툴팁 스타일 */
+/* rail-tooltip 색상 클래스 추가 (원 색상과 동일하게 설정) */
+.rail-tooltip .congestion-very-high { color: #d73027; } /* 진한 빨강 */
+.rail-tooltip .congestion-high { color: #fdae61; }     /* 주황색 */
+.rail-tooltip .congestion-average { color: #abd9e9; }  /* 매우 연한 파랑 */
+.rail-tooltip .congestion-low { color: #74add1; }      /* 연한 파랑 */
+.rail-tooltip .congestion-very-low { color: #4575b4; } /* 진한 파랑 */
+
+/* 기존 .rail-tooltip 스타일 유지 */
 .rail-tooltip {
   font-family: Arial, sans-serif;
   min-width: 200px;
   padding: 10px;
 }
-
 .rail-tooltip h4 {
   margin: 0 0 10px 0;
   font-size: 16px;
 }
-
 .rail-tooltip p {
   margin: 5px 0;
   font-size: 14px;
 }
-
-.congestion-very-low { color: #4575b4; }
-.congestion-low { color: #74add1; }
-.congestion-average { color: #abd9e9; }
-.congestion-high { color: #fdae61; }
-.congestion-very-high { color: #d73027; }
 
 /* 범례 숨김 */
 .legend {
