@@ -10,8 +10,8 @@ class TruckCongestionMap {
       attribution: '© OpenStreetMap'
     }).addTo(this.map);
 
-    this.addControls();
     this.initializeMap();
+    this.setupTabSwitching(); // 탭 전환 핸들러 추가
   }
 
   async initializeMap() {
@@ -181,14 +181,28 @@ class TruckCongestionMap {
     this.map.fitBounds(bounds);
   }
 
-  addControls() {
-    const controlContainer = L.control({ position: 'topright' });
-    
-    controlContainer.onAdd = () => {
-      this.controlDiv = L.DomUtil.create('div', 'truck-control-container');
-      this.renderControls();
-      return this.controlDiv;
-    };
+  setupTabSwitching() {
+    document.querySelectorAll('.transport-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        // 모든 탭 비활성화
+        document.querySelectorAll('.transport-tab').forEach(t => {
+          t.classList.remove('active');
+        });
+        
+        // 모든 맵 숨기기
+        document.querySelectorAll('.transport-map').forEach(m => {
+          m.classList.remove('active');
+        });
+
+        // 선택한 탭 활성화
+        tab.classList.add('active');
+        
+        // 해당 맵 표시
+        const mapType = tab.dataset.map;
+        document.getElementById(`${mapType}-map`).classList.add('active');
+      });
+    });
+  }
     
     controlContainer.addTo(this.map);
   }
