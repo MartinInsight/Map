@@ -196,6 +196,23 @@ html, body {
   color: #555;
 }
 
+.merged-count {
+  color: white !important;
+  font-weight: bold !important;
+  font-size: 14px !important;
+  text-shadow: 0 0 5px rgba(0,0,0,0.7);
+  background: transparent !important;
+  border: none !important;
+}
+
+.merged-popup {
+  max-height: 300px !important;
+}
+.merged-popup hr {
+  margin: 5px 0;
+  border-color: #eee;
+}
+
 /* 범례 숨김 */
 .legend {
   display: none !important;
