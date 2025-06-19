@@ -77,28 +77,37 @@ class RailCongestionMap {
     return 5;                        // 제일 작음
   }
 
-  getColor(level) {
-    // 원 색상과 툴팁 텍스트 색상을 완전히 동일하게 설정
-    const colors = {
-      'Very Low': '#4575b4',    // 진한 파랑
-      'Low': '#74add1',         // 연한 파랑 (명확한 구분)
-      'Average': '#b0b0b0',     // 회색
-      'High': '#fdae61',        // 주황색
-      'Very High': '#d73027'    // 진한 빨강
+  getColor(level, isText = false) {
+    // 원 색상 (기존보다 약간 연하게)
+    const circleColors = {
+      'Very Low': '#004fc0',    // 원: 파랑
+      'Low': '#75acfc',         // 원: 연한 파랑 
+      'Average': '#bfc5cd',     // 원: 회색
+      'High': '#f8a99c',        // 원: 연한 빨강
+      'Very High': '#e1402c'    // 원: 빨강
     };
-    return colors[level] || '#999';
+    
+    // 텍스트 색상 (원보다 더 진하게)
+    const textColors = {
+      'Very Low': '#0047ad',    // 텍스트: 파랑
+      'Low': '#699be3',         // 텍스트: 연한 파랑
+      'Average': '#acb1b9',     // 텍스트: 회색
+      'High': '#df988c',        // 텍스트: 연한 빨강
+      'Very High': '#cb3a28'    // 텍스트: 빨강
+    };
+  
+    return isText ? textColors[level] : circleColors[level];
   }
-
+  
   createPopupContent(data) {
     const level = data.congestion_level || 'Unknown';
-    const color = this.getColor(level); // 원 색상을 가져와 텍스트에 적용
-  
+    
     return `
       <div class="rail-tooltip">
         <h4>${data.location || 'Unknown Location'}</h4>
         <p><strong>Company:</strong> ${data.company || 'Unknown'}</p>
         <p><strong>Congestion Level:</strong> 
-          <span style="color: ${color}"> <!-- 원 색상과 동일하게 적용 -->
+          <span style="color: ${this.getColor(level, true)}"> <!-- 텍스트용 진한 색상 -->
             ${level}
           </span>
         </p>
