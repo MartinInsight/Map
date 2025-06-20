@@ -15,7 +15,7 @@
     "location": "Denver, CO",
     "lat": 39.7392358,
     "lng": -104.990251,
-    "congestion_score": 28.0,
+    "congestion_score": 28,
     "indicator": -0.8897918835,
     "congestion_level": "Average"
   },
@@ -375,9 +375,9 @@
     "location": "Rocky Mount, NC",
     "lat": 35.9144906,
     "lng": -77.8064608,
-    "congestion_score": 0.0,
-    "indicator": 0.0,
-    "congestion_level": "Average"
+    "congestion_score": null,
+    "indicator": null,
+    "congestion_level": "Very High"
   },
   {
     "date": "2025-05-30 0:00:00",
@@ -415,9 +415,9 @@
     "location": "Allentown, PA",
     "lat": 40.6022939,
     "lng": -75.4714098,
-    "congestion_score": 0.0,
-    "indicator": 0.0,
-    "congestion_level": "Average"
+    "congestion_score": null,
+    "indicator": null,
+    "congestion_level": "Very High"
   },
   {
     "date": "2025-05-30 0:00:00",
@@ -505,9 +505,9 @@
     "location": "Linwood, NC",
     "lat": 35.7506938,
     "lng": -80.3178305,
-    "congestion_score": 0.0,
-    "indicator": 0.0,
-    "congestion_level": "Average"
+    "congestion_score": null,
+    "indicator": null,
+    "congestion_level": "Very High"
   },
   {
     "date": "2025-05-30 0:00:00",
@@ -585,9 +585,9 @@
     "location": "North Platte East, NE",
     "lat": 41.1402759,
     "lng": -100.7601454,
-    "congestion_score": 0.0,
-    "indicator": 0.0,
-    "congestion_level": "Average"
+    "congestion_score": null,
+    "indicator": null,
+    "congestion_level": "Very High"
   },
   {
     "date": "2025-05-30 0:00:00",

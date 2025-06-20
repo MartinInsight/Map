@@ -1,0 +1,452 @@
+{
+  "TN": {
+    "name": "Tennessee",
+    "inboundDelay": -3.08,
+    "inboundColor": -1,
+    "outboundDelay": -6.46,
+    "outboundColor": -2,
+    "dwellInbound": -5.56,
+    "dwellOutbound": -1.55
+  },
+  "NE": {
+    "name": "Nebraska",
+    "inboundDelay": -6.94,
+    "inboundColor": -2,
+    "outboundDelay": -3.71,
+    "outboundColor": -1,
+    "dwellInbound": 6.8,
+    "dwellOutbound": -6.77
+  },
+  "AZ": {
+    "name": "Arizona",
+    "inboundDelay": -1.81,
+    "inboundColor": -1,
+    "outboundDelay": -1.91,
+    "outboundColor": -1,
+    "dwellInbound": -5.2,
+    "dwellOutbound": -7.13
+  },
+  "NY": {
+    "name": "New York",
+    "inboundDelay": -0.08,
+    "inboundColor": -1,
+    "outboundDelay": -0.09,
+    "outboundColor": -1,
+    "dwellInbound": -12.37,
+    "dwellOutbound": -6.27
+  },
+  "SD": {
+    "name": "South Dakota",
+    "inboundDelay": -4.67,
+    "inboundColor": -1,
+    "outboundDelay": -0.95,
+    "outboundColor": -1,
+    "dwellInbound": -15.59,
+    "dwellOutbound": -5.03
+  },
+  "VT": {
+    "name": "Vermont",
+    "inboundDelay": 6.46,
+    "inboundColor": 2,
+    "outboundDelay": 9.37,
+    "outboundColor": 2,
+    "dwellInbound": -41.05,
+    "dwellOutbound": -3.34
+  },
+  "SC": {
+    "name": "South Carolina",
+    "inboundDelay": -2.91,
+    "inboundColor": -1,
+    "outboundDelay": -9.87,
+    "outboundColor": -2,
+    "dwellInbound": -2.21,
+    "dwellOutbound": -0.65
+  },
+  "TX": {
+    "name": "Texas",
+    "inboundDelay": -0.87,
+    "inboundColor": -1,
+    "outboundDelay": -2.84,
+    "outboundColor": -1,
+    "dwellInbound": -4.98,
+    "dwellOutbound": -3.89
+  },
+  "NM": {
+    "name": "New Mexico",
+    "inboundDelay": 1.03,
+    "inboundColor": 1,
+    "outboundDelay": 0.56,
+    "outboundColor": 1,
+    "dwellInbound": -11.84,
+    "dwellOutbound": -5.29
+  },
+  "GA": {
+    "name": "Georgia",
+    "inboundDelay": -5,
+    "inboundColor": -1,
+    "outboundDelay": -2.28,
+    "outboundColor": -1,
+    "dwellInbound": -1.12,
+    "dwellOutbound": -3.13
+  },
+  "FL": {
+    "name": "Florida",
+    "inboundDelay": -0.8,
+    "inboundColor": -1,
+    "outboundDelay": 2.52,
+    "outboundColor": 1,
+    "dwellInbound": -7.3,
+    "dwellOutbound": -3.3
+  },
+  "CT": {
+    "name": "Connecticut",
+    "inboundDelay": -3.43,
+    "inboundColor": -1,
+    "outboundDelay": -3.24,
+    "outboundColor": -1,
+    "dwellInbound": 3.08,
+    "dwellOutbound": -7.14
+  },
+  "OH": {
+    "name": "Ohio",
+    "inboundDelay": -1.38,
+    "inboundColor": -1,
+    "outboundDelay": -0.45,
+    "outboundColor": -1,
+    "dwellInbound": -5.85,
+    "dwellOutbound": -4.77
+  },
+  "VA": {
+    "name": "Virginia",
+    "inboundDelay": -2.78,
+    "inboundColor": -1,
+    "outboundDelay": -2.41,
+    "outboundColor": -1,
+    "dwellInbound": -2.23,
+    "dwellOutbound": 1.21
+  },
+  "PA": {
+    "name": "Pennsylvania",
+    "inboundDelay": -5.25,
+    "inboundColor": -2,
+    "outboundDelay": -1.23,
+    "outboundColor": -1,
+    "dwellInbound": -1.52,
+    "dwellOutbound": -0.85
+  },
+  "IN": {
+    "name": "Indiana",
+    "inboundDelay": -4.94,
+    "inboundColor": -1,
+    "outboundDelay": -3.79,
+    "outboundColor": -1,
+    "dwellInbound": -2.66,
+    "dwellOutbound": 0.86
+  },
+  "CO": {
+    "name": "Colorado",
+    "inboundDelay": -0.02,
+    "inboundColor": -1,
+    "outboundDelay": 0.91,
+    "outboundColor": 1,
+    "dwellInbound": 2.72,
+    "dwellOutbound": -2.09
+  },
+  "WI": {
+    "name": "Wisconsin",
+    "inboundDelay": -3.1,
+    "inboundColor": -1,
+    "outboundDelay": -4.68,
+    "outboundColor": -1,
+    "dwellInbound": -0.97,
+    "dwellOutbound": -5.75
+  },
+  "MT": {
+    "name": "Montana",
+    "inboundDelay": 0.27,
+    "inboundColor": 1,
+    "outboundDelay": -4.23,
+    "outboundColor": -1,
+    "dwellInbound": -3.15,
+    "dwellOutbound": -1.27
+  },
+  "IA": {
+    "name": "Iowa",
+    "inboundDelay": -10.25,
+    "inboundColor": -3,
+    "outboundDelay": -8.56,
+    "outboundColor": -2,
+    "dwellInbound": -6.71,
+    "dwellOutbound": -1.01
+  },
+  "RI": {
+    "name": "Rhode Island",
+    "inboundDelay": -10.13,
+    "inboundColor": -3,
+    "outboundDelay": null,
+    "outboundColor": 0,
+    "dwellInbound": 0.03,
+    "dwellOutbound": 24.61
+  },
+  "MO": {
+    "name": "Missouri",
+    "inboundDelay": -3.33,
+    "inboundColor": -1,
+    "outboundDelay": -2,
+    "outboundColor": -1,
+    "dwellInbound": 1.46,
+    "dwellOutbound": -5.59
+  },
+  "MA": {
+    "name": "Massachusetts",
+    "inboundDelay": 6.39,
+    "inboundColor": 2,
+    "outboundDelay": 1.41,
+    "outboundColor": 1,
+    "dwellInbound": -6.57,
+    "dwellOutbound": -1.24
+  },
+  "OK": {
+    "name": "Oklahoma",
+    "inboundDelay": -3.06,
+    "inboundColor": -1,
+    "outboundDelay": 0.59,
+    "outboundColor": 1,
+    "dwellInbound": -7.49,
+    "dwellOutbound": -8.98
+  },
+  "MS": {
+    "name": "Mississippi",
+    "inboundDelay": -2.4,
+    "inboundColor": -1,
+    "outboundDelay": -3.69,
+    "outboundColor": -1,
+    "dwellInbound": -2.09,
+    "dwellOutbound": 3.05
+  },
+  "NJ": {
+    "name": "New Jersey",
+    "inboundDelay": -1.76,
+    "inboundColor": -1,
+    "outboundDelay": -3.49,
+    "outboundColor": -1,
+    "dwellInbound": -11.67,
+    "dwellOutbound": -1.14
+  },
+  "NH": {
+    "name": "New Hampshire",
+    "inboundDelay": -2.24,
+    "inboundColor": -1,
+    "outboundDelay": null,
+    "outboundColor": 0,
+    "dwellInbound": -0.69,
+    "dwellOutbound": 3.32
+  },
+  "WY": {
+    "name": "Wyoming",
+    "inboundDelay": null,
+    "inboundColor": 0,
+    "outboundDelay": null,
+    "outboundColor": 0,
+    "dwellInbound": 0.35,
+    "dwellOutbound": 4.14
+  },
+  "ME": {
+    "name": "Maine",
+    "inboundDelay": -3.34,
+    "inboundColor": -1,
+    "outboundDelay": null,
+    "outboundColor": 0,
+    "dwellInbound": -14.23,
+    "dwellOutbound": -5.41
+  },
+  "WV": {
+    "name": "West Virginia",
+    "inboundDelay": -4.08,
+    "inboundColor": -1,
+    "outboundDelay": -2.53,
+    "outboundColor": -1,
+    "dwellInbound": -2.38,
+    "dwellOutbound": -5.39
+  },
+  "WA": {
+    "name": "Washington",
+    "inboundDelay": -0.65,
+    "inboundColor": -1,
+    "outboundDelay": 1.91,
+    "outboundColor": 1,
+    "dwellInbound": -1.32,
+    "dwellOutbound": 2.06
+  },
+  "IL": {
+    "name": "Illinois",
+    "inboundDelay": -1.39,
+    "inboundColor": -1,
+    "outboundDelay": -2.99,
+    "outboundColor": -1,
+    "dwellInbound": -4.31,
+    "dwellOutbound": -1.84
+  },
+  "AR": {
+    "name": "Arkansas",
+    "inboundDelay": -3.12,
+    "inboundColor": -1,
+    "outboundDelay": -5.55,
+    "outboundColor": -2,
+    "dwellInbound": -0.03,
+    "dwellOutbound": -3.96
+  },
+  "KY": {
+    "name": "Kentucky",
+    "inboundDelay": -5.09,
+    "inboundColor": -2,
+    "outboundDelay": -3.3,
+    "outboundColor": -1,
+    "dwellInbound": -1.37,
+    "dwellOutbound": -4.32
+  },
+  "OR": {
+    "name": "Oregon",
+    "inboundDelay": 2.31,
+    "inboundColor": 1,
+    "outboundDelay": 5.99,
+    "outboundColor": 2,
+    "dwellInbound": -5.51,
+    "dwellOutbound": -1
+  },
+  "ND": {
+    "name": "North Dakota",
+    "inboundDelay": -6.05,
+    "inboundColor": -2,
+    "outboundDelay": 3.7,
+    "outboundColor": 1,
+    "dwellInbound": 7.43,
+    "dwellOutbound": 3.11
+  },
+  "MI": {
+    "name": "Michigan",
+    "inboundDelay": -3.15,
+    "inboundColor": -1,
+    "outboundDelay": -5.84,
+    "outboundColor": -2,
+    "dwellInbound": -7.79,
+    "dwellOutbound": -0.02
+  },
+  "MD": {
+    "name": "Maryland",
+    "inboundDelay": -2.92,
+    "inboundColor": -1,
+    "outboundDelay": -3.55,
+    "outboundColor": -1,
+    "dwellInbound": -6.3,
+    "dwellOutbound": -0.45
+  },
+  "NV": {
+    "name": "Nevada",
+    "inboundDelay": -3.04,
+    "inboundColor": -1,
+    "outboundDelay": -10.52,
+    "outboundColor": -3,
+    "dwellInbound": 0.23,
+    "dwellOutbound": 2.1
+  },
+  "ID": {
+    "name": "Idaho",
+    "inboundDelay": 0.73,
+    "inboundColor": 1,
+    "outboundDelay": 6.5,
+    "outboundColor": 2,
+    "dwellInbound": -12.6,
+    "dwellOutbound": -5.87
+  },
+  "AK": {
+    "name": "Alaska",
+    "inboundDelay": null,
+    "inboundColor": 0,
+    "outboundDelay": null,
+    "outboundColor": 0,
+    "dwellInbound": -100,
+    "dwellOutbound": 1273.68
+  },
+  "CA": {
+    "name": "California",
+    "inboundDelay": 0.06,
+    "inboundColor": 1,
+    "outboundDelay": 0.68,
+    "outboundColor": 1,
+    "dwellInbound": -3.49,
+    "dwellOutbound": -2.83
+  },
+  "LA": {
+    "name": "Louisiana",
+    "inboundDelay": -0.94,
+    "inboundColor": -1,
+    "outboundDelay": -2.96,
+    "outboundColor": -1,
+    "dwellInbound": -0.02,
+    "dwellOutbound": -4.95
+  },
+  "AL": {
+    "name": "Alabama",
+    "inboundDelay": -2.92,
+    "inboundColor": -1,
+    "outboundDelay": -2.59,
+    "outboundColor": -1,
+    "dwellInbound": -6.21,
+    "dwellOutbound": 5.93
+  },
+  "KS": {
+    "name": "Kansas",
+    "inboundDelay": -5.42,
+    "inboundColor": -2,
+    "outboundDelay": -0.75,
+    "outboundColor": -1,
+    "dwellInbound": -5.2,
+    "dwellOutbound": -1.51
+  },
+  "NC": {
+    "name": "North Carolina",
+    "inboundDelay": -4.43,
+    "inboundColor": -1,
+    "outboundDelay": -2.6,
+    "outboundColor": -1,
+    "dwellInbound": -7.68,
+    "dwellOutbound": -0.77
+  },
+  "MN": {
+    "name": "Minnesota",
+    "inboundDelay": 6.3,
+    "inboundColor": 2,
+    "outboundDelay": 6.19,
+    "outboundColor": 2,
+    "dwellInbound": -2.56,
+    "dwellOutbound": -4.66
+  },
+  "HI": {
+    "name": "Hawaii",
+    "inboundDelay": null,
+    "inboundColor": 0,
+    "outboundDelay": null,
+    "outboundColor": 0,
+    "dwellInbound": null,
+    "dwellOutbound": null
+  },
+  "UT": {
+    "name": "Utah",
+    "inboundDelay": -2.38,
+    "inboundColor": -1,
+    "outboundDelay": -4.31,
+    "outboundColor": -1,
+    "dwellInbound": -4.73,
+    "dwellOutbound": -4.65
+  },
+  "DE": {
+    "name": "Delaware",
+    "inboundDelay": -4.44,
+    "inboundColor": -1,
+    "outboundDelay": -8.79,
+    "outboundColor": -2,
+    "dwellInbound": -16.41,
+    "dwellOutbound": 2.04
+  }
+}
