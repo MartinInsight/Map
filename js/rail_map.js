@@ -116,3 +116,5 @@ class RailCongestionMap {
     `;
   }
 }
+
+window.RailCongestionMap = RailCongestionMap;
