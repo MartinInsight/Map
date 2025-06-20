@@ -160,10 +160,11 @@ class TruckCongestionMap {
     `;
   
     L.popup({
-      className: 'custom-popup', // 커스텀 클래스 추가
-      maxWidth: 250,
+      className: 'truck-tooltip-container', // 새 클래스 추가
+      maxWidth: 300,
       autoClose: false,
-      closeButton: false
+      closeButton: false,
+      closeOnClick: false
     })
     .setLatLng(event.latlng)
     .setContent(content)
