@@ -85,6 +85,7 @@ html, body {
 /* 트럭 툴팁 스타일 */
 .truck-tooltip {
   font-family: 'Noto Sans KR', sans-serif;
+  font-weight: 400;
   min-width: 220px;
   padding: 15px;
   background: white;
@@ -95,9 +96,9 @@ html, body {
 }
 
 .truck-tooltip h4 {
+  font-weight: 600;
   margin: 0 0 15px 0;
   font-size: 16px;
-  font-weight: 600;
   color: #333;
   border-bottom: 1px solid #eee;
   padding-bottom: 8px;
@@ -121,6 +122,7 @@ html, body {
 }
 
 .truck-metric-box strong {
+  font-weight: 600;
   display: block;
   margin-bottom: 5px;
   font-size: 14px;
@@ -138,6 +140,7 @@ html, body {
 }
 
 .truck-normal-text {
+  font-weight: 400;
   color: #333;
 }
 
