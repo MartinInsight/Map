@@ -103,6 +103,15 @@ html, body {
   padding-bottom: 8px;
 }
 
+.truck-tooltip-container .leaflet-popup-content-wrapper {
+  background: transparent !important;
+  padding: 0 !important;
+}
+
+.truck-tooltip-container .leaflet-popup-content {
+  width: 100% !important;
+}
+
 .truck-metric-box {
   margin-bottom: 10px;
 }
