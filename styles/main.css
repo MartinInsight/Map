@@ -89,7 +89,7 @@ html, body {
   width: 50%;
 }
 
-/* ===== TRUCK 관련 스타일 ===== */
+/* 트럭 툴팁 스타일 */
 .truck-tooltip {
   font-family: 'Noto Sans KR', sans-serif;
   min-width: 220px;
@@ -97,7 +97,6 @@ html, body {
   background: white;
   border-radius: 6px;
   box-shadow: 0 3px 10px rgba(0,0,0,0.2);
-  text-align: center;
 }
 
 .truck-tooltip h4 {
@@ -110,7 +109,11 @@ html, body {
 }
 
 .truck-metric-box {
-  margin: 15px 0;
+  margin-bottom: 10px;
+}
+
+.truck-metric-box:last-child {
+  margin-bottom: 0;
 }
 
 .truck-metric-box strong {
@@ -118,23 +121,23 @@ html, body {
   margin-bottom: 5px;
   font-size: 14px;
   color: #555;
-  font-weight: 400;
-}
-
-.truck-metric-box p {
-  margin: 0;
-  font-size: 13px;
 }
 
 .truck-positive {
-  color: #27ae60 !important;
+  color: #27ae60;
+  font-weight: 600;
 }
 
 .truck-negative {
-  color: #e74c3c !important;
+  color: #e74c3c;
+  font-weight: 600;
 }
 
-/* ===== RAIL 관련 스타일 ===== */
+.truck-normal-text {
+  color: #333;
+}
+
+/* 레일 툴팁 스타일 */
 .rail-tooltip {
   font-family: 'Noto Sans KR', sans-serif;
   min-width: 200px;
@@ -147,8 +150,8 @@ html, body {
 .rail-tooltip h4 {
   margin: 0 0 12px 0;
   font-size: 16px;
-  color: #333;
   font-weight: 600;
+  color: #333;
   border-bottom: 1px solid #eee;
   padding-bottom: 8px;
 }
@@ -156,12 +159,10 @@ html, body {
 .rail-tooltip p {
   margin: 8px 0;
   font-size: 14px;
-  font-weight: 400;
 }
 
 .rail-tooltip strong {
   color: #555;
-  font-weight: 400;
 }
 
 /* 공통 툴팁 위치 */
