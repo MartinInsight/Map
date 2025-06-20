@@ -90,6 +90,8 @@ html, body {
   background: white;
   border-radius: 6px;
   box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+  border: none;
+  margin: 0;
 }
 
 .truck-tooltip h4 {
@@ -163,6 +165,22 @@ html, body {
   transform: translate(-50%, 0) !important;
   left: 50% !important;
   margin-top: 15px !important;
+}
+
+.leaflet-popup-content-wrapper {
+  all: initial !important; /* 기본 스타일 완전 제거 */
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.leaflet-popup-content {
+  margin: 0 !important;
+  width: auto !important;
+}
+
+.leaflet-popup-tip {
+  display: none !important; /* 팝업 화살표 제거 */
 }
 
 /* 트럭 맵 컨트롤 패널 (새 디자인) */
