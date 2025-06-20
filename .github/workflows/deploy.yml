@@ -29,7 +29,7 @@ jobs:
           echo "생성된 파일:"
           ls -la data/
           echo -e "\nJSON 내용 샘플:"
-          jq '.["TN"]' data/data.json || echo "JSON 파싱 실패"
+          jq '.["TN"]' data/us-truck.json || echo "JSON 파싱 실패"
 
       - name: Fetch Rail Data
         env:
@@ -49,9 +49,17 @@ jobs:
       - name: Verify JSON files
         run: |
           echo "Trucking data sample:"
-          jq -r '.["TN"]' data/data.json
+          if [ -f "data/us-truck.json" ]; then
+            jq -r '.["TN"]' data/us-truck.json
+          else
+            echo "No truck data file exists"
+          fi
           echo -e "\nRail data sample:"
-          jq -r '.[0]' data/us-rail.json
+          if [ -f "data/us-rail.json" ]; then
+            jq -r '.[0]' data/us-rail.json
+          else
+            echo "No rail data file exists"
+          fi
           echo -e "\n파일 크기:"
           ls -lh data/
       
