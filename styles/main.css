@@ -45,7 +45,7 @@ html, body {
   height: 2px;
   background-color: #00657E;
   opacity: 0;
-  transition: all 0.3s ease;
+  transition: opacity 0.3s ease;
 }
 
 /* 활성 탭 스타일 */
@@ -63,7 +63,7 @@ html, body {
 }
 
 /* 다른 탭 호버 시 활성 탭 라인 숨김 */
-.transport-tab-container:hover .transport-tab.active:not(:hover)::after {
+.transport-tab-container:hover .transport-tab.active::after {
   opacity: 0;
 }
 
