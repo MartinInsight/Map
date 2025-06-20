@@ -40,9 +40,10 @@ def fetch_ocean_data():
                 lng = safe_convert(row.get('Longitude'))
                 if None in [lat, lng]:
                     continue
-                    
+                
                 # 데이터 정제
                 data = {
+                    'date': str(row.get('Date', '')).strip(),
                     'port': str(row.get('Port', '')).strip(),
                     'country': str(row.get('Country', '')).strip(),
                     'country_code': str(row.get('Country Code', '')).strip().lower(),
