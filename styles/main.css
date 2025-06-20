@@ -21,55 +21,49 @@ html, body {
 }
 
 .transport-tab {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  background: white;
-  cursor: pointer;
-  font-family: 'Noto Sans KR', sans-serif;
-  font-weight: 400;
-  font-size: 14px;
-  color: black;
-  position: relative;
-  transition: all 0.3s ease;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: white;
+    cursor: pointer;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-weight: 400;
+    font-size: 14px;
+    color: black;
+    position: relative; /* 필수 */
+    transition: all 0.3s ease;
+    padding: 0; /* 버튼 기본 패딩 제거 */
+    margin: 0; /* 버튼 기본 마진 제거 */
 }
 
+/* 모든 탭의 하단 라인 (초기 상태) */
 .transport-tab::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  height: 2px;
-  background-color: #00657E;
-  opacity: 0;
-  transition: opacity 0.3s ease;
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background-color: #00657E;
+    opacity: 0;
+    transition: opacity 0.3s ease;
 }
 
-/* 활성 탭 스타일 */
-.transport-tab.active {
-  font-weight: 600; /* 세미볼드 */
-  color: #00657e; /* 진한 파란색 */
-}
+/* 활성 탭 라인 */
 .transport-tab.active::after {
-  opacity: 1; /* 라인 표시 */
+    opacity: 1;
 }
 
 /* 비활성 탭 호버 시 */
 .transport-tab:not(.active):hover::after {
-  opacity: 1; /* 라인 표시 */
+    opacity: 1;
 }
 
-/* 다른 탭 호버 시 활성 탭 라인 숨김 */
-.transport-tab-container:hover .transport-tab.active::after {
-  opacity: 0;
-}
-
-/* 활성 탭 호버 시 라인 유지 */
-.transport-tab.active:hover::after {
-  opacity: 1 !important;
+/* 활성 탭이 아닌 다른 요소 호버 시 */
+.transport-tab-container:hover .transport-tab.active:not(:hover)::after {
+    opacity: 0;
 }
 
 /* 맵 컨테이너 - 50/50 분할 */
