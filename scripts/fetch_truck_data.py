@@ -99,4 +99,21 @@ def fetch_truck_data():
         with open(output_path, 'w', encoding='utf-8') as f:
             json.dump(result, f, indent=2, ensure_ascii=False, default=lambda o: None if o is None else o)
             
-        print(f"✅ Truck 데이터 저장
+        print(f"✅ Truck 데이터 저장 완료: {output_path}")
+        print(f"🔄 생성된 데이터 개수: {len(result)}")
+        print(f"⏩ 건너뛴 행 개수: {skipped_rows}")
+        
+        # 샘플 데이터 출력
+        if result:
+            first_key = next(iter(result))
+            print("\n🔍 생성된 데이터 샘플:")
+            print(json.dumps({first_key: result[first_key]}, indent=2, ensure_ascii=False))
+            
+        return True
+        
+    except Exception as e:
+        print(f"❌ 심각한 오류: {str(e)}")
+        return False
+
+if __name__ == "__main__":
+    fetch_truck_data()
