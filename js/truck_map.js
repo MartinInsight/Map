@@ -13,7 +13,6 @@ class TruckCongestionMap {
 
     this.addControls();
     this.initializeMap();
-    this.setupTabSwitching();
   }
 
   async initializeMap() {
@@ -50,8 +49,8 @@ class TruckCongestionMap {
             dwellInbound: Number(data.dwellInbound) || 0,
             dwellOutbound: Number(data.dwellOutbound) || 0
           }
-        ]  // 여기서 괄호가 닫혀야 함
-      );  // 전체 함수 닫기
+        ])
+      );
     } catch (e) {
       console.error("Truck data loading failed:", e);
       return this.useFallbackData();
@@ -183,39 +182,6 @@ class TruckCongestionMap {
     this.map.fitBounds(bounds);
   }
 
-  setupTabSwitching() {
-    document.querySelectorAll('.transport-tab').forEach(tab => {
-      tab.addEventListener('click', () => {
-        // 모든 탭 활성화 상태 변경
-        document.querySelectorAll('.transport-tab').forEach(t => {
-          t.classList.remove('active');
-        });
-        tab.classList.add('active');
-        
-        // 모든 맵 활성화 상태 변경
-        document.querySelectorAll('.transport-map').forEach(m => {
-          m.classList.remove('active');
-        });
-  
-        const mapType = tab.dataset.map;
-        document.getElementById(`${mapType}-map`).classList.add('active');
-        
-        // 50/50 레이아웃 조정
-        if (mapType === 'truck') {
-          document.getElementById('truck-map').style.left = '0';
-          document.getElementById('truck-map').style.width = '50%';
-          document.getElementById('rail-map').style.left = '50%';
-          document.getElementById('rail-map').style.width = '50%';
-        } else {
-          document.getElementById('truck-map').style.left = '0';
-          document.getElementById('truck-map').style.width = '50%';
-          document.getElementById('rail-map').style.left = '50%';
-          document.getElementById('rail-map').style.width = '50%';
-        }
-      });
-    });
-  }
-    
   addControls() {
     const controlContainer = L.control({ position: 'topright' });
     
@@ -255,10 +221,7 @@ class TruckCongestionMap {
       this.map.setView([37.8, -96], 4);
     });
   }
-
-  updateLegend() {
-    if (this.legend) {
-      this.map.removeControl(this.legend);
-    }
-  }
 }
+
+// 전역 변수로 노출
+window.TruckCongestionMap = TruckCongestionMap;
