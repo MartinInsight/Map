@@ -7,18 +7,63 @@
   <link rel="stylesheet" href="styles/main.css">
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600&display=swap" rel="stylesheet">
   <style>
-    html, body {
+    body {
       margin: 0;
       padding: 0;
-      height: 100%;
-    }
-    #truck-map, #rail-map {
+      font-family: 'Noto Sans KR', sans-serif;
       height: 100vh;
-      width: 100vw;
+      display: flex;
+      flex-direction: column;
     }
+    
+    #tab-container {
+      display: flex;
+      height: 5%;
+      background: white;
+      z-index: 1000;
+    }
+    
+    .transport-tab {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: none;
+      background: white;
+      cursor: pointer;
+      font-weight: 400;
+      font-size: 14px;
+      position: relative;
+      transition: all 0.3s;
+    }
+    
+    .transport-tab.active {
+      font-weight: 600;
+      color: #003A52;
+    }
+    
+    .transport-tab.active::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background-color: #00657E;
+    }
+    
+    #map-container {
+      display: flex;
+      height: 95%;
+      width: 100%;
+    }
+    
     .transport-map {
+      width: 100%;
+      height: 100%;
       display: none;
     }
+    
     .transport-map.active {
       display: block;
     }
@@ -26,50 +71,50 @@
 </head>
 <body>
   <!-- 탭 버튼 -->
-  <div id="tab-container" class="transport-tab-container">
-    <button class="transport-tab truck-tab active" data-map="truck">Truck</button>
-    <button class="transport-tab rail-tab" data-map="rail">Rail</button>
+  <div id="tab-container">
+    <button class="transport-tab active" data-map="truck">Truck</button>
+    <button class="transport-tab" data-map="rail">Rail</button>
   </div>
 
-  <!-- 지도 영역 -->
-  <div id="truck-map" class="transport-map active"></div>
-  <div id="rail-map" class="transport-map"></div>
+  <!-- 지도 컨테이너 -->
+  <div id="map-container">
+    <div id="truck-map" class="transport-map active"></div>
+    <div id="rail-map" class="transport-map"></div>
+  </div>
 
-  <!-- 스크립트 로딩 -->
+  <!-- 스크립트 -->
   <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
   <script src="js/truck_map.js"></script>
   <script src="js/rail_map.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      // 약간의 지연 후 지도 초기화 (Leaflet 초기 렌더링 오류 방지)
-      setTimeout(() => {
-        const truckMap = new TruckCongestionMap('truck-map');
-        const railMap = new RailCongestionMap('rail-map');
+      const truckMap = new TruckCongestionMap('truck-map');
+      const railMap = new RailCongestionMap('rail-map');
 
-        document.querySelectorAll('.transport-tab').forEach(tab => {
-          tab.addEventListener('click', () => {
-            // 모든 탭 비활성화
-            document.querySelectorAll('.transport-tab').forEach(t => t.classList.remove('active'));
-            // 현재 탭 활성화
-            tab.classList.add('active');
-
-            // 모든 지도 숨기기
-            document.querySelectorAll('.transport-map').forEach(m => m.classList.remove('active'));
-            const selectedMapId = tab.dataset.map + '-map';
-            const selectedMap = document.getElementById(selectedMapId);
-            selectedMap.classList.add('active');
-
-            // 지도 크기 재계산
-            setTimeout(() => {
-              if (tab.dataset.map === 'truck') {
-                truckMap.map.invalidateSize();
-              } else {
-                railMap.map.invalidateSize();
-              }
-            }, 50);
+      document.querySelectorAll('.transport-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+          // 탭 전환
+          document.querySelectorAll('.transport-tab').forEach(t => {
+            t.classList.remove('active');
           });
+          tab.classList.add('active');
+
+          // 지도 전환
+          document.querySelectorAll('.transport-map').forEach(m => {
+            m.classList.remove('active');
+          });
+          document.getElementById(`${tab.dataset.map}-map`).classList.add('active');
+
+          // 지도 크기 조정
+          setTimeout(() => {
+            if (tab.dataset.map === 'truck') {
+              truckMap.map.invalidateSize();
+            } else {
+              railMap.map.invalidateSize();
+            }
+          }, 100);
         });
-      }, 100);
+      });
     });
   </script>
 </body>
