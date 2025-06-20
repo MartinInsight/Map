@@ -34,7 +34,6 @@ class TruckCongestionMap {
 
   async fetchSheetData() {
     try {
-      // 파일명을 data.json → us-truck.json으로 명시적으로 변경
       const response = await fetch('data/us-truck.json');
       if (!response.ok) throw new Error("Failed to load truck data");
       
@@ -51,8 +50,8 @@ class TruckCongestionMap {
             dwellInbound: Number(data.dwellInbound) || 0,
             dwellOutbound: Number(data.dwellOutbound) || 0
           }
-        ]
-      );
+        ]  // 여기서 괄호가 닫혀야 함
+      );  // 전체 함수 닫기
     } catch (e) {
       console.error("Truck data loading failed:", e);
       return this.useFallbackData();
