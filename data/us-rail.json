@@ -372,6 +372,16 @@
   {
     "date": "2025-05-30 0:00:00",
     "company": "CSX",
+    "location": "Rocky Mount, NC",
+    "lat": 35.9144906,
+    "lng": -77.8064608,
+    "congestion_score": 0.0,
+    "indicator": 0.0,
+    "congestion_level": "Average"
+  },
+  {
+    "date": "2025-05-30 0:00:00",
+    "company": "CSX",
     "location": "Selkirk, NY",
     "lat": 42.5319998,
     "lng": -73.7985008,
@@ -397,6 +407,16 @@
     "lng": -82.3540178,
     "congestion_score": 26.15,
     "indicator": -0.09048491818,
+    "congestion_level": "Average"
+  },
+  {
+    "date": "2025-05-30 0:00:00",
+    "company": "NS",
+    "location": "Allentown, PA",
+    "lat": 40.6022939,
+    "lng": -75.4714098,
+    "congestion_score": 0.0,
+    "indicator": 0.0,
     "congestion_level": "Average"
   },
   {
@@ -482,6 +502,16 @@
   {
     "date": "2025-05-30 0:00:00",
     "company": "NS",
+    "location": "Linwood, NC",
+    "lat": 35.7506938,
+    "lng": -80.3178305,
+    "congestion_score": 0.0,
+    "indicator": 0.0,
+    "congestion_level": "Average"
+  },
+  {
+    "date": "2025-05-30 0:00:00",
+    "company": "NS",
     "location": "Macon, GA",
     "lat": 32.8406946,
     "lng": -83.6324022,
@@ -547,6 +577,16 @@
     "lng": -92.2670941,
     "congestion_score": 24.4,
     "indicator": 0.02928012344,
+    "congestion_level": "Average"
+  },
+  {
+    "date": "2025-05-30 0:00:00",
+    "company": "UP",
+    "location": "North Platte East, NE",
+    "lat": 41.1402759,
+    "lng": -100.7601454,
+    "congestion_score": 0.0,
+    "indicator": 0.0,
     "congestion_level": "Average"
   },
   {
