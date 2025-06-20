@@ -77,16 +77,9 @@ html, body {
   display: block;
 }
 
-/* 트럭 맵이 활성화된 경우 레일 맵 위치 조정 */
-#rail-map {
-  left: 50%;
-  width: 50%;
-}
-
-/* 레일 맵이 활성화된 경우 트럭 맵 위치 조정 */
-#truck-map {
+#rail-map, #truck-map {
   left: 0;
-  width: 50%;
+  width: 100%;
 }
 
 /* 트럭 툴팁 스타일 */
