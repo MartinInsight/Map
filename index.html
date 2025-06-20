@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>US Transportation Congestion Map</title>
+  <title>Global Transportation Congestion Map</title>
   <meta charset="UTF-8">
   <link rel="icon" href="data:,">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
@@ -75,22 +75,26 @@
   <div class="transport-tab-container">
     <button class="transport-tab active" data-map="truck">Truck</button>
     <button class="transport-tab" data-map="rail">Rail</button>
+    <button class="transport-tab" data-map="ocean">Ocean</button>
   </div>
 
   <!-- 지도 컨테이너 -->
   <div id="map-container">
     <div id="truck-map" class="transport-map active"></div>
     <div id="rail-map" class="transport-map"></div>
+    <div id="ocean-map" class="transport-map"></div>
   </div>
 
   <!-- 스크립트 -->
   <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
   <script src="js/truck_map.js"></script>
   <script src="js/rail_map.js"></script>
+  <script src="js/ocean_map.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       const truckMap = new TruckCongestionMap('truck-map');
       const railMap = new RailCongestionMap('rail-map');
+      const oceanMap = new OceanCongestionMap('ocean-map');
 
       document.querySelectorAll('.transport-tab').forEach(tab => {
         tab.addEventListener('click', () => {
@@ -108,10 +112,16 @@
 
           // 지도 크기 조정
           setTimeout(() => {
-            if (tab.dataset.map === 'truck') {
-              truckMap.map.invalidateSize();
-            } else {
-              railMap.map.invalidateSize();
+            switch(tab.dataset.map) {
+              case 'truck':
+                truckMap.map.invalidateSize();
+                break;
+              case 'rail':
+                railMap.map.invalidateSize();
+                break;
+              case 'ocean':
+                oceanMap.map.invalidateSize();
+                break;
             }
           }, 100);
         });
