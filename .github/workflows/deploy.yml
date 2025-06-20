@@ -46,6 +46,21 @@ jobs:
             echo "No rail data file exists"
           fi
 
+      - name: Fetch Ocean Data
+        env:
+          GOOGLE_CREDENTIAL_JSON: ${{ secrets.GOOGLE_CREDENTIAL_JSON }}
+          SPREADSHEET_ID: ${{ secrets.SPREADSHEET_ID }}
+        run: |
+          python scripts/fetch_ocean_data.py
+          echo "Ocean data file:"
+          ls -la data/us-ocean.json || echo "Ocean data file not found"
+          echo -e "\nOcean data sample:"
+          if [ -f "data/us-ocean.json" ]; then
+            jq '.[0]' data/us-ocean.json
+          else
+            echo "No ocean data file exists"
+          fi
+
       - name: Verify JSON files
         run: |
           echo "Trucking data sample:"
