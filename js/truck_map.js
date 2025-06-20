@@ -186,22 +186,32 @@ class TruckCongestionMap {
   setupTabSwitching() {
     document.querySelectorAll('.transport-tab').forEach(tab => {
       tab.addEventListener('click', () => {
-        // 모든 탭 비활성화
+        // 모든 탭 활성화 상태 변경
         document.querySelectorAll('.transport-tab').forEach(t => {
           t.classList.remove('active');
         });
+        tab.classList.add('active');
         
-        // 모든 맵 숨기기
+        // 모든 맵 활성화 상태 변경
         document.querySelectorAll('.transport-map').forEach(m => {
           m.classList.remove('active');
         });
-
-        // 선택한 탭 활성화
-        tab.classList.add('active');
-        
-        // 해당 맵 표시
+  
         const mapType = tab.dataset.map;
         document.getElementById(`${mapType}-map`).classList.add('active');
+        
+        // 50/50 레이아웃 조정
+        if (mapType === 'truck') {
+          document.getElementById('truck-map').style.left = '0';
+          document.getElementById('truck-map').style.width = '50%';
+          document.getElementById('rail-map').style.left = '50%';
+          document.getElementById('rail-map').style.width = '50%';
+        } else {
+          document.getElementById('truck-map').style.left = '0';
+          document.getElementById('truck-map').style.width = '50%';
+          document.getElementById('rail-map').style.left = '50%';
+          document.getElementById('rail-map').style.width = '50%';
+        }
       });
     });
   }
