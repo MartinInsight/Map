@@ -39,6 +39,7 @@ def fetch_truck_data():
             try:
                 state_code = row.get('Code')
                 if not state_code:
+                    print(f"⚠️ State Code 없음 - 행 건너뜀: {row.get('State')}")
                     continue
                     
                 # 데이터 정제
@@ -62,10 +63,10 @@ def fetch_truck_data():
                 print(f"⚠️ 행 처리 오류 - {row.get('State')}: {str(e)}")
                 continue
         
-        # JSON 저장
+        # JSON 저장 (파일명을 us-truck.json으로 변경)
         output_dir = os.path.join(os.path.dirname(__file__), '../data')
         os.makedirs(output_dir, exist_ok=True)
-        output_path = os.path.join(output_dir, 'us-truck.json')
+        output_path = os.path.join(output_dir, 'us-truck.json')  # 파일명 변경
         
         with open(output_path, 'w', encoding='utf-8') as f:
             json.dump(result, f, indent=2, ensure_ascii=False)
