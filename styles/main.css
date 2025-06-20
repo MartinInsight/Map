@@ -175,6 +175,34 @@ html, body {
   color: #555;
 }
 
+/* Ocean 툴팁 스타일 */
+.ocean-tooltip {
+  font-family: 'Noto Sans KR', sans-serif;
+  min-width: 220px;
+  padding: 15px;
+  background: white;
+  border-radius: 6px;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+}
+
+.ocean-tooltip h4 {
+  margin: 0 0 12px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 8px;
+}
+
+.ocean-tooltip p {
+  margin: 8px 0;
+  font-size: 14px;
+}
+
+.ocean-tooltip strong {
+  color: #555;
+}
+
 /* 공통 툴팁 위치 */
 .leaflet-tooltip {
   transform: translate(-50%, 0) !important;
