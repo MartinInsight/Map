@@ -36,8 +36,7 @@ html, body {
   transition: all 0.3s ease;
 }
 
-/* 호버 효과 - 하단 라인 */
-.transport-tab:hover::after {
+.transport-tab::after {
   content: '';
   position: absolute;
   bottom: 0;
@@ -45,22 +44,32 @@ html, body {
   width: 100%;
   height: 2px;
   background-color: #00657E;
+  opacity: 0;
+  transition: all 0.3s ease;
 }
 
-/* 선택된 탭 스타일 */
+/* 활성 탭 스타일 */
 .transport-tab.active {
-  font-weight: 600;
-  color: #003A52;
+  font-weight: 600; /* 세미볼드 */
+  color: #00657e; /* 진한 파란색 */
+}
+.transport-tab.active::after {
+  opacity: 1; /* 라인 표시 */
 }
 
-.transport-tab.active::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  height: 2px;
-  background-color: #00657E;
+/* 비활성 탭 호버 시 */
+.transport-tab:not(.active):hover::after {
+  opacity: 1; /* 라인 표시 */
+}
+
+/* 다른 탭 호버 시 활성 탭 라인 숨김 */
+.transport-tab-container:hover .transport-tab.active:not(:hover)::after {
+  opacity: 0;
+}
+
+/* 활성 탭 호버 시 라인 유지 */
+.transport-tab.active:hover::after {
+  opacity: 1 !important;
 }
 
 /* 맵 컨테이너 - 50/50 분할 */
