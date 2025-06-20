@@ -4,6 +4,28 @@ import gspread
 import json
 from google.oauth2 import service_account
 
+def safe_convert_float(val, default=0.0):
+    """안전한 float 변환 함수"""
+    if val in [None, "", " "]:
+        return default
+    try:
+        return float(val)
+    except (ValueError, TypeError):
+        return default
+
+def determine_congestion_level(indicator):
+    """Indicator 값에 따라 혼잡도 레벨 결정"""
+    if indicator > 2:
+        return 'Very High'
+    elif indicator > 1:
+        return 'High'
+    elif indicator > -1:
+        return 'Average'
+    elif indicator > -2:
+        return 'Low'
+    else:
+        return 'Very Low'
+
 def fetch_rail_data():
     try:
         print("🔵 Rail 데이터 수집 시작")
@@ -21,7 +43,6 @@ def fetch_rail_data():
         sheet = gc.open_by_key(os.environ['SPREADSHEET_ID'])
         print(f"📊 시트 제목: {sheet.title}")
         
-        # 사용 가능한 워크시트 목록 출력
         print("📋 사용 가능한 워크시트:")
         for ws in sheet.worksheets():
             print(f"- {ws.title}")
@@ -40,37 +61,30 @@ def fetch_rail_data():
         result = []
         for row in records:
             try:
-                # 필수 필드 확인
+                # 필수 필드 확인 (위도/경도/회사명)
                 if not all([row.get('Latitude'), row.get('Longitude'), row.get('Railroad')]):
+                    print(f"⚠️ 필수 데이터 누락 - 행 건너뜀: {row}")
                     continue
                     
-                # 데이터 정제
+                # 위치 정보 결정
                 location = row.get('Location', '') or row.get('Yard', '')
                 if not location:
+                    print(f"⚠️ 위치 정보 없음 - 행 건너뜀: {row}")
                     continue
                 
-                # Indicator 값에 따라 혼잡도 레벨 결정
-                indicator = float(row.get('Indicator', 0))
-                if indicator > 2:
-                    category = 'Very High'
-                elif 1 < indicator <= 2:
-                    category = 'High'
-                elif -1 < indicator <= 1:
-                    category = 'Average'
-                elif -2 < indicator <= -1:
-                    category = 'Low'
-                else:
-                    category = 'Very Low'
-                    
+                # 숫자 데이터 변환 (공란 대체값 적용)
+                indicator = safe_convert_float(row.get('Indicator', 0))
+                dwell_time = safe_convert_float(row.get('Dwell Time', 0))
+                
                 result.append({
-                    'date': row.get('Date', '').strip(),
-                    'company': row.get('Railroad', '').strip(),
+                    'date': str(row.get('Date', '')).strip(),
+                    'company': str(row.get('Railroad', '')).strip(),
                     'location': location.strip(),
-                    'lat': float(row['Latitude']),
-                    'lng': float(row['Longitude']),
-                    'congestion_score': float(row.get('Dwell Time', 0)),
-                    'indicator': float(row.get('Indicator', 0)),  # Indicator 값 추가
-                    'congestion_level': category
+                    'lat': safe_convert_float(row['Latitude']),
+                    'lng': safe_convert_float(row['Longitude']),
+                    'congestion_score': dwell_time,
+                    'indicator': indicator,
+                    'congestion_level': determine_congestion_level(indicator)
                 })
             except Exception as e:
                 print(f"⚠️ 데이터 처리 오류 건너뜀 - 행: {row}, 오류: {str(e)}")
@@ -82,10 +96,15 @@ def fetch_rail_data():
         output_path = os.path.join(output_dir, 'us-rail.json')
         
         with open(output_path, 'w', encoding='utf-8') as f:
-            json.dump(result, f, indent=2, ensure_ascii=False, default=str)
+            json.dump(result, f, indent=2, ensure_ascii=False)
             
         print(f"✅ Rail 데이터 저장 완료: {output_path}")
         print(f"🔄 생성된 데이터 개수: {len(result)}")
+        
+        # 샘플 데이터 출력
+        if result:
+            print("\n🔍 생성된 데이터 샘플:")
+            print(json.dumps(result[0], indent=2, ensure_ascii=False))
         return True
         
     except Exception as e:
@@ -93,11 +112,4 @@ def fetch_rail_data():
         return False
 
 if __name__ == "__main__":
-    if fetch_rail_data():
-        print("\n🔍 생성된 데이터 샘플:")
-        try:
-            with open('../data/us-rail.json', 'r', encoding='utf-8') as f:
-                data = json.load(f)
-                print(json.dumps(data[:3], indent=2, ensure_ascii=False))  # 처음 3개 항목 출력
-        except Exception as e:
-            print(f"생성된 파일 확인 오류: {str(e)}")
+    fetch_rail_data()
