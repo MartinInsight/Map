@@ -134,26 +134,23 @@ class TruckCongestionMap {
     const delay = isInbound ? data.inboundDelay : data.outboundDelay;
     const dwell = isInbound ? data.dwellInbound : data.dwellOutbound;
   
+    // 더 간결한 HTML 구조로 변경
     const content = `
       <div class="truck-tooltip">
         <h4>${data.name || 'Unknown'}</h4>
-        <div class="truck-metric-box">
+        <div>
           <strong>Truck Movement</strong>
-          <p>
-            <span class="${delay >= 0 ? 'truck-positive' : 'truck-negative'}">
-              ${delay >= 0 ? '↑' : '↓'} ${formatValue(delay)}%
-            </span>
+          <p class="${delay >= 0 ? 'truck-positive' : 'truck-negative'}">
+            ${delay >= 0 ? '↑' : '↓'} ${formatValue(delay)}%
             <span class="truck-normal-text">
               ${delay >= 0 ? ' above ' : ' below '}2 weeks moving average
             </span>
           </p>
         </div>
-        <div class="truck-metric-box">
+        <div>
           <strong>Dwell Time</strong>
-          <p>
-            <span class="${dwell >= 0 ? 'truck-positive' : 'truck-negative'}">
-              ${dwell >= 0 ? '↑' : '↓'} ${formatValue(dwell)}%
-            </span>
+          <p class="${dwell >= 0 ? 'truck-positive' : 'truck-negative'}">
+            ${dwell >= 0 ? '↑' : '↓'} ${formatValue(dwell)}%
             <span class="truck-normal-text">
               ${dwell >= 0 ? ' above ' : ' below '}2 weeks moving average
             </span>
@@ -163,16 +160,15 @@ class TruckCongestionMap {
     `;
   
     L.popup({
+      className: 'custom-popup', // 커스텀 클래스 추가
+      maxWidth: 250,
       autoClose: false,
-      closeButton: false,
-      className: 'truck-popup-container',
-      offset: L.point(0, -10)
+      closeButton: false
     })
-      .setLatLng(event.latlng)
-      .setContent(content)
-      .openOn(this.map);
+    .setLatLng(event.latlng)
+    .setContent(content)
+    .openOn(this.map);
   }
-
   hideTooltip() {
     this.map.closePopup();
   }
