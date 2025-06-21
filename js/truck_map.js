@@ -100,13 +100,13 @@ class TruckCongestionMap {
 
   getColor(value) {
     const colors = {
-      '-3': '#d73027',
-      '-2': '#f46d43',
-      '-1': '#fdae61',
-      '0': '#ffffbf',
-      '1': '#a6d96a',
-      '2': '#66bd63',
-      '3': '#1a9850'
+      '-3': '#F44336', // Red (High)
+      '-2': '#FF9800', // Orange (Medium-High)
+      '-1': '#FFC107', // Amber (Medium)
+      '0': '#8BC34A',  // Light Green (Low)
+      '1': '#4CAF50',  // Green (Very Low)
+      '2': '#2E7D32',  // Dark Green
+      '3': '#1B5E20'   // Darker Green
     };
     return colors[value] || '#cccccc';
   }
