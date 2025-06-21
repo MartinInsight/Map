@@ -51,40 +51,20 @@ class RailCongestionMap {
   renderMarkers() {
     this.markers.forEach(marker => this.map.removeLayer(marker));
     this.markers = [];
-  
+
     this.currentData.forEach(item => {
       const marker = L.circleMarker([item.lat, item.lng], {
-        radius: this.getRadiusByIndicator(item.indicator),
+        radius: this.getRadiusByIndicator(item.indicator), // Indicator로 크기 결정
         fillColor: this.getColor(item.congestion_level),
         color: "#000",
         weight: 1,
         opacity: 1,
         fillOpacity: 0.8
       });
-  
+
       marker.bindPopup(this.createPopupContent(item));
-      
-      // 호버 및 클릭 이벤트 추가
-      marker.on({
-        mouseover: function() {
-          this.setStyle({ weight: 3, fillOpacity: 1 });
-        },
-        mouseout: function() {
-          this.setStyle({ weight: 1, fillOpacity: 0.8 });
-        },
-        click: () => this.zoomToMarker(item.lat, item.lng)
-      });
-      
       marker.addTo(this.map);
       this.markers.push(marker);
-    });
-  }
-  
-  // 줌 기능 추가
-  zoomToMarker(lat, lng) {
-    this.map.setView([lat, lng], 8, {
-      animate: true,
-      duration: 1
     });
   }
 
@@ -98,24 +78,24 @@ class RailCongestionMap {
   }
 
   getColor(level, isText = false) {
-    // 원 색상
+    // 원 색상 (기존보다 약간 연하게)
     const circleColors = {
-      'Very High': '#F44336',   // Red
-      'High': '#FF9800',        // Orange
-      'Average': '#FFC107',     // Amber
-      'Low': '#8BC34A',         // Light Green
-      'Very Low': '#4CAF50'     // Green
+      'Very High': '#d62828',   // 원: 빨강
+      'High': '#f88c2b',        // 원: 주황
+      'Average': '#bcbcbc',     // 원: 회색
+      'Low': '#5fa9f6',         // 원: 하늘
+      'Very Low': '#004fc0'     // 원: 파랑
     };
     
-    // 텍스트 색상
+    // 텍스트 색상 (원보다 더 진하게)
     const textColors = {
-      'Very High': '#C62828',   // Dark Red
-      'High': '#E65100',        // Dark Orange
-      'Average': '#FF8F00',     // Dark Amber
-      'Low': '#2E7D32',         // Dark Green
-      'Very Low': '#1B5E20'     // Darker Green
+      'Very High': '#6b1414',   // 텍스트: 빨강
+      'High': '#7c4616',        // 텍스트: 주황
+      'Average': '#5e5e5e',     // 텍스트: 회색
+      'Low': '#30557b',         // 텍스트: 하늘
+      'Very Low': '#002860'     // 텍스트: 파랑
     };
-    
+  
     return isText ? textColors[level] : circleColors[level];
   }
   
