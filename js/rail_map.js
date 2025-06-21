@@ -51,20 +51,40 @@ class RailCongestionMap {
   renderMarkers() {
     this.markers.forEach(marker => this.map.removeLayer(marker));
     this.markers = [];
-
+  
     this.currentData.forEach(item => {
       const marker = L.circleMarker([item.lat, item.lng], {
-        radius: this.getRadiusByIndicator(item.indicator), // Indicator로 크기 결정
+        radius: this.getRadiusByIndicator(item.indicator),
         fillColor: this.getColor(item.congestion_level),
         color: "#000",
         weight: 1,
         opacity: 1,
         fillOpacity: 0.8
       });
-
+  
       marker.bindPopup(this.createPopupContent(item));
+      
+      // 호버 및 클릭 이벤트 추가
+      marker.on({
+        mouseover: function() {
+          this.setStyle({ weight: 3, fillOpacity: 1 });
+        },
+        mouseout: function() {
+          this.setStyle({ weight: 1, fillOpacity: 0.8 });
+        },
+        click: () => this.zoomToMarker(item.lat, item.lng)
+      });
+      
       marker.addTo(this.map);
       this.markers.push(marker);
+    });
+  }
+  
+  // 줌 기능 추가
+  zoomToMarker(lat, lng) {
+    this.map.setView([lat, lng], 8, {
+      animate: true,
+      duration: 1
     });
   }
 
