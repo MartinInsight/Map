@@ -78,24 +78,24 @@ class RailCongestionMap {
   }
 
   getColor(level, isText = false) {
-    // 원 색상 (기존보다 약간 연하게)
+    // 원 색상
     const circleColors = {
-      'Very High': '#d62828',   // 원: 빨강
-      'High': '#f88c2b',        // 원: 주황
-      'Average': '#bcbcbc',     // 원: 회색
-      'Low': '#5fa9f6',         // 원: 하늘
-      'Very Low': '#004fc0'     // 원: 파랑
+      'Very High': '#F44336',   // Red
+      'High': '#FF9800',        // Orange
+      'Average': '#FFC107',     // Amber
+      'Low': '#8BC34A',         // Light Green
+      'Very Low': '#4CAF50'     // Green
     };
     
-    // 텍스트 색상 (원보다 더 진하게)
+    // 텍스트 색상
     const textColors = {
-      'Very High': '#6b1414',   // 텍스트: 빨강
-      'High': '#7c4616',        // 텍스트: 주황
-      'Average': '#5e5e5e',     // 텍스트: 회색
-      'Low': '#30557b',         // 텍스트: 하늘
-      'Very Low': '#002860'     // 텍스트: 파랑
+      'Very High': '#C62828',   // Dark Red
+      'High': '#E65100',        // Dark Orange
+      'Average': '#FF8F00',     // Dark Amber
+      'Low': '#2E7D32',         // Dark Green
+      'Very Low': '#1B5E20'     // Darker Green
     };
-  
+    
     return isText ? textColors[level] : circleColors[level];
   }
   
