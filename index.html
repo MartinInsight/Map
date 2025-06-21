@@ -95,22 +95,35 @@
       const truckMap = new TruckCongestionMap('truck-map');
       const railMap = new RailCongestionMap('rail-map');
       const oceanMap = new OceanCongestionMap('ocean-map');
-
+  
+      // 리셋 버튼 추가
+      function addResetButton(map, defaultView) {
+        const resetControl = L.control({position: 'topright'});
+        resetControl.onAdd = () => {
+          const div = L.DomUtil.create('div', 'reset-control');
+          div.innerHTML = '<button class="reset-btn">Reset View</button>';
+          return div;
+        };
+        resetControl.addTo(map.map);
+        
+        map.map.getContainer().querySelector('.reset-btn').addEventListener('click', () => {
+          map.map.setView(defaultView[0], defaultView[1]);
+        });
+      }
+  
+      addResetButton(truckMap, [37.8, -96], 4);
+      addResetButton(railMap, [37.8, -96], 4);
+      addResetButton(oceanMap, [20, 0], 2);
+  
+      // 탭 전환 로직
       document.querySelectorAll('.transport-tab').forEach(tab => {
         tab.addEventListener('click', () => {
-          // 탭 전환
-          document.querySelectorAll('.transport-tab').forEach(t => {
-            t.classList.remove('active');
-          });
+          document.querySelectorAll('.transport-tab').forEach(t => t.classList.remove('active'));
           tab.classList.add('active');
-
-          // 지도 전환
-          document.querySelectorAll('.transport-map').forEach(m => {
-            m.classList.remove('active');
-          });
+  
+          document.querySelectorAll('.transport-map').forEach(m => m.classList.remove('active'));
           document.getElementById(`${tab.dataset.map}-map`).classList.add('active');
-
-          // 지도 크기 조정
+  
           setTimeout(() => {
             switch(tab.dataset.map) {
               case 'truck':
