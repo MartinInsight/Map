@@ -51,7 +51,7 @@ class OceanCongestionMap {
   renderMarkers() {
     this.markers.forEach(marker => this.map.removeLayer(marker));
     this.markers = [];
-  
+
     this.currentData.forEach(port => {
       const marker = L.circleMarker([port.lat, port.lng], {
         radius: this.getRadiusByDelay(port.current_delay_days),
@@ -61,30 +61,10 @@ class OceanCongestionMap {
         opacity: 1,
         fillOpacity: 0.8
       });
-  
+
       marker.bindPopup(this.createPopupContent(port));
-      
-      // 호버 및 클릭 이벤트 추가
-      marker.on({
-        mouseover: function() {
-          this.setStyle({ weight: 3, fillOpacity: 1 });
-        },
-        mouseout: function() {
-          this.setStyle({ weight: 1, fillOpacity: 0.8 });
-        },
-        click: () => this.zoomToMarker(port.lat, port.lng)
-      });
-      
       marker.addTo(this.map);
       this.markers.push(marker);
-    });
-  }
-  
-  // 줌 기능 추가
-  zoomToMarker(lat, lng) {
-    this.map.setView([lat, lng], 8, {
-      animate: true,
-      duration: 1
     });
   }
 
