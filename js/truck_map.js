@@ -100,7 +100,12 @@ class TruckCongestionMap {
         });
       },
       onEachFeature: (feature, layer) => {
-        layer.bindTooltip(this.createTooltipContent(feature.properties));
+        layer.bindTooltip(this.createTooltipContent(feature.properties), {
+          permanent: false,
+          direction: 'top',
+          className: 'truck-tooltip',
+          offset: [0, -10]
+        });
       }
     }).addTo(this.map);
 
@@ -135,6 +140,7 @@ class TruckCongestionMap {
       Object.entries(this.stateData).filter(([_, state]) => 
         state.name.toLowerCase().includes(searchTerm) ||
         state.Code.toLowerCase().includes(searchTerm)
+      )
     );
     this.renderMap();
   }
