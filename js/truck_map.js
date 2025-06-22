@@ -28,15 +28,16 @@ class TruckCongestionMap {
     L.control.zoom({ position: 'topright' }).addTo(this.map);
   }
 
-  loadData() {
+loadData() {
     fetch('data/us-truck.json')
-      .then(response => response.json())
-      .then(data => {
-        this.truckData = data;
-        this.renderMap();
-      })
-      .catch(error => console.error('Error loading truck data:', error));
-  }
+        .then(response => response.json())
+        .then(data => {
+            this.allStatesData = data.data;  // 데이터 구조 변경 반영
+            this.filteredStatesData = {...data.data};
+            this.renderMap();
+        })
+        .catch(error => console.error('Error loading truck data:', error));
+}
 
   renderMap(data = this.filteredStatesData) {
     if (this.geojson) {
