@@ -13,6 +13,16 @@ def safe_convert(val, default=None):
     except (ValueError, TypeError):
         return default
 
+def get_rail_locations(records):
+    locations = set()
+    for row in records:
+        location = str(row.get('Location', '') or row.get('Yard', '')).strip()
+        if location:
+            # "Chicago, IL" -> "Chicago"
+            city = location.split(',')[0].strip()
+            locations.add(city)
+    return sorted(list(locations))
+
 def fetch_rail_data():
     print("🔵 Rail 데이터 수집 시작")
     try:
@@ -69,8 +79,15 @@ def fetch_rail_data():
         os.makedirs(output_dir, exist_ok=True)
         output_path = os.path.join(output_dir, 'us-rail.json')
         
+        metadata = {
+            'data': result,
+            'metadata': {
+                'cities': get_rail_locations(records)
+            }
+        }
+        
         with open(output_path, 'w', encoding='utf-8') as f:
-            json.dump(result, f, indent=2, ensure_ascii=False)
+            json.dump(metadata, f, indent=2, ensure_ascii=False)
             
         print(f"✅ Rail 데이터 저장 완료: {output_path}")
         print(f"🔄 생성된 데이터 개수: {len(result)}")
