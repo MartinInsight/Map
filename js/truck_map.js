@@ -45,7 +45,12 @@ class TruckCongestionMap {
             ...truckData[stateCode],
             lat: center.lat,
             lng: center.lng,
-            name: feature.properties.name
+            name: feature.properties.name,
+            // 새 데이터 구조 반영
+            inbound_delay: truckData[stateCode]['Inbound Delay'],
+            outbound_delay: truckData[stateCode]['Outbound Delay'],
+            dwell_inbound: truckData[stateCode]['Dwell Inbound'],
+            dwell_outbound: truckData[stateCode]['Dwell Outbound']
           };
         }
         return acc;
@@ -140,10 +145,13 @@ class TruckCongestionMap {
   }
 
   getColor(value) {
-    const hue = value > 0 ? 
-      120 * (value / 3) : // 초록색 범위
-      60 * (1 + value / 3); // 노랑-빨강 범위
-    return `hsl(${hue}, 100%, 50%)`;
+    const colorMap = {
+      '-2': '#e74c3c', // Red
+      '-1': '#f39c12', // Orange
+      '1': '#2ecc71',  // Green
+      '2': '#3498db'   // Blue
+    };
+    return colorMap[value?.toString()] || '#95a5a6'; // Default gray
   }
 
   searchLocations({ location, keyword }) {
