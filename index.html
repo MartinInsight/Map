@@ -120,7 +120,95 @@
         const country = document.getElementById('country-select').value;
         const city = document.getElementById('city-select').value;
         const keyword = document.getElementById('search-input').value;
-        activeMap.searchLocations({ country, city, keyword });
+document.getElementById('search-btn').addEventListener('click', () => {
+  const country = document.getElementById('country-select').value;
+  const city = document.getElementById('city-select').value;
+  const keyword = document.getElementById('search-input').value.trim();
+  
+  // 현재 활성화된 맵에 따라 검색 실행
+  const activeTab = document.querySelector('.transport-tab.active');
+  if (activeTab) {
+    const mapType = activeTab.dataset.map;
+    switch(mapType) {
+      case 'truck':
+        truckMap.searchLocations({ country: 'United States', city, keyword });
+        break;
+      case 'rail':
+        railMap.searchLocations({ country: 'United States', city, keyword });
+        break;
+      case 'ocean':
+        oceanMap.searchLocations({ country, city, keyword });
+        break;
+    }
+  }
+});
+
+// 국가 선택 시 도시 목록 업데이트 함수
+function updateCitySelect(country) {
+  const citySelect = document.getElementById('city-select');
+  citySelect.innerHTML = '<option value="">All Cities</option>';
+  
+  if (!country) return;
+
+  // 현재 활성화된 맵 타입에 따라 도시 목록 다르게 표시
+  const activeTab = document.querySelector('.transport-tab.active');
+  if (!activeTab) return;
+
+  const mapType = activeTab.dataset.map;
+  let cities = [];
+
+  switch(mapType) {
+    case 'truck':
+      cities = getUSCities();
+      break;
+    case 'rail':
+      cities = getRailCities();
+      break;
+    case 'ocean':
+      cities = getOceanCities(country);
+      break;
+  }
+
+  cities.forEach(city => {
+    const option = document.createElement('option');
+    option.value = city;
+    option.textContent = city;
+    citySelect.appendChild(option);
+  });
+}
+
+// 예시 데이터 함수 - 실제로는 데이터에서 추출해야 함
+function getUSCities() {
+  return ['New York', 'Los Angeles', 'Chicago', 'Houston', 'Phoenix'];
+}
+
+function getRailCities() {
+  return ['Chicago', 'Kansas City', 'Houston', 'Los Angeles', 'New York'];
+}
+
+function getOceanCities(country) {
+  const cityData = {
+    'United States': ['Los Angeles', 'Long Beach', 'New York', 'Savannah'],
+    'China': ['Shanghai', 'Shenzhen', 'Ningbo', 'Qingdao'],
+    'Japan': ['Tokyo', 'Osaka', 'Yokohama', 'Kobe']
+  };
+  return cityData[country] || [];
+}
+
+// 국가 선택 변경 이벤트 리스너
+document.getElementById('country-select').addEventListener('change', (e) => {
+  updateCitySelect(e.target.value);
+});
+
+// 탭 변경 시 국가/도시 선택기 업데이트
+document.querySelectorAll('.transport-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    setTimeout(() => {
+      const countrySelect = document.getElementById('country-select');
+      updateCitySelect(countrySelect.value);
+    }, 100);
+  });
+});
       });
     });
 
