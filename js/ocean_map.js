@@ -5,11 +5,13 @@ class OceanCongestionMap {
     this.markers = [];
     this.currentData = null;
     this.lastUpdated = null;
+    this.controlDiv = null; // 추가
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© OpenStreetMap'
     }).addTo(this.map);
 
+    this.addControls(); // 추가
     this.loadData();
   }
 
@@ -81,6 +83,28 @@ class OceanCongestionMap {
     };
     return colors[level] || '#555';
   }
+
+  addControls() {
+    const controlContainer = L.control({ position: 'topright' });
+    
+    controlContainer.onAdd = () => {
+      this.controlDiv = L.DomUtil.create('div', 'ocean-control-container');
+      this.renderControls();
+      return this.controlDiv;
+    };
+    
+    controlContainer.addTo(this.map);
+  }
+
+  renderControls() {
+    this.controlDiv.innerHTML = `
+      <button class="ocean-reset-btn" id="ocean-reset-view">Reset View</button>
+    `;
+
+    this.controlDiv.querySelector('#ocean-reset-view').addEventListener('click', () => {
+      this.map.setView([20, 0], 2);
+    });
+  }  
   
   createPopupContent(port) {
     return `
