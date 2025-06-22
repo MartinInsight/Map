@@ -3,10 +3,13 @@ class TruckCongestionMap {
     this.mapId = mapId;
     this.map = null;
     this.geojson = null;
+    this.allStatesData = {}; // 모든 주 데이터 저장
+    this.filteredStatesData = {}; // 필터링된 주 데이터 저장
     this.initMap();
     this.loadData();
     this.addResetButton();
   }
+
 
   initMap() {
     // 지도 초기화
@@ -35,15 +38,13 @@ class TruckCongestionMap {
       .catch(error => console.error('Error loading truck data:', error));
   }
 
-  renderMap() {
-    // 기존 GeoJSON 레이어 제거
+  renderMap(data = this.filteredStatesData) {
     if (this.geojson) {
       this.map.removeLayer(this.geojson);
     }
 
-    // GeoJSON 데이터 생성
-    const geojsonFeatures = Object.keys(this.truckData).map(stateCode => {
-      const stateData = this.truckData[stateCode];
+    const geojsonFeatures = Object.keys(data).map(stateCode => {
+      const stateData = data[stateCode];
       return {
         type: 'Feature',
         properties: {
@@ -57,7 +58,6 @@ class TruckCongestionMap {
       };
     });
 
-    // GeoJSON 레이어 생성 및 추가
     this.geojson = L.geoJSON(
       { type: 'FeatureCollection', features: geojsonFeatures },
       {
@@ -73,7 +73,6 @@ class TruckCongestionMap {
           });
         },
         onEachFeature: (feature, layer) => {
-          // 툴팁 바인딩 (호버 시 표시)
           layer.bindTooltip(this.createTooltipContent(feature.properties), {
             permanent: false,
             direction: 'top',
@@ -84,7 +83,6 @@ class TruckCongestionMap {
       }
     ).addTo(this.map);
 
-    // 지도 범위 조정
     this.map.fitBounds(this.geojson.getBounds());
   }
 
@@ -149,6 +147,37 @@ class TruckCongestionMap {
     `;
   }
 
+  searchLocations({ country, city, keyword }) {
+    // 미국 내 트럭 데이터만 있으므로 country는 'United States'로 고정
+    this.filteredStatesData = Object.keys(this.allStatesData).reduce((filtered, stateCode) => {
+      const stateData = this.allStatesData[stateCode];
+      const stateName = stateData.name.toLowerCase();
+      const searchTerm = keyword.toLowerCase();
+      
+      // 키워드 검색 (주 이름에 포함되는지 확인)
+      if (keyword && !stateName.includes(searchTerm)) {
+        return filtered;
+      }
+      
+      filtered[stateCode] = stateData;
+      return filtered;
+    }, {});
+
+    this.renderMap();
+  }
+
+  // 데이터 로드 시 allStatesData 저장
+  loadData() {
+    fetch('data/us-truck.json')
+      .then(response => response.json())
+      .then(data => {
+        this.allStatesData = data;
+        this.filteredStatesData = {...data};
+        this.renderMap();
+      })
+      .catch(error => console.error('Error loading truck data:', error));
+  }
+
   addResetButton() {
     const resetControl = L.control({ position: 'topright' });
     
@@ -168,10 +197,3 @@ class TruckCongestionMap {
     
     resetControl.addTo(this.map);
   }
-
-  searchLocations({ country, city, keyword }) {
-    // 검색 기능 구현
-    console.log('Searching truck locations:', { country, city, keyword });
-    // 실제 구현에서는 필터링 로직 추가
-  }
-}
