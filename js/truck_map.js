@@ -138,18 +138,18 @@ class TruckCongestionMap {
   }
 
   addControls() {
-    const container = L.DomUtil.create('div', 'map-control-container');
-    container.style.height = '40px'; // 고정 높이 설정
+    const container = L.DomUtil.create('div', 'truck-control-container');
     
+    // HTML 구조 (인라인 스타일로 높이 강제 고정)
     container.innerHTML = `
-      <div style="display: flex; align-items: center; height: 100%;">
-        <div class="truck-toggle-wrapper">
+      <div style="display: flex; align-items: center; height: 32px;">
+        <div style="display: flex; height: 30px; border-radius: 4px; overflow: hidden; border: 1px solid #e0e0e0;">
           <button class="truck-toggle-btn ${this.currentMode === 'inbound' ? 'truck-active' : ''}" 
-                  data-mode="inbound">INBOUND</button>
+                  data-mode="inbound" style="height: 30px; line-height: 30px;">INBOUND</button>
           <button class="truck-toggle-btn ${this.currentMode === 'outbound' ? 'truck-active' : ''}" 
-                  data-mode="outbound">OUTBOUND</button>
+                  data-mode="outbound" style="height: 30px; line-height: 30px;">OUTBOUND</button>
         </div>
-        <button class="reset-view-btn" style="margin-left: 10px;">Reset View</button>
+        <button class="reset-view-btn" style="height: 30px; line-height: 30px; margin-left: 8px;">RESET</button>
       </div>
     `;
 
@@ -157,7 +157,7 @@ class TruckCongestionMap {
     container.querySelectorAll('.truck-toggle-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         this.currentMode = btn.dataset.mode;
-        this.updateControls(container);
+        this.updateToggleButtons(container);
         if (this.stateLayer) this.stateLayer.setStyle(feature => this.getStyle(feature));
       });
     });
@@ -169,7 +169,7 @@ class TruckCongestionMap {
     this.map.getContainer().appendChild(container);
   }
 
-  updateControls(container) {
+  updateToggleButtons(container) {
     container.querySelectorAll('.truck-toggle-btn').forEach(btn => {
       btn.classList.toggle('truck-active', btn.dataset.mode === this.currentMode);
     });
