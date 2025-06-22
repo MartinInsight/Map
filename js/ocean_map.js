@@ -1,18 +1,30 @@
-// js/ocean_map.js
 class OceanCongestionMap {
   constructor(mapElementId) {
     this.map = L.map(mapElementId).setView([20, 0], 2);
     this.markers = [];
     this.currentData = null;
     this.lastUpdated = null;
-    this.controlDiv = null; // 추가
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© OpenStreetMap'
     }).addTo(this.map);
 
-    this.addControls(); // 추가
+    // 리셋 버튼 추가 (트럭맵과 동일한 스타일)
+    this.addResetButton();
     this.loadData();
+  }
+
+  addResetButton() {
+    const container = L.DomUtil.create('div', 'map-control-container');
+    container.innerHTML = `
+      <button class="reset-view-btn">Reset View</button>
+    `;
+    
+    container.querySelector('.reset-view-btn').addEventListener('click', () => {
+      this.map.setView([20, 0], 2);
+    });
+
+    this.map.getContainer().appendChild(container);
   }
 
   async loadData() {
