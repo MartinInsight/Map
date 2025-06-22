@@ -5,6 +5,15 @@ class RailCongestionMap {
     this.markers = [];
     this.currentData = null;
     this.lastUpdated = null;
+    this.controlDiv = null; // 추가
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap'
+    }).addTo(this.map);
+
+    this.addControls(); // 추가
+    this.loadData();
+  }
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© OpenStreetMap'
@@ -98,7 +107,29 @@ class RailCongestionMap {
   
     return isText ? textColors[level] : circleColors[level];
   }
-  
+
+  addControls() {
+    const controlContainer = L.control({ position: 'topright' });
+    
+    controlContainer.onAdd = () => {
+      this.controlDiv = L.DomUtil.create('div', 'rail-control-container');
+      this.renderControls();
+      return this.controlDiv;
+    };
+    
+    controlContainer.addTo(this.map);
+  }
+
+  renderControls() {
+    this.controlDiv.innerHTML = `
+      <button class="rail-reset-btn" id="rail-reset-view">Reset View</button>
+    `;
+
+    this.controlDiv.querySelector('#rail-reset-view').addEventListener('click', () => {
+      this.map.setView([37.8, -96], 4);
+    });
+  }
+
   createPopupContent(data) {
     const level = data.congestion_level || 'Unknown';
     
