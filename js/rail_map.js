@@ -1,3 +1,4 @@
+// js/rail_map.js
 class RailCongestionMap {
   constructor(mapElementId) {
     this.map = L.map(mapElementId).setView([37.8, -96], 4);
@@ -9,22 +10,7 @@ class RailCongestionMap {
       attribution: '© OpenStreetMap'
     }).addTo(this.map);
 
-    // 리셋 버튼 추가 (트럭맵과 동일한 스타일)
-    this.addResetButton();
     this.loadData();
-  }
-
-  addResetButton() {
-    const container = L.DomUtil.create('div', 'map-control-container');
-    container.innerHTML = `
-      <button class="reset-view-btn">Reset View</button>
-    `;
-    
-    container.querySelector('.reset-view-btn').addEventListener('click', () => {
-      this.map.setView([37.8, -96], 4);
-    });
-
-    this.map.getContainer().appendChild(container);
   }
 
   async loadData() {
@@ -112,29 +98,7 @@ class RailCongestionMap {
   
     return isText ? textColors[level] : circleColors[level];
   }
-
-  addControls() {
-    const controlContainer = L.control({ position: 'topright' });
-    
-    controlContainer.onAdd = () => {
-      this.controlDiv = L.DomUtil.create('div', 'rail-control-container');
-      this.renderControls();
-      return this.controlDiv;
-    };
-    
-    controlContainer.addTo(this.map);
-  }
-
-  renderControls() {
-    this.controlDiv.innerHTML = `
-      <button class="rail-reset-btn" id="rail-reset-view">Reset View</button>
-    `;
-
-    this.controlDiv.querySelector('#rail-reset-view').addEventListener('click', () => {
-      this.map.setView([37.8, -96], 4);
-    });
-  }
-
+  
   createPopupContent(data) {
     const level = data.congestion_level || 'Unknown';
     
