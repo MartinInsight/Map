@@ -3,254 +3,60 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Global Transportation Congestion Map</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+  <title>Transportation Congestion Map</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="styles/main.css">
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <style>
+    .transport-map { display: none; height: 100%; }
+    .transport-map.active { display: block; }
+    .reset-control { background: white; padding: 5px; border-radius: 4px; }
+    .reset-btn { border: none; background: none; cursor: pointer; }
+    .transport-tab-container { display: flex; justify-content: center; margin: 10px; }
+    .transport-tab { padding: 10px 20px; margin: 0 5px; cursor: pointer; }
+    .transport-tab.active { background: #3498db; color: white; }
+  </style>
 </head>
 <body>
-  <div class="app-container">
-    <!-- 상단 탭 메뉴 -->
-    <div class="transport-tab-container">
-      <button class="transport-tab active" data-map="truck">
-        <i class="fas fa-truck"></i> Truck
-      </button>
-      <button class="transport-tab" data-map="rail">
-        <i class="fas fa-train"></i> Rail
-      </button>
-      <button class="transport-tab" data-map="ocean">
-        <i class="fas fa-ship"></i> Ocean
-      </button>
-    </div>
-
-    <!-- 지도 컨테이너 -->
-    <div class="map-container">
-      <div id="truck-map" class="transport-map active"></div>
-      <div id="rail-map" class="transport-map"></div>
-      <div id="ocean-map" class="transport-map"></div>
-    </div>
-
-    <!-- 검색 패널 -->
-    <div class="search-panel">
-      <div class="search-header">
-        <h3><i class="fas fa-search"></i> Search</h3>
-        <button class="close-search"><i class="fas fa-times"></i></button>
-      </div>
-      <div class="search-filters">
-        <div class="filter-group">
-          <label for="country-select"><i class="fas fa-globe"></i> Country</label>
-          <select id="country-select" class="search-select">
-            <option value="">All Countries</option>
-          </select>
-        </div>
-        <div class="filter-group">
-          <label for="city-select"><i class="fas fa-city"></i> City</label>
-          <select id="city-select" class="search-select">
-            <option value="">All Cities</option>
-          </select>
-        </div>
-        <div class="filter-group">
-          <label for="search-input"><i class="fas fa-keyboard"></i> Keyword</label>
-          <input type="text" id="search-input" class="search-input" placeholder="Enter location...">
-        </div>
-        <button id="search-btn" class="search-btn">
-          <i class="fas fa-search"></i> Search
-        </button>
-      </div>
-    </div>
-
-    <!-- 검색 토글 버튼 -->
-    <button class="search-toggle-btn">
-      <i class="fas fa-search"></i>
+  <div class="transport-tab-container">
+    <button class="transport-tab active" data-map="truck">
+      <i class="fas fa-truck"></i> Truck
+    </button>
+    <button class="transport-tab" data-map="rail">
+      <i class="fas fa-train"></i> Rail
+    </button>
+    <button class="transport-tab" data-map="ocean">
+      <i class="fas fa-ship"></i> Ocean
     </button>
   </div>
 
-  <!-- 지도 라이브러리 및 스크립트 -->
+  <div id="truck-map" class="transport-map active"></div>
+  <div id="rail-map" class="transport-map"></div>
+  <div id="ocean-map" class="transport-map"></div>
+
   <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
   <script src="js/truck_map.js"></script>
   <script src="js/rail_map.js"></script>
   <script src="js/ocean_map.js"></script>
   
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      // 지도 인스턴스 생성
-      const truckMap = new TruckCongestionMap('truck-map');
-      const railMap = new RailCongestionMap('rail-map');
-      const oceanMap = new OceanCongestionMap('ocean-map');
-      let activeMap = truckMap;
+  document.addEventListener('DOMContentLoaded', () => {
+    const maps = {
+      truck: new TruckCongestionMap('truck-map'),
+      rail: new RailCongestionMap('rail-map'),
+      ocean: new OceanCongestionMap('ocean-map')
+    };
 
-      // 탭 전환 기능
-      document.querySelectorAll('.transport-tab').forEach(tab => {
-        tab.addEventListener('click', () => {
-          // 탭 활성화
-          document.querySelectorAll('.transport-tab').forEach(t => t.classList.remove('active'));
-          tab.classList.add('active');
-
-          // 지도 전환
-          document.querySelectorAll('.transport-map').forEach(m => m.classList.remove('active'));
-          const mapId = tab.dataset.map;
-          document.getElementById(`${mapId}-map`).classList.add('active');
-
-          // 활성 지도 업데이트
-          activeMap = 
-            mapId === 'truck' ? truckMap :
-            mapId === 'rail' ? railMap : oceanMap;
-
-          // 지도 크기 조정
-          setTimeout(() => activeMap.map.invalidateSize(), 100);
+    document.querySelectorAll('.transport-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.transport-tab, .transport-map').forEach(el => {
+          el.classList.remove('active');
         });
-      });
-
-      // 검색 패널 토글
-      const searchPanel = document.querySelector('.search-panel');
-      document.querySelector('.search-toggle-btn').addEventListener('click', () => {
-        searchPanel.classList.toggle('visible');
-      });
-      document.querySelector('.close-search').addEventListener('click', () => {
-        searchPanel.classList.remove('visible');
-      });
-
-      // 국가/도시 선택기 초기화
-      initLocationSelectors();
-
-      // 검색 기능
-      document.getElementById('search-btn').addEventListener('click', () => {
-        const country = document.getElementById('country-select').value;
-        const city = document.getElementById('city-select').value;
-        const keyword = document.getElementById('search-input').value;
-document.getElementById('search-btn').addEventListener('click', () => {
-  const country = document.getElementById('country-select').value;
-  const city = document.getElementById('city-select').value;
-  const keyword = document.getElementById('search-input').value.trim();
-  
-  // 현재 활성화된 맵에 따라 검색 실행
-  const activeTab = document.querySelector('.transport-tab.active');
-  if (activeTab) {
-    const mapType = activeTab.dataset.map;
-    switch(mapType) {
-      case 'truck':
-        truckMap.searchLocations({ country: 'United States', city, keyword });
-        break;
-      case 'rail':
-        railMap.searchLocations({ country: 'United States', city, keyword });
-        break;
-      case 'ocean':
-        oceanMap.searchLocations({ country, city, keyword });
-        break;
-    }
-  }
-});
-
-// 국가 선택 시 도시 목록 업데이트 함수
-function updateCitySelect(country) {
-  const citySelect = document.getElementById('city-select');
-  citySelect.innerHTML = '<option value="">All Cities</option>';
-  
-  if (!country) return;
-
-  // 현재 활성화된 맵 타입에 따라 도시 목록 다르게 표시
-  const activeTab = document.querySelector('.transport-tab.active');
-  if (!activeTab) return;
-
-  const mapType = activeTab.dataset.map;
-  let cities = [];
-
-  switch(mapType) {
-    case 'truck':
-      cities = getUSCities();
-      break;
-    case 'rail':
-      cities = getRailCities();
-      break;
-    case 'ocean':
-      cities = getOceanCities(country);
-      break;
-  }
-
-  cities.forEach(city => {
-    const option = document.createElement('option');
-    option.value = city;
-    option.textContent = city;
-    citySelect.appendChild(option);
-  });
-}
-
-// 예시 데이터 함수 - 실제로는 데이터에서 추출해야 함
-function getUSCities() {
-  return ['New York', 'Los Angeles', 'Chicago', 'Houston', 'Phoenix'];
-}
-
-function getRailCities() {
-  return ['Chicago', 'Kansas City', 'Houston', 'Los Angeles', 'New York'];
-}
-
-function getOceanCities(country) {
-  const cityData = {
-    'United States': ['Los Angeles', 'Long Beach', 'New York', 'Savannah'],
-    'China': ['Shanghai', 'Shenzhen', 'Ningbo', 'Qingdao'],
-    'Japan': ['Tokyo', 'Osaka', 'Yokohama', 'Kobe']
-  };
-  return cityData[country] || [];
-}
-
-// 국가 선택 변경 이벤트 리스너
-document.getElementById('country-select').addEventListener('change', (e) => {
-  updateCitySelect(e.target.value);
-});
-
-// 탭 변경 시 국가/도시 선택기 업데이트
-document.querySelectorAll('.transport-tab').forEach(tab => {
-  tab.addEventListener('click', () => {
-    setTimeout(() => {
-      const countrySelect = document.getElementById('country-select');
-      updateCitySelect(countrySelect.value);
-    }, 100);
-  });
-});
+        tab.classList.add('active');
+        document.getElementById(`${tab.dataset.map}-map`).classList.add('active');
       });
     });
-
-    function initLocationSelectors() {
-      // TODO: 실제 데이터에서 국가 및 도시 목록 로드
-      // 임시 데이터로 초기화
-      const countries = ['United States', 'China', 'Japan', 'South Korea'];
-      const countrySelect = document.getElementById('country-select');
-      
-      countries.forEach(country => {
-        const option = document.createElement('option');
-        option.value = country;
-        option.textContent = country;
-        countrySelect.appendChild(option);
-      });
-
-      // 국가 선택 시 도시 업데이트
-      countrySelect.addEventListener('change', (e) => {
-        const citySelect = document.getElementById('city-select');
-        citySelect.innerHTML = '<option value="">All Cities</option>';
-        
-        // TODO: 선택된 국가에 맞는 도시 목록 로드
-        const cities = getCitiesForCountry(e.target.value);
-        cities.forEach(city => {
-          const option = document.createElement('option');
-          option.value = city;
-          option.textContent = city;
-          citySelect.appendChild(option);
-        });
-      });
-    }
-
-    function getCitiesForCountry(country) {
-      // 임시 데이터 - 실제로는 API 또는 데이터 파일에서 로드
-      const cityData = {
-        'United States': ['New York', 'Los Angeles', 'Chicago', 'Houston'],
-        'China': ['Beijing', 'Shanghai', 'Guangzhou', 'Shenzhen'],
-        'Japan': ['Tokyo', 'Osaka', 'Yokohama', 'Nagoya'],
-        'South Korea': ['Seoul', 'Busan', 'Incheon', 'Daegu']
-      };
-      return cityData[country] || [];
-    }
+  });
   </script>
 </body>
 </html>

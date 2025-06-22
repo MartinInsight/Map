@@ -2,198 +2,155 @@ class TruckCongestionMap {
   constructor(mapId) {
     this.mapId = mapId;
     this.map = null;
+    this.stateData = {};
+    this.filteredData = {};
     this.geojson = null;
-    this.allStatesData = {}; // 모든 주 데이터 저장
-    this.filteredStatesData = {}; // 필터링된 주 데이터 저장
     this.initMap();
     this.loadData();
     this.addResetButton();
   }
 
-
   initMap() {
-    // 지도 초기화
     this.map = L.map(this.mapId, {
       zoomControl: false,
       preferCanvas: true
     }).setView([37.8, -96], 4);
 
-    // 타일 레이어 추가
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
       maxZoom: 18
     }).addTo(this.map);
 
-    // 줌 컨트롤 추가
     L.control.zoom({ position: 'topright' }).addTo(this.map);
   }
 
-  loadData() {
-    fetch('data/us-truck.json')
-      .then(response => response.json())
-      .then(data => {
-        this.truckData = data;
-        this.renderMap();
-      })
-      .catch(error => console.error('Error loading truck data:', error));
+  async loadData() {
+    try {
+      const [statesRes, truckRes] = await Promise.all([
+        fetch('../data/us-states.json'),
+        fetch('../data/us-truck.json')
+      ]);
+      
+      const [statesGeoJSON, truckData] = await Promise.all([
+        statesRes.json(),
+        truckRes.json()
+      ]);
+
+      this.stateData = statesGeoJSON.features.reduce((acc, feature) => {
+        const stateCode = feature.id;
+        const stateTruckData = truckData.find(item => item.Code === stateCode);
+        if (stateTruckData) {
+          const center = this.calculateCentroid(feature.geometry);
+          acc[stateCode] = {
+            ...stateTruckData,
+            lat: center.lat,
+            lng: center.lng,
+            name: feature.properties.name
+          };
+        }
+        return acc;
+      }, {});
+
+      this.filteredData = {...this.stateData};
+      this.renderMap();
+    } catch (error) {
+      console.error('Error loading truck data:', error);
+      alert('트럭 데이터 로드 실패: ' + error.message);
+    }
   }
 
-  renderMap(data = this.filteredStatesData) {
-    if (this.geojson) {
-      this.map.removeLayer(this.geojson);
-    }
-
-    const geojsonFeatures = Object.keys(data).map(stateCode => {
-      const stateData = data[stateCode];
+  calculateCentroid(geometry) {
+    if (geometry.type === 'Polygon') {
+      const coords = geometry.coordinates[0];
+      let x = 0, y = 0;
+      coords.forEach(coord => {
+        x += coord[0];
+        y += coord[1];
+      });
       return {
+        lng: x / coords.length,
+        lat: y / coords.length
+      };
+    }
+    return { lng: -98.5795, lat: 39.8283 };
+  }
+
+  renderMap(data = this.filteredData) {
+    if (this.geojson) this.map.removeLayer(this.geojson);
+
+    this.geojson = L.geoJSON({
+      type: 'FeatureCollection',
+      features: Object.entries(data).map(([stateCode, stateData]) => ({
         type: 'Feature',
-        properties: {
-          stateCode,
-          ...stateData
-        },
+        properties: stateData,
         geometry: {
           type: 'Point',
-          coordinates: [this.getStateLongitude(stateCode), this.getStateLatitude(stateCode)]
+          coordinates: [stateData.lng, stateData.lat]
         }
-      };
-    });
-
-    this.geojson = L.geoJSON(
-      { type: 'FeatureCollection', features: geojsonFeatures },
-      {
-        pointToLayer: (feature, latlng) => {
-          const color = this.getColor(feature.properties.inboundColor);
-          return L.circleMarker(latlng, {
-            radius: 8,
-            fillColor: color,
-            color: '#fff',
-            weight: 1,
-            opacity: 1,
-            fillOpacity: 0.8
-          });
-        },
-        onEachFeature: (feature, layer) => {
-          layer.bindTooltip(this.createTooltipContent(feature.properties), {
-            permanent: false,
-            direction: 'top',
-            className: 'truck-tooltip',
-            offset: [0, -10]
-          });
-        }
+      }))
+    }, {
+      pointToLayer: (feature, latlng) => {
+        return L.circleMarker(latlng, {
+          radius: 10,
+          fillColor: this.getColor(feature.properties['Inbound Color']),
+          color: '#fff',
+          weight: 1,
+          opacity: 1,
+          fillOpacity: 0.8
+        });
+      },
+      onEachFeature: (feature, layer) => {
+        layer.bindTooltip(this.createTooltipContent(feature.properties));
       }
-    ).addTo(this.map);
+    }).addTo(this.map);
 
     this.map.fitBounds(this.geojson.getBounds());
   }
 
-  getStateLatitude(stateCode) {
-    // 간단한 예시 - 실제로는 정확한 좌표 데이터 사용
-    const stateCoords = {
-      'CA': 36.7783, 'TX': 31.9686, 'FL': 27.6648, 'NY': 43.2994,
-      'IL': 40.6331, 'PA': 41.2033, 'OH': 40.4173, 'GA': 32.1656,
-      // 다른 주들 추가...
-    };
-    return stateCoords[stateCode] || 39.8283; // 기본값
-  }
-
-  getStateLongitude(stateCode) {
-    // 간단한 예시 - 실제로는 정확한 좌표 데이터 사용
-    const stateCoords = {
-      'CA': -119.4179, 'TX': -99.9018, 'FL': -81.5158, 'NY': -74.2179,
-      'IL': -89.3985, 'PA': -77.1945, 'OH': -82.9071, 'GA': -82.9001,
-      // 다른 주들 추가...
-    };
-    return stateCoords[stateCode] || -98.5795; // 기본값
-  }
-
   getColor(value) {
-    // 색상 범위: -3(빨강) ~ 0(노랑) ~ 3(초록)
-    const hue = value > 0 ? 
-      120 * (value / 3) : // 초록색 범위
-      60 * (1 + value / 3); // 노랑-빨강 범위
-    return `hsl(${hue}, 100%, 50%)`;
+    const colors = {
+      '-2': '#e74c3c', // Red
+      '-1': '#f39c12', // Orange
+      '1': '#2ecc71',  // Green
+      '2': '#3498db'   // Blue
+    };
+    return colors[value?.toString()] || '#95a5a6';
   }
 
-  createTooltipContent(properties) {
-    const { name, inboundDelay, outboundDelay, dwellInbound, dwellOutbound } = properties;
-    
-    const formatDelay = (delay) => {
-      if (delay === null || delay === undefined) return 'N/A';
-      return `${delay > 0 ? '+' : ''}${delay.toFixed(1)} days`;
-    };
-
+  createTooltipContent(data) {
     return `
-      <h4>${name}</h4>
-      <div class="truck-metric-box">
-        <strong>Inbound Delay</strong>
-        <span class="${inboundDelay > 0 ? 'truck-negative' : 'truck-positive'}">
-          ${formatDelay(inboundDelay)}
-        </span>
-      </div>
-      <div class="truck-metric-box">
-        <strong>Outbound Delay</strong>
-        <span class="${outboundDelay > 0 ? 'truck-negative' : 'truck-positive'}">
-          ${formatDelay(outboundDelay)}
-        </span>
-      </div>
-      <div class="truck-metric-box">
-        <strong>Dwell Time (Inbound)</strong>
-        <span class="truck-normal-text">${dwellInbound?.toFixed(1) || 'N/A'} days</span>
-      </div>
-      <div class="truck-metric-box">
-        <strong>Dwell Time (Outbound)</strong>
-        <span class="truck-normal-text">${dwellOutbound?.toFixed(1) || 'N/A'} days</span>
+      <div class="truck-tooltip">
+        <h4>${data.name || 'N/A'}</h4>
+        <p><strong>Inbound Delay:</strong> ${data['Inbound Delay'] || 'N/A'} days</p>
+        <p><strong>Outbound Delay:</strong> ${data['Outbound Delay'] || 'N/A'} days</p>
+        <p><strong>Dwell Inbound:</strong> ${data['Dwell Inbound'] || 'N/A'} days</p>
+        <p><strong>Dwell Outbound:</strong> ${data['Dwell Outbound'] || 'N/A'} days</p>
       </div>
     `;
   }
 
-  searchLocations({ country, city, keyword }) {
-    // 미국 내 트럭 데이터만 있으므로 country는 'United States'로 고정
-    this.filteredStatesData = Object.keys(this.allStatesData).reduce((filtered, stateCode) => {
-      const stateData = this.allStatesData[stateCode];
-      const stateName = stateData.name.toLowerCase();
-      const searchTerm = keyword.toLowerCase();
-      
-      // 키워드 검색 (주 이름에 포함되는지 확인)
-      if (keyword && !stateName.includes(searchTerm)) {
-        return filtered;
-      }
-      
-      filtered[stateCode] = stateData;
-      return filtered;
-    }, {});
-
+  searchLocations({ location, keyword }) {
+    const searchTerm = keyword?.toLowerCase() || '';
+    this.filteredData = Object.fromEntries(
+      Object.entries(this.stateData).filter(([_, state]) => 
+        state.name.toLowerCase().includes(searchTerm) ||
+        state.Code.toLowerCase().includes(searchTerm)
+    );
     this.renderMap();
-  }
-
-  // 데이터 로드 시 allStatesData 저장
-  loadData() {
-    fetch('data/us-truck.json')
-      .then(response => response.json())
-      .then(data => {
-        this.allStatesData = data;
-        this.filteredStatesData = {...data};
-        this.renderMap();
-      })
-      .catch(error => console.error('Error loading truck data:', error));
   }
 
   addResetButton() {
     const resetControl = L.control({ position: 'topright' });
-    
     resetControl.onAdd = () => {
-      const container = L.DomUtil.create('div', 'reset-control-container');
+      const container = L.DomUtil.create('div', 'reset-control');
       const button = L.DomUtil.create('button', 'reset-btn', container);
-      button.innerHTML = '<i class="fas fa-expand"></i> Reset View';
+      button.innerHTML = '<i class="fas fa-sync-alt"></i> Reset';
       button.onclick = () => {
-        if (this.geojson) {
-          this.map.fitBounds(this.geojson.getBounds());
-        } else {
-          this.map.setView([37.8, -96], 4);
-        }
+        this.filteredData = {...this.stateData};
+        this.renderMap();
       };
       return container;
     };
-    
     resetControl.addTo(this.map);
   }
+}

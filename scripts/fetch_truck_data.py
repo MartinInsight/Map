@@ -15,6 +15,14 @@ def safe_convert(val, default=None):
     except (ValueError, TypeError):
         return default
 
+def get_us_cities(records):
+    states = set()
+    for row in records:
+        state = str(row.get('State', '')).strip()
+        if state:
+            states.add(state)
+    return sorted(list(states))
+
 def fetch_truck_data():
     print("🚛 Truck 데이터 수집 시작")
     try:
@@ -68,8 +76,16 @@ def fetch_truck_data():
         os.makedirs(output_dir, exist_ok=True)
         output_path = os.path.join(output_dir, 'us-truck.json')  # 파일명 변경
         
+        # 메타데이터 생성
+        metadata = {
+            'data': result,
+            'metadata': {
+                'states': list(result.keys())
+            }
+        }
+        
         with open(output_path, 'w', encoding='utf-8') as f:
-            json.dump(result, f, indent=2, ensure_ascii=False)
+            json.dump(metadata, f, indent=2, ensure_ascii=False)
             
         print(f"✅ Truck 데이터 저장 완료: {output_path}")
         print(f"🔄 처리된 주(State) 개수: {len(result)}")
