@@ -3,6 +3,8 @@ class RailCongestionMap {
     this.mapId = mapId;
     this.map = null;
     this.markers = [];
+    this.allRailData = []; // 모든 레일 데이터 저장
+    this.filteredRailData = []; // 필터링된 레일 데이터 저장
     this.initMap();
     this.loadData();
     this.addResetButton();
@@ -35,12 +37,10 @@ class RailCongestionMap {
       .catch(error => console.error('Error loading rail data:', error));
   }
 
-  renderMarkers() {
-    // 기존 마커 제거
+  renderMarkers(data = this.filteredRailData) {
     this.clearMarkers();
 
-    // 새로운 마커 추가
-    this.markers = this.railData.map(item => {
+    this.markers = data.map(item => {
       const marker = L.circleMarker([item.lat, item.lng], {
         radius: this.getRadius(item.congestion_score),
         fillColor: this.getColor(item.congestion_level),
@@ -50,7 +50,6 @@ class RailCongestionMap {
         fillOpacity: 0.8
       });
 
-      // 툴팁 바인딩 (호버 시 표시)
       marker.bindTooltip(this.createTooltipContent(item), {
         permanent: false,
         direction: 'top',
@@ -62,13 +61,57 @@ class RailCongestionMap {
       return marker;
     });
 
-    // 지도 범위 조정
     if (this.markers.length > 0) {
       const group = new L.featureGroup(this.markers);
       this.map.fitBounds(group.getBounds());
     }
   }
 
+  searchLocations({ country, city, keyword }) {
+    this.filteredRailData = this.allRailData.filter(item => {
+      // 국가 필터 (미국만 있는 경우 생략 가능)
+      if (country && country !== 'United States') return false;
+      
+      // 도시 필터
+      if (city) {
+        const locationCity = this.extractCityFromLocation(item.location);
+        if (!locationCity || !locationCity.toLowerCase().includes(city.toLowerCase())) {
+          return false;
+        }
+      }
+      
+      // 키워드 검색 (회사명 또는 위치에서 검색)
+      if (keyword) {
+        const searchTerm = keyword.toLowerCase();
+        const companyMatch = item.company?.toLowerCase().includes(searchTerm);
+        const locationMatch = item.location?.toLowerCase().includes(searchTerm);
+        return companyMatch || locationMatch;
+      }
+      
+      return true;
+    });
+
+    this.renderMarkers();
+  }
+
+  extractCityFromLocation(location) {
+    if (!location) return null;
+    // 위치 문자열에서 도시명 추출 (예: "Chicago, IL" -> "Chicago")
+    return location.split(',')[0].trim();
+  }
+
+  // 데이터 로드 시 allRailData 저장
+  loadData() {
+    fetch('data/us-rail.json')
+      .then(response => response.json())
+      .then(data => {
+        this.allRailData = data;
+        this.filteredRailData = [...data];
+        this.renderMarkers();
+      })
+      .catch(error => console.error('Error loading rail data:', error));
+  }
+  
   getRadius(score) {
     // 점수에 따라 반지름 결정 (5-15 범위)
     return 5 + (score || 0) * 2;
@@ -123,10 +166,3 @@ class RailCongestionMap {
     
     resetControl.addTo(this.map);
   }
-
-  searchLocations({ country, city, keyword }) {
-    // 검색 기능 구현
-    console.log('Searching rail locations:', { country, city, keyword });
-    // 실제 구현에서는 필터링 로직 추가
-  }
-}
