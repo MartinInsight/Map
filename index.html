@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="styles/main.css">
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link rel="icon" href="data:,">
 </head>
 <body>
   <div class="app-container">
@@ -71,156 +72,53 @@
   <script src="js/truck_map.js"></script>
   <script src="js/rail_map.js"></script>
   <script src="js/ocean_map.js"></script>
-  
+
   <script>
-  document.addEventListener('DOMContentLoaded', () => {
-      // 지도 인스턴스 생성
-      const truckMap = new TruckCongestionMap('truck-map');
-      const railMap = new RailCongestionMap('rail-map');
-      const oceanMap = new OceanCongestionMap('ocean-map');
-      let activeMap = truckMap;
-  
-      // 위치 데이터 저장 객체
-      const locationData = {
-          ocean: { countries: [], cities: [] },
-          rail: { locations: [] },
-          truck: { states: [] }
-      };
-  
-      // 데이터 로드 함수
-      async function loadLocationData() {
-          try {
-              // Truck 데이터 로드
-              const truckRes = await fetch('data/us-truck.json');
-              const truckData = await truckRes.json();
-              locationData.truck.states = truckData.metadata?.states || [];
-              
-              // Rail 데이터 로드
-              const railRes = await fetch('data/us-rail.json');
-              const railData = await railRes.json();
-              locationData.rail.locations = railData.metadata?.cities || [];
-              
-              // Ocean 데이터 로드
-              const oceanRes = await fetch('data/global-ports.json');
-              const oceanData = await oceanRes.json();
-              if (oceanData.metadata?.countries_cities) {
-                  locationData.ocean.countries = oceanData.metadata.countries_cities.countries || [];
-                  locationData.ocean.cities = oceanData.metadata.countries_cities.cities || [];
-              }
-              
-              initLocationSelectors();
-          } catch (error) {
-              console.error('Error loading location data:', error);
-          }
-      }
-  
-      // 위치 선택기 초기화
-      function initLocationSelectors() {
-          const countrySelect = document.getElementById('country-select');
-          countrySelect.innerHTML = '<option value="">All Countries</option>';
-          
-          // Ocean 국가 목록 추가
-          locationData.ocean.countries.forEach(country => {
-              const option = document.createElement('option');
-              option.value = country;
-              option.textContent = country;
-              countrySelect.appendChild(option);
-          });
-          
-          // 초기 위치 목록 업데이트
-          updateLocationSelect();
-      }
-  
-      // 위치 선택기 업데이트
-      function updateLocationSelect() {
-          const country = document.getElementById('country-select').value;
-          const locationSelect = document.getElementById('location-select');
-          locationSelect.innerHTML = '<option value="">All Locations</option>';
-          
-          const activeTab = document.querySelector('.transport-tab.active');
-          if (!activeTab) return;
-          
-          const mapType = activeTab.dataset.map;
-          let locations = [];
-          
-          switch(mapType) {
-              case 'truck':
-                  locations = locationData.truck.states;
-                  break;
-              case 'rail':
-                  locations = locationData.rail.locations;
-                  break;
-              case 'ocean':
-                  if (country) {
-                      locations = locationData.ocean.cities.filter(city => 
-                          city.toLowerCase().includes(country.toLowerCase()));
-                  } else {
-                      locations = locationData.ocean.cities;
-                  }
-                  break;
-          }
-          
-          locations.forEach(location => {
-              const option = document.createElement('option');
-              option.value = location;
-              option.textContent = location;
-              locationSelect.appendChild(option);
-          });
-      }
-  
-      // 탭 전환 기능
-      document.querySelectorAll('.transport-tab').forEach(tab => {
-          tab.addEventListener('click', () => {
-              // 탭 활성화
-              document.querySelectorAll('.transport-tab').forEach(t => t.classList.remove('active'));
-              tab.classList.add('active');
-  
-              // 지도 전환
-              document.querySelectorAll('.transport-map').forEach(m => m.classList.remove('active'));
-              document.getElementById(`${tab.dataset.map}-map`).classList.add('active');
-  
-              // 활성 지도 업데이트
-              activeMap = 
-                  tab.dataset.map === 'truck' ? truckMap :
-                  tab.dataset.map === 'rail' ? railMap : oceanMap;
-  
-              // 지도 크기 조정
-              setTimeout(() => activeMap.map.invalidateSize(), 100);
-              
-              // 위치 선택기 업데이트
-              updateLocationSelect();
-          });
+  document.addEventListener('DOMContentLoaded', function() {
+    // 지도 인스턴스 생성
+    const truckMap = new TruckCongestionMap('truck-map');
+    const railMap = new RailCongestionMap('rail-map');
+    const oceanMap = new OceanCongestionMap('ocean-map');
+    let activeMap = truckMap;
+
+    // 탭 전환 기능
+    document.querySelectorAll('.transport-tab').forEach(tab => {
+      tab.addEventListener('click', function() {
+        // 활성 탭 업데이트
+        document.querySelectorAll('.transport-tab').forEach(t => t.classList.remove('active'));
+        this.classList.add('active');
+
+        // 활성 지도 업데이트
+        const mapType = this.dataset.map;
+        document.querySelectorAll('.transport-map').forEach(map => map.classList.remove('active'));
+        document.getElementById(`${mapType}-map`).classList.add('active');
+
+        // 활성 맵 객체 설정
+        switch(mapType) {
+          case 'truck': activeMap = truckMap; break;
+          case 'rail': activeMap = railMap; break;
+          case 'ocean': activeMap = oceanMap; break;
+        }
       });
-  
-      // 국가 선택 변경 이벤트
-      document.getElementById('country-select').addEventListener('change', () => {
-          updateLocationSelect();
-      });
-  
-      // 검색 패널 토글
-      const searchPanel = document.querySelector('.search-panel');
-      document.querySelector('.search-toggle-btn').addEventListener('click', () => {
-          searchPanel.classList.toggle('visible');
-      });
-      document.querySelector('.close-search').addEventListener('click', () => {
-          searchPanel.classList.remove('visible');
-      });
-  
-      // 검색 기능
-      document.getElementById('search-btn').addEventListener('click', () => {
-          const country = document.getElementById('country-select').value;
-          const location = document.getElementById('location-select').value;
-          const keyword = document.getElementById('search-input').value.trim();
-          
-          activeMap.searchLocations({ 
-              country: activeMap === oceanMap ? country : 'United States', 
-              location, 
-              keyword 
-          });
-      });
-  
-      // 초기 데이터 로드
-      loadLocationData();
+    });
+
+    // 검색 기능
+    document.getElementById('search-btn').addEventListener('click', function() {
+      const country = document.getElementById('country-select').value;
+      const location = document.getElementById('location-select').value;
+      const keyword = document.getElementById('search-input').value;
+
+      activeMap.searchLocations({ country, location, keyword });
+    });
+
+    // 검색 패널 토글
+    document.querySelector('.search-toggle-btn').addEventListener('click', function() {
+      document.querySelector('.search-panel').classList.toggle('active');
+    });
+
+    document.querySelector('.close-search').addEventListener('click', function() {
+      document.querySelector('.search-panel').classList.remove('active');
+    });
   });
   </script>
 </body>
