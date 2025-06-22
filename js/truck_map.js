@@ -5,7 +5,6 @@ class TruckCongestionMap {
     this.currentMode = 'inbound';
     this.metricData = null;
     this.initialized = false;
-    this.controlDiv = null;
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© OpenStreetMap'
@@ -30,7 +29,7 @@ class TruckCongestionMap {
       this.showError();
     }
   }
-
+  
   async fetchSheetData() {
     try {
       const response = await fetch('data/us-truck.json');
@@ -182,43 +181,41 @@ class TruckCongestionMap {
   addControls() {
     const controlContainer = L.control({ position: 'topright' });
     
-    controlContainer.onAdd = () => {
-      this.controlDiv = L.DomUtil.create('div', 'truck-control-container');
-      this.renderControls();
-      return this.controlDiv;
+    controlContainer.onAdd = (map) => {
+      const container = L.DomUtil.create('div', 'map-control-container');
+      this.renderControls(container); // 컨테이너를 인자로 전달
+      return container;
     };
     
     controlContainer.addTo(this.map);
   }
 
-  renderControls() {
-    this.controlDiv.innerHTML = `
-      <div class="map-control-container">
-        <div class="truck-toggle-wrapper">
-          <button class="truck-toggle-btn ${this.currentMode === 'inbound' ? 'truck-active' : ''}" 
-                  data-mode="inbound">INBOUND</button>
-          <button class="truck-toggle-btn ${this.currentMode === 'outbound' ? 'truck-active' : ''}" 
-                  data-mode="outbound">OUTBOUND</button>
-        </div>
-        <button class="reset-view-btn">Reset View</button>
+  renderControls(container) {
+    container.innerHTML = `
+      <div class="truck-toggle-wrapper">
+        <button class="truck-toggle-btn ${this.currentMode === 'inbound' ? 'truck-active' : ''}" 
+                data-mode="inbound">INBOUND</button>
+        <button class="truck-toggle-btn ${this.currentMode === 'outbound' ? 'truck-active' : ''}" 
+                data-mode="outbound">OUTBOUND</button>
       </div>
+      <button class="reset-view-btn">Reset View</button>
     `;
 
-    this.controlDiv.querySelectorAll('.truck-toggle-btn').forEach(btn => {
+    // 이벤트 리스너 추가 (안전하게)
+    container.querySelectorAll('.truck-toggle-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         this.currentMode = btn.dataset.mode;
-        this.renderControls();
+        this.renderControls(container); // 컨테이너 다시 렌더링
         if (this.stateLayer) {
           this.stateLayer.setStyle(feature => this.getStyle(feature));
         }
       });
     });
 
-    this.controlDiv.querySelector('#truck-reset-view').addEventListener('click', () => {
+    container.querySelector('.reset-view-btn').addEventListener('click', () => {
       this.map.setView([37.8, -96], 4);
     });
   }
-}
 
 // 전역 변수로 노출
 window.TruckCongestionMap = TruckCongestionMap;
