@@ -193,14 +193,14 @@ class TruckCongestionMap {
 
   renderControls() {
     this.controlDiv.innerHTML = `
-      <div class="truck-toggle-container">
+      <div class="map-control-container">
         <div class="truck-toggle-wrapper">
           <button class="truck-toggle-btn ${this.currentMode === 'inbound' ? 'truck-active' : ''}" 
                   data-mode="inbound">INBOUND</button>
           <button class="truck-toggle-btn ${this.currentMode === 'outbound' ? 'truck-active' : ''}" 
                   data-mode="outbound">OUTBOUND</button>
         </div>
-        <button class="truck-reset-btn" id="truck-reset-view">Reset View</button>
+        <button class="reset-view-btn">Reset View</button>
       </div>
     `;
 
