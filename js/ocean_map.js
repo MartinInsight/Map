@@ -1,3 +1,4 @@
+// js/ocean_map.js
 class OceanCongestionMap {
   constructor(mapElementId) {
     this.map = L.map(mapElementId).setView([20, 0], 2);
@@ -9,22 +10,7 @@ class OceanCongestionMap {
       attribution: '© OpenStreetMap'
     }).addTo(this.map);
 
-    // 리셋 버튼 추가 (트럭맵과 동일한 스타일)
-    this.addResetButton();
     this.loadData();
-  }
-
-  addResetButton() {
-    const container = L.DomUtil.create('div', 'map-control-container');
-    container.innerHTML = `
-      <button class="reset-view-btn">Reset View</button>
-    `;
-    
-    container.querySelector('.reset-view-btn').addEventListener('click', () => {
-      this.map.setView([20, 0], 2);
-    });
-
-    this.map.getContainer().appendChild(container);
   }
 
   async loadData() {
@@ -95,28 +81,6 @@ class OceanCongestionMap {
     };
     return colors[level] || '#555';
   }
-
-  addControls() {
-    const controlContainer = L.control({ position: 'topright' });
-    
-    controlContainer.onAdd = () => {
-      this.controlDiv = L.DomUtil.create('div', 'ocean-control-container');
-      this.renderControls();
-      return this.controlDiv;
-    };
-    
-    controlContainer.addTo(this.map);
-  }
-
-  renderControls() {
-    this.controlDiv.innerHTML = `
-      <button class="ocean-reset-btn" id="ocean-reset-view">Reset View</button>
-    `;
-
-    this.controlDiv.querySelector('#ocean-reset-view').addEventListener('click', () => {
-      this.map.setView([20, 0], 2);
-    });
-  }  
   
   createPopupContent(port) {
     return `
