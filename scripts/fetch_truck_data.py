@@ -76,10 +76,11 @@ def fetch_truck_data():
         os.makedirs(output_dir, exist_ok=True)
         output_path = os.path.join(output_dir, 'us-truck.json')  # 파일명 변경
         
+        # 메타데이터 생성
         metadata = {
             'data': result,
             'metadata': {
-                'cities': get_us_cities(records)
+                'states': list(result.keys())
             }
         }
         
