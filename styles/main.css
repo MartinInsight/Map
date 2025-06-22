@@ -1,78 +1,99 @@
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600&display=swap');
 
-html, body {
-  height: 100%;
-  margin: 0;
-  padding: 0;
-  overflow: hidden;
-  font-family: 'Noto Sans KR', sans-serif;
+/* 기본 설정 */
+:root {
+  --primary-color: #00657E;
+  --secondary-color: #003A52;
+  --text-color: #333;
+  --light-gray: #f5f5f5;
+  --medium-gray: #e0e0e0;
+  --dark-gray: #777;
+  --success-color: #27ae60;
+  --warning-color: #f39c12;
+  --danger-color: #e74c3c;
+  --box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+  --border-radius: 6px;
 }
 
-/* 상단 탭 스타일 - 50/50 분할 레이아웃 */
-.transport-tab-container {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 5%;
-  z-index: 1000;
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  font-family: 'Noto Sans KR', sans-serif;
+  color: var(--text-color);
+  overflow: hidden;
+}
+
+.app-container {
+  height: 100vh;
   display: flex;
+  flex-direction: column;
+}
+
+/* 탭 메뉴 스타일 */
+.transport-tab-container {
+  display: flex;
+  height: 50px;
   background: white;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  z-index: 1000;
 }
 
 .transport-tab {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: none;
-    background: white;
-    cursor: pointer;
-    font-family: 'Noto Sans KR', sans-serif;
-    font-weight: 400;
-    font-size: 14px;
-    color: black;
-    position: relative; /* 필수 */
-    transition: all 0.3s ease;
-    padding: 0; /* 버튼 기본 패딩 제거 */
-    margin: 0; /* 버튼 기본 마진 제거 */
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: white;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--dark-gray);
+  transition: all 0.3s ease;
+  gap: 8px;
 }
 
-/* 모든 탭의 하단 라인 (초기 상태) */
-.transport-tab::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: 2px;
-    background-color: #00657E;
-    opacity: 0;
-    transition: opacity 0.3s ease;
+.transport-tab i {
+  font-size: 16px;
 }
 
-/* 활성 탭 라인 */
+.transport-tab.active {
+  color: var(--primary-color);
+  font-weight: 600;
+}
+
 .transport-tab.active::after {
-    opacity: 1;
-}
-
-/* 비활성 탭 호버 시 */
-.transport-tab:not(.active):hover::after {
-    opacity: 1;
-}
-
-/* 활성 탭이 아닌 다른 요소 호버 시 */
-.transport-tab-container:hover .transport-tab.active:not(:hover)::after {
-    opacity: 0;
-}
-
-/* 맵 컨테이너 - 50/50 분할 */
-.transport-map {
-  position: fixed;
-  top: 5%; /* 탭 높이만큼 아래로 */
+  content: '';
+  position: absolute;
+  bottom: 0;
   left: 0;
   width: 100%;
-  height: 95%;
+  height: 3px;
+  background-color: var(--primary-color);
+}
+
+.transport-tab:not(.active):hover {
+  color: var(--secondary-color);
+  background-color: var(--light-gray);
+}
+
+/* 지도 컨테이너 */
+.map-container {
+  flex: 1;
+  position: relative;
+}
+
+.transport-map {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
   display: none;
 }
 
@@ -80,44 +101,188 @@ html, body {
   display: block;
 }
 
-#rail-map, #truck-map {
-  left: 0;
-  width: 100%;
-}
-
-/* 트럭 툴팁 스타일 */
-.truck-tooltip {
-  font-family: 'Noto Sans KR', sans-serif;
-  font-weight: 400;
-  min-width: 220px;
-  padding: 15px;
+/* 리셋 버튼 공통 스타일 */
+.reset-btn {
+  padding: 6px 12px;
   background: white;
-  border-radius: 6px;
-  box-shadow: 0 3px 10px rgba(0,0,0,0.2);
-  border: none;
-  margin: 0;
+  border: 1px solid var(--medium-gray);
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  box-shadow: var(--box-shadow);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.2s;
 }
 
-.truck-tooltip h4 {
-  font-weight: 600;
-  margin: 0 0 15px 0;
+.reset-btn:hover {
+  background: var(--light-gray);
+  border-color: var(--dark-gray);
+}
+
+.reset-btn i {
+  font-size: 12px;
+}
+
+/* 검색 패널 */
+.search-panel {
+  position: fixed;
+  bottom: -300px;
+  right: 20px;
+  width: 320px;
+  background: white;
+  border-radius: var(--border-radius);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+  z-index: 1100;
+  transition: bottom 0.3s ease;
+  padding: 15px;
+}
+
+.search-panel.visible {
+  bottom: 20px;
+}
+
+.search-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.search-header h3 {
   font-size: 16px;
-  color: #333;
-  border-bottom: 1px solid #eee;
-  padding-bottom: 8px;
+  font-weight: 600;
+  color: var(--primary-color);
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-.truck-tooltip-container .leaflet-popup-content-wrapper {
-  background: transparent !important;
-  padding: 0 !important;
+.close-search {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--dark-gray);
+  font-size: 16px;
+  transition: color 0.2s;
 }
 
-.truck-tooltip-container .leaflet-popup-content {
-  width: 100% !important;
+.close-search:hover {
+  color: var(--danger-color);
+}
+
+.search-filters {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.filter-group label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--secondary-color);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.search-select, .search-input {
+  padding: 8px 12px;
+  border: 1px solid var(--medium-gray);
+  border-radius: var(--border-radius);
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 14px;
+  transition: border-color 0.2s;
+}
+
+.search-select:focus, .search-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+.search-btn {
+  padding: 10px;
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-weight: 500;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: background 0.2s;
+  margin-top: 5px;
+}
+
+.search-btn:hover {
+  background: var(--secondary-color);
+}
+
+.search-toggle-btn {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 50px;
+  height: 50px;
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  transition: all 0.3s;
+}
+
+.search-toggle-btn:hover {
+  background: var(--secondary-color);
+  transform: scale(1.05);
+}
+
+/* 툴팁 스타일 */
+.leaflet-tooltip {
+  font-family: 'Noto Sans KR', sans-serif;
+  border: none !important;
+  background: white !important;
+  box-shadow: var(--box-shadow) !important;
+  border-radius: var(--border-radius) !important;
+  padding: 12px !important;
+  font-size: 14px !important;
+}
+
+.leaflet-tooltip-top:before {
+  border-top-color: white !important;
+}
+
+/* 트럭 툴팁 특정 스타일 */
+.truck-tooltip h4 {
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: var(--secondary-color);
+  border-bottom: 1px solid var(--medium-gray);
+  padding-bottom: 5px;
 }
 
 .truck-metric-box {
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
 .truck-metric-box:last-child {
@@ -125,172 +290,69 @@ html, body {
 }
 
 .truck-metric-box strong {
-  font-weight: 600;
-  display: block;
-  margin-bottom: 5px;
-  font-size: 14px;
-  color: #555;
+  font-weight: 500;
+  font-size: 13px;
+  color: var(--dark-gray);
 }
 
 .truck-positive {
-  color: #27ae60;
-  font-weight: 600;
+  color: var(--success-color);
 }
 
 .truck-negative {
-  color: #e74c3c;
-  font-weight: 600;
+  color: var(--danger-color);
 }
 
-.truck-normal-text {
-  font-weight: 400;
-  color: #333;
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .transport-tab {
+    font-size: 12px;
+    padding: 0 5px;
+  }
+  
+  .transport-tab i {
+    font-size: 14px;
+  }
+  
+  .reset-btn {
+    font-size: 11px;
+    padding: 5px 8px;
+  }
+  
+  .search-panel {
+    width: 90%;
+    right: 5%;
+    padding: 12px;
+  }
+  
+  .search-select, .search-input {
+    font-size: 13px;
+    padding: 7px 10px;
+  }
+  
+  .search-btn {
+    font-size: 13px;
+    padding: 8px;
+  }
+  
+  .leaflet-tooltip {
+    font-size: 13px !important;
+    max-width: 200px !important;
+  }
 }
 
-/* 레일 툴팁 스타일 */
-.rail-tooltip {
-  font-family: 'Noto Sans KR', sans-serif;
-  min-width: 200px;
-  padding: 12px;
-  background: white;
-  border-radius: 6px;
-  box-shadow: 0 3px 10px rgba(0,0,0,0.2);
-}
-
-.rail-tooltip h4 {
-  margin: 0 0 12px 0;
-  font-size: 16px;
-  font-weight: 600;
-  color: #333;
-  border-bottom: 1px solid #eee;
-  padding-bottom: 8px;
-}
-
-.rail-tooltip p {
-  margin: 8px 0;
-  font-size: 14px;
-}
-
-.rail-tooltip strong {
-  color: #555;
-}
-
-/* Ocean 툴팁 스타일 */
-.ocean-tooltip {
-  font-family: 'Noto Sans KR', sans-serif;
-  min-width: 220px;
-  padding: 15px;
-  background: white;
-  border-radius: 6px;
-  box-shadow: 0 3px 10px rgba(0,0,0,0.2);
-}
-
-.ocean-tooltip h4 {
-  margin: 0 0 12px 0;
-  font-size: 16px;
-  font-weight: 600;
-  color: #333;
-  border-bottom: 1px solid #eee;
-  padding-bottom: 8px;
-}
-
-.ocean-tooltip p {
-  margin: 8px 0;
-  font-size: 14px;
-}
-
-.ocean-tooltip strong {
-  color: #555;
-}
-
-/* 공통 툴팁 위치 */
-.leaflet-tooltip {
-  transform: translate(-50%, 0) !important;
-  left: 50% !important;
-  margin-top: 15px !important;
-}
-
-.leaflet-popup-content-wrapper {
-  all: initial !important; /* 기본 스타일 완전 제거 */
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-}
-
-.leaflet-popup-content {
-  margin: 0 !important;
-  width: auto !important;
-}
-
-.leaflet-popup-tip {
-  display: none !important; /* 팝업 화살표 제거 */
-}
-
-/* 트럭 맵 컨트롤 패널 (새 디자인) */
-.truck-control-container {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  z-index: 1000;
-}
-
-.truck-toggle-container {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.truck-toggle-wrapper {
-  display: flex;
-  border-radius: 5px;
-  overflow: hidden;
-  background: white;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-  border: 1px solid #e0e0e0;
-}
-
-.truck-toggle-btn {
-  padding: 0 15px;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  font-family: 'Noto Sans KR', sans-serif;
-  font-weight: 400;
-  font-size: 13px;
-  transition: all 0.3s;
-  min-width: 80px;
-  height: 30px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: black;
-}
-
-/* 선택된 버튼 스타일 */
-.truck-toggle-btn.truck-active {
-  background: #00657E;
-  color: white;
-  font-weight: 600;
-}
-
-/* 호버 시 버튼 스타일 */
-.truck-toggle-btn:not(.truck-active):hover {
-  font-weight: 600;
-}
-
-.truck-reset-btn {
-  padding: 0 15px;
-  background: white;
-  border: 1px solid #e0e0e0;
-  border-radius: 5px;
-  cursor: pointer;
-  font-family: 'Noto Sans KR', sans-serif;
-  font-weight: 400;
-  font-size: 13px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-  height: 30px;
-}
-
-.truck-reset-btn:hover {
-  background: #f5f5f5;
+@media (max-width: 480px) {
+  .transport-tab span {
+    display: none;
+  }
+  
+  .transport-tab i {
+    font-size: 16px;
+  }
+  
+  .search-toggle-btn {
+    width: 40px;
+    height: 40px;
+    font-size: 18px;
+  }
 }
