@@ -26,16 +26,16 @@ class RailCongestionMap {
     // 줌 컨트롤 추가
     L.control.zoom({ position: 'topright' }).addTo(this.map);
   }
-
+  
   loadData() {
-      fetch('data/us-rail.json')
+      fetch('data/global-ports.json')
           .then(response => response.json())
           .then(data => {
-              this.allRailData = data.data;  // 데이터 구조 변경 반영
-              this.filteredRailData = [...data.data];
+              this.allPortData = data.data;  // 데이터 구조 변경 반영
+              this.filteredPortData = [...data.data];
               this.renderMarkers();
           })
-          .catch(error => console.error('Error loading rail data:', error));
+          .catch(error => console.error('Error loading ocean data:', error));
   }
 
   renderMarkers(data = this.filteredRailData) {
