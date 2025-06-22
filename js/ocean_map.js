@@ -3,6 +3,8 @@ class OceanCongestionMap {
     this.mapId = mapId;
     this.map = null;
     this.markers = [];
+    this.allPortData = []; // 모든 항구 데이터 저장
+    this.filteredPortData = []; // 필터링된 항구 데이터 저장
     this.initMap();
     this.loadData();
     this.addResetButton();
@@ -35,12 +37,10 @@ class OceanCongestionMap {
       .catch(error => console.error('Error loading ocean data:', error));
   }
 
-  renderMarkers() {
-    // 기존 마커 제거
+  renderMarkers(data = this.filteredPortData) {
     this.clearMarkers();
 
-    // 새로운 마커 추가
-    this.markers = this.portData.map(item => {
+    this.markers = data.map(item => {
       const marker = L.circleMarker([item.lat, item.lng], {
         radius: this.getRadius(item.current_delay_days),
         fillColor: this.getColor(item.delay_level),
@@ -50,7 +50,6 @@ class OceanCongestionMap {
         fillOpacity: 0.8
       });
 
-      // 툴팁 바인딩 (호버 시 표시)
       marker.bindTooltip(this.createTooltipContent(item), {
         permanent: false,
         direction: 'top',
@@ -62,11 +61,58 @@ class OceanCongestionMap {
       return marker;
     });
 
-    // 지도 범위 조정
     if (this.markers.length > 0) {
       const group = new L.featureGroup(this.markers);
-      this.map.fitBounds(group.getBounds().pad(0.2)); // 약간의 패딩 추가
+      this.map.fitBounds(group.getBounds().pad(0.2));
     }
+  }
+
+  searchLocations({ country, city, keyword }) {
+    this.filteredPortData = this.allPortData.filter(item => {
+      // 국가 필터
+      if (country && item.country && !item.country.toLowerCase().includes(country.toLowerCase())) {
+        return false;
+      }
+      
+      // 도시 필터 (항구 위치에서 도시명 추정)
+      if (city) {
+        const portCity = this.extractCityFromPort(item.port);
+        if (!portCity || !portCity.toLowerCase().includes(city.toLowerCase())) {
+          return false;
+        }
+      }
+      
+      // 키워드 검색 (항구명, 국가, 코드 등에서 검색)
+      if (keyword) {
+        const searchTerm = keyword.toLowerCase();
+        const portMatch = item.port?.toLowerCase().includes(searchTerm);
+        const countryMatch = item.country?.toLowerCase().includes(searchTerm);
+        const codeMatch = item.port_code?.toLowerCase().includes(searchTerm);
+        return portMatch || countryMatch || codeMatch;
+      }
+      
+      return true;
+    });
+
+    this.renderMarkers();
+  }
+
+  extractCityFromPort(portName) {
+    if (!portName) return null;
+    // 항구 이름에서 도시명 추출 (예: "Port of Los Angeles" -> "Los Angeles")
+    return portName.replace(/Port of/i, '').trim();
+  }
+
+  // 데이터 로드 시 allPortData 저장
+  loadData() {
+    fetch('data/global-ports.json')
+      .then(response => response.json())
+      .then(data => {
+        this.allPortData = data;
+        this.filteredPortData = [...data];
+        this.renderMarkers();
+      })
+      .catch(error => console.error('Error loading ocean data:', error));
   }
 
   getRadius(delayDays) {
@@ -127,10 +173,3 @@ class OceanCongestionMap {
     
     resetControl.addTo(this.map);
   }
-
-  searchLocations({ country, city, keyword }) {
-    // 검색 기능 구현
-    console.log('Searching ocean ports:', { country, city, keyword });
-    // 실제 구현에서는 필터링 로직 추가
-  }
-}
