@@ -116,29 +116,31 @@ html, body {
 .truck-negative { color: #e74c3c; font-weight: 600; }
 .truck-normal-text { font-weight: 400; color: #333; }
 
-/* 컨트롤 패널 공통 */
+/* 통합 컨트롤 스타일 */
 .map-control-container {
   position: absolute;
   top: 10px;
   right: 10px;
   z-index: 1000;
+  background: white;
+  padding: 5px 10px;
+  border-radius: 5px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  height: 40px; /* 고정 높이 */
   display: flex;
   align-items: center;
-  gap: 10px;
 }
 
-/* 리셋 버튼 공통 */
 .reset-view-btn {
   padding: 0 15px;
+  height: 30px;
   background: white;
   border: 1px solid #e0e0e0;
   border-radius: 5px;
   cursor: pointer;
   font-family: 'Noto Sans KR', sans-serif;
-  font-weight: 400;
   font-size: 13px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-  height: 30px;
+  margin-left: 10px;
 }
 
 .reset-view-btn:hover {
