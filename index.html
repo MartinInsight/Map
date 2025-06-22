@@ -3,72 +3,11 @@
 <head>
   <title>Global Transportation Congestion Map</title>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" href="data:,">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
   <link rel="stylesheet" href="styles/main.css">
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600&display=swap" rel="stylesheet">
-  <style>
-    body {
-      margin: 0;
-      padding: 0;
-      font-family: 'Noto Sans KR', sans-serif;
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
-    
-    #tab-container {
-      display: flex;
-      height: 5%;
-      background: white;
-      z-index: 1000;
-    }
-    
-    .transport-tab {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border: none;
-      background: white;
-      cursor: pointer;
-      font-weight: 400;
-      font-size: 14px;
-      position: relative;
-      transition: all 0.3s;
-    }
-    
-    .transport-tab.active {
-      font-weight: 600;
-      color: #003A52;
-    }
-    
-    .transport-tab.active::after {
-      content: '';
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      width: 100%;
-      height: 2px;
-      background-color: #00657E;
-    }
-    
-    #map-container {
-      display: flex;
-      height: 95%;
-      width: 100%;
-    }
-    
-    .transport-map {
-      width: 100%;
-      height: 100%;
-      display: none;
-    }
-    
-    .transport-map.active {
-      display: block;
-    }
-  </style>
 </head>
 <body>
   <!-- 탭 버튼 -->
@@ -85,6 +24,20 @@
     <div id="ocean-map" class="transport-map"></div>
   </div>
 
+  <!-- 공통 검색 패널 (우측 하단) -->
+  <div class="search-panel">
+    <div class="search-filters">
+      <select id="country-select" class="search-select">
+        <option value="">All Countries</option>
+      </select>
+      <select id="city-select" class="search-select">
+        <option value="">All Cities</option>
+      </select>
+      <input type="text" id="search-input" class="search-input" placeholder="Search...">
+      <button id="search-btn" class="search-btn">Search</button>
+    </div>
+  </div>
+
   <!-- 스크립트 -->
   <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
   <script src="js/truck_map.js"></script>
@@ -96,6 +49,7 @@
       const railMap = new RailCongestionMap('rail-map');
       const oceanMap = new OceanCongestionMap('ocean-map');
 
+      // 탭 전환 로직
       document.querySelectorAll('.transport-tab').forEach(tab => {
         tab.addEventListener('click', () => {
           // 탭 전환
@@ -126,7 +80,41 @@
           }, 100);
         });
       });
+
+      // 검색 패널 초기화
+      initSearchPanel();
     });
+
+    function initSearchPanel() {
+      // TODO: 실제 데이터에 맞게 국가/도시 목록 동적 로드
+      // 임시 예시 코드
+      const countrySelect = document.getElementById('country-select');
+      const citySelect = document.getElementById('city-select');
+      
+      // 국가 목록 추가 예시
+      const countries = ['United States', 'China', 'Japan', 'Korea'];
+      countries.forEach(country => {
+        const option = document.createElement('option');
+        option.value = country;
+        option.textContent = country;
+        countrySelect.appendChild(option);
+      });
+      
+      // 국가 선택 시 도시 목록 변경
+      countrySelect.addEventListener('change', (e) => {
+        citySelect.innerHTML = '<option value="">All Cities</option>';
+        // TODO: 선택된 국가에 맞는 도시 목록 로드
+      });
+      
+      // 검색 버튼 이벤트
+      document.getElementById('search-btn').addEventListener('click', () => {
+        const country = countrySelect.value;
+        const city = citySelect.value;
+        const keyword = document.getElementById('search-input').value;
+        // TODO: 검색 로직 구현
+        console.log('Search:', {country, city, keyword});
+      });
+    }
   </script>
 </body>
 </html>
