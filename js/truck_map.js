@@ -2,50 +2,59 @@ class TruckCongestionMap {
   constructor(mapId) {
     this.mapId = mapId;
     this.map = null;
+    this.stateData = {}; // 주 데이터 저장 (위도/경도 포함)
+    this.truckData = {}; // 트럭 데이터 저장
     this.geojson = null;
-    this.allStatesData = {}; // 모든 주 데이터 저장
-    this.filteredStatesData = {}; // 필터링된 주 데이터 저장
     this.initMap();
     this.loadData();
     this.addResetButton();
   }
 
-
-  initMap() {
-    // 지도 초기화
-    this.map = L.map(this.mapId, {
-      zoomControl: false,
-      preferCanvas: true
-    }).setView([37.8, -96], 4);
-
-    // 타일 레이어 추가
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-      maxZoom: 18
-    }).addTo(this.map);
-
-    // 줌 컨트롤 추가
-    L.control.zoom({ position: 'topright' }).addTo(this.map);
+  async loadData() {
+    try {
+      // 주 데이터 로드 (위도/경도 포함)
+      const statesRes = await fetch('data/us-states.json');
+      const statesGeoJSON = await statesRes.json();
+      
+      // 트럭 데이터 로드
+      const truckRes = await fetch('data/us-truck.json');
+      const truckData = await truckRes.json();
+      
+      // 주 데이터와 트럭 데이터 병합
+      this.stateData = statesGeoJSON.features.reduce((acc, feature) => {
+        const stateCode = feature.id;
+        if (truckData[stateCode]) {
+          // 주의 중심점 계산 (간단한 버전)
+          const coordinates = feature.geometry.coordinates[0][0];
+          const center = coordinates.reduce((acc, coord) => {
+            return [acc[0] + coord[0], acc[1] + coord[1]];
+          }, [0, 0]);
+          center[0] /= coordinates.length;
+          center[1] /= coordinates.length;
+          
+          acc[stateCode] = {
+            ...truckData[stateCode],
+            lat: center[1],
+            lng: center[0],
+            name: feature.properties.name
+          };
+        }
+        return acc;
+      }, {});
+      
+      this.renderMap();
+    } catch (error) {
+      console.error('Error loading data:', error);
+    }
   }
 
-loadData() {
-    fetch('data/us-truck.json')
-        .then(response => response.json())
-        .then(data => {
-            this.allStatesData = data.data;  // 데이터 구조 변경 반영
-            this.filteredStatesData = {...data.data};
-            this.renderMap();
-        })
-        .catch(error => console.error('Error loading truck data:', error));
-}
-
-  renderMap(data = this.filteredStatesData) {
+  renderMap() {
     if (this.geojson) {
       this.map.removeLayer(this.geojson);
     }
 
-    const geojsonFeatures = Object.keys(data).map(stateCode => {
-      const stateData = data[stateCode];
+    const geojsonFeatures = Object.keys(this.stateData).map(stateCode => {
+      const stateData = this.stateData[stateCode];
       return {
         type: 'Feature',
         properties: {
@@ -54,7 +63,7 @@ loadData() {
         },
         geometry: {
           type: 'Point',
-          coordinates: [this.getStateLongitude(stateCode), this.getStateLatitude(stateCode)]
+          coordinates: [stateData.lng, stateData.lat]
         }
       };
     });
