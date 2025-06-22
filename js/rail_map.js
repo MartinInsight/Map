@@ -28,13 +28,14 @@ class RailCongestionMap {
   }
 
   loadData() {
-    fetch('data/us-rail.json')
-      .then(response => response.json())
-      .then(data => {
-        this.railData = data;
-        this.renderMarkers();
-      })
-      .catch(error => console.error('Error loading rail data:', error));
+      fetch('data/us-rail.json')
+          .then(response => response.json())
+          .then(data => {
+              this.allRailData = data.data;  // 데이터 구조 변경 반영
+              this.filteredRailData = [...data.data];
+              this.renderMarkers();
+          })
+          .catch(error => console.error('Error loading rail data:', error));
   }
 
   renderMarkers(data = this.filteredRailData) {
