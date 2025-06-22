@@ -3,121 +3,58 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Global Transportation Congestion Map</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+  <title>Transportation Congestion Map</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="styles/main.css">
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-  <link rel="icon" href="data:,">
+  <style>
+    .transport-map { display: none; height: 100%; }
+    .transport-map.active { display: block; }
+    .reset-control { background: white; padding: 5px; border-radius: 4px; }
+    .reset-btn { border: none; background: none; cursor: pointer; }
+    .transport-tab-container { display: flex; justify-content: center; margin: 10px; }
+    .transport-tab { padding: 10px 20px; margin: 0 5px; cursor: pointer; }
+    .transport-tab.active { background: #3498db; color: white; }
+  </style>
 </head>
 <body>
-  <div class="app-container">
-    <!-- 상단 탭 메뉴 -->
-    <div class="transport-tab-container">
-      <button class="transport-tab active" data-map="truck">
-        <i class="fas fa-truck"></i> Truck
-      </button>
-      <button class="transport-tab" data-map="rail">
-        <i class="fas fa-train"></i> Rail
-      </button>
-      <button class="transport-tab" data-map="ocean">
-        <i class="fas fa-ship"></i> Ocean
-      </button>
-    </div>
-
-    <!-- 지도 컨테이너 -->
-    <div class="map-container">
-      <div id="truck-map" class="transport-map active"></div>
-      <div id="rail-map" class="transport-map"></div>
-      <div id="ocean-map" class="transport-map"></div>
-    </div>
-
-    <!-- 검색 패널 -->
-    <div class="search-panel">
-      <div class="search-header">
-        <h3><i class="fas fa-search"></i> Search</h3>
-        <button class="close-search"><i class="fas fa-times"></i></button>
-      </div>
-      <div class="search-filters">
-        <div class="filter-group">
-          <label for="country-select"><i class="fas fa-globe"></i> Country</label>
-          <select id="country-select" class="search-select">
-            <option value="">All Countries</option>
-          </select>
-        </div>
-        <div class="filter-group">
-          <label for="location-select"><i class="fas fa-city"></i> Location</label>
-          <select id="location-select" class="search-select">
-            <option value="">All Locations</option>
-          </select>
-        </div>
-        <div class="filter-group">
-          <label for="search-input"><i class="fas fa-keyboard"></i> Keyword</label>
-          <input type="text" id="search-input" class="search-input" placeholder="Enter location...">
-        </div>
-        <button id="search-btn" class="search-btn">
-          <i class="fas fa-search"></i> Search
-        </button>
-      </div>
-    </div>
-
-    <!-- 검색 토글 버튼 -->
-    <button class="search-toggle-btn">
-      <i class="fas fa-search"></i>
+  <div class="transport-tab-container">
+    <button class="transport-tab active" data-map="truck">
+      <i class="fas fa-truck"></i> Truck
+    </button>
+    <button class="transport-tab" data-map="rail">
+      <i class="fas fa-train"></i> Rail
+    </button>
+    <button class="transport-tab" data-map="ocean">
+      <i class="fas fa-ship"></i> Ocean
     </button>
   </div>
 
-  <!-- 지도 라이브러리 및 스크립트 -->
+  <div id="truck-map" class="transport-map active"></div>
+  <div id="rail-map" class="transport-map"></div>
+  <div id="ocean-map" class="transport-map"></div>
+
   <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
   <script src="js/truck_map.js"></script>
   <script src="js/rail_map.js"></script>
   <script src="js/ocean_map.js"></script>
-
+  
   <script>
-  document.addEventListener('DOMContentLoaded', function() {
-    // 지도 인스턴스 생성
-    const truckMap = new TruckCongestionMap('truck-map');
-    const railMap = new RailCongestionMap('rail-map');
-    const oceanMap = new OceanCongestionMap('ocean-map');
-    let activeMap = truckMap;
+  document.addEventListener('DOMContentLoaded', () => {
+    const maps = {
+      truck: new TruckCongestionMap('truck-map'),
+      rail: new RailCongestionMap('rail-map'),
+      ocean: new OceanCongestionMap('ocean-map')
+    };
 
-    // 탭 전환 기능
     document.querySelectorAll('.transport-tab').forEach(tab => {
-      tab.addEventListener('click', function() {
-        // 활성 탭 업데이트
-        document.querySelectorAll('.transport-tab').forEach(t => t.classList.remove('active'));
-        this.classList.add('active');
-
-        // 활성 지도 업데이트
-        const mapType = this.dataset.map;
-        document.querySelectorAll('.transport-map').forEach(map => map.classList.remove('active'));
-        document.getElementById(`${mapType}-map`).classList.add('active');
-
-        // 활성 맵 객체 설정
-        switch(mapType) {
-          case 'truck': activeMap = truckMap; break;
-          case 'rail': activeMap = railMap; break;
-          case 'ocean': activeMap = oceanMap; break;
-        }
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.transport-tab, .transport-map').forEach(el => {
+          el.classList.remove('active');
+        });
+        tab.classList.add('active');
+        document.getElementById(`${tab.dataset.map}-map`).classList.add('active');
       });
-    });
-
-    // 검색 기능
-    document.getElementById('search-btn').addEventListener('click', function() {
-      const country = document.getElementById('country-select').value;
-      const location = document.getElementById('location-select').value;
-      const keyword = document.getElementById('search-input').value;
-
-      activeMap.searchLocations({ country, location, keyword });
-    });
-
-    // 검색 패널 토글
-    document.querySelector('.search-toggle-btn').addEventListener('click', function() {
-      document.querySelector('.search-panel').classList.toggle('active');
-    });
-
-    document.querySelector('.close-search').addEventListener('click', function() {
-      document.querySelector('.search-panel').classList.remove('active');
     });
   });
   </script>
