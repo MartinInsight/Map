@@ -91,21 +91,22 @@
       // 데이터 로드 함수
       async function loadLocationData() {
           try {
+              // Truck 데이터 로드 (주 목록)
+              const truckRes = await fetch('data/us-truck.json');
+              const truckData = await truckRes.json();
+              locationData.truck.states = truckData.metadata.states;              
+
+              // Rail 데이터 로드
+              const railRes = await fetch('data/us-rail.json');
+              const railData = await railRes.json();
+            
               // Ocean 데이터 로드
               const oceanRes = await fetch('data/global-ports.json');
               const oceanData = await oceanRes.json();
               locationData.ocean = oceanData.metadata.countries_cities;
-              
-              // Rail 데이터 로드
-              const railRes = await fetch('data/us-rail.json');
-              const railData = await railRes.json();
+
               locationData.rail.cities = railData.metadata.cities;
-              
-              // Truck 데이터 로드
-              const truckRes = await fetch('data/us-truck.json');
-              const truckData = await truckRes.json();
-              locationData.truck.cities = truckData.metadata.cities;
-              
+                            
               initLocationSelectors();
           } catch (error) {
               console.error('Error loading location data:', error);
@@ -140,16 +141,25 @@
           updateCitySelect('');
       }
   
-      // 도시 선택기 업데이트
+      // 도시 선택기 업데이트 (Truck 전용)
       function updateCitySelect(country) {
           const citySelect = document.getElementById('city-select');
-          citySelect.innerHTML = '<option value="">All Cities</option>';
+          citySelect.innerHTML = '<option value="">All States</option>';
           
           const activeTab = document.querySelector('.transport-tab.active');
           if (!activeTab) return;
           
           const mapType = activeTab.dataset.map;
-          let cities = [];
+          
+          if (mapType === 'truck') {
+              // Truck인 경우 주(State) 목록 표시
+              locationData.truck.states.forEach(stateCode => {
+                  const option = document.createElement('option');
+                  option.value = stateCode;
+                  option.textContent = stateCode; // 또는 주 이름 매핑 가능
+                  citySelect.appendChild(option);
+              });
+          } 
           
           switch(mapType) {
               case 'ocean':
