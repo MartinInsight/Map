@@ -13,6 +13,27 @@ def safe_convert(val, default=None):
     except (ValueError, TypeError):
         return default
 
+def get_country_city_data(records):
+    countries = set()
+    cities = set()
+    
+    for row in records:
+        country = str(row.get('Country', '')).strip()
+        port = str(row.get('Port', '')).strip()
+        
+        if country:
+            countries.add(country)
+        
+        # 포트 이름에서 도시 추출 (예: "Port of Los Angeles" -> "Los Angeles")
+        city = port.replace('Port of', '').replace('Port', '').strip()
+        if city:
+            cities.add(city)
+    
+    return {
+        'countries': sorted(list(countries)),
+        'cities': sorted(list(cities))
+    }
+
 def fetch_ocean_data():
     print("🔵 Ocean 데이터 수집 시작")
     try:
@@ -72,8 +93,17 @@ def fetch_ocean_data():
         os.makedirs(output_dir, exist_ok=True)
         output_path = os.path.join(output_dir, 'global-ports.json')
         
+        # 메타데이터 생성
+        metadata = {
+            'data': result,
+            'metadata': {
+                'countries_cities': get_country_city_data(records)
+            }
+        }
+        
+        # JSON 저장 부분 수정
         with open(output_path, 'w', encoding='utf-8') as f:
-            json.dump(result, f, indent=2, ensure_ascii=False)
+            json.dump(metadata, f, indent=2, ensure_ascii=False)
             
         print(f"✅ Ocean 데이터 저장 완료: {output_path}")
         print(f"🔄 생성된 데이터 개수: {len(result)}")
