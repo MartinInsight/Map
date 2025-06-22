@@ -1,120 +1,132 @@
-// js/rail_map.js
 class RailCongestionMap {
-  constructor(mapElementId) {
-    this.map = L.map(mapElementId).setView([37.8, -96], 4);
+  constructor(mapId) {
+    this.mapId = mapId;
+    this.map = null;
     this.markers = [];
-    this.currentData = null;
-    this.lastUpdated = null;
+    this.initMap();
+    this.loadData();
+    this.addResetButton();
+  }
 
+  initMap() {
+    // 지도 초기화
+    this.map = L.map(this.mapId, {
+      zoomControl: false,
+      preferCanvas: true
+    }).setView([37.8, -96], 4);
+
+    // 타일 레이어 추가
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap'
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      maxZoom: 18
     }).addTo(this.map);
 
-    this.loadData();
+    // 줌 컨트롤 추가
+    L.control.zoom({ position: 'topright' }).addTo(this.map);
   }
 
-  async loadData() {
-    try {
-      const response = await fetch('data/us-rail.json');
-      this.currentData = await response.json();
-      if (this.currentData.length > 0) {
-        this.lastUpdated = this.currentData[0].date;
-      }
-      this.renderMarkers();
-      this.addLastUpdatedText();
-    } catch (error) {
-      console.error("Failed to load rail data:", error);
-    }
-  }
-
-  addLastUpdatedText() {
-    if (this.lastUpdated) {
-      const date = new Date(this.lastUpdated);
-      const formattedDate = `${date.getMonth()+1}-${date.getDate()}-${date.getFullYear()}`;
-      
-      const infoControl = L.control({ position: 'bottomleft' });
-      
-      infoControl.onAdd = () => {
-        const div = L.DomUtil.create('div', 'last-updated-info');
-        div.innerHTML = `<strong>Last Updated:</strong> ${formattedDate}`;
-        div.style.backgroundColor = 'white';
-        div.style.padding = '5px 10px';
-        div.style.borderRadius = '5px';
-        div.style.boxShadow = '0 0 5px rgba(0,0,0,0.2)';
-        return div;
-      };
-      
-      infoControl.addTo(this.map);
-    }
+  loadData() {
+    fetch('data/us-rail.json')
+      .then(response => response.json())
+      .then(data => {
+        this.railData = data;
+        this.renderMarkers();
+      })
+      .catch(error => console.error('Error loading rail data:', error));
   }
 
   renderMarkers() {
-    this.markers.forEach(marker => this.map.removeLayer(marker));
-    this.markers = [];
+    // 기존 마커 제거
+    this.clearMarkers();
 
-    this.currentData.forEach(item => {
+    // 새로운 마커 추가
+    this.markers = this.railData.map(item => {
       const marker = L.circleMarker([item.lat, item.lng], {
-        radius: this.getRadiusByIndicator(item.indicator), // Indicator로 크기 결정
+        radius: this.getRadius(item.congestion_score),
         fillColor: this.getColor(item.congestion_level),
-        color: "#000",
+        color: '#fff',
         weight: 1,
         opacity: 1,
         fillOpacity: 0.8
       });
 
-      marker.bindPopup(this.createPopupContent(item));
+      // 툴팁 바인딩 (호버 시 표시)
+      marker.bindTooltip(this.createTooltipContent(item), {
+        permanent: false,
+        direction: 'top',
+        className: 'rail-tooltip',
+        offset: [0, -10]
+      });
+
       marker.addTo(this.map);
-      this.markers.push(marker);
+      return marker;
     });
+
+    // 지도 범위 조정
+    if (this.markers.length > 0) {
+      const group = new L.featureGroup(this.markers);
+      this.map.fitBounds(group.getBounds());
+    }
   }
 
-  getRadiusByIndicator(indicator) {
-    // Indicator 값에 따른 원 크기 (명확한 5단계 구분)
-    if (indicator > 2) return 20;    // 제일 큼
-    if (indicator > 1) return 16;    // 중간 큼
-    if (indicator > -1) return 12;   // 중간
-    if (indicator > -2) return 8;    // 중간 작음
-    return 5;                        // 제일 작음
+  getRadius(score) {
+    // 점수에 따라 반지름 결정 (5-15 범위)
+    return 5 + (score || 0) * 2;
   }
 
-  getColor(level, isText = false) {
-    // 원 색상 (기존보다 약간 연하게)
-    const circleColors = {
-      'Very High': '#d62828',   // 원: 빨강
-      'High': '#f88c2b',        // 원: 주황
-      'Average': '#bcbcbc',     // 원: 회색
-      'Low': '#5fa9f6',         // 원: 하늘
-      'Very Low': '#004fc0'     // 원: 파랑
-    };
-    
-    // 텍스트 색상 (원보다 더 진하게)
-    const textColors = {
-      'Very High': '#6b1414',   // 텍스트: 빨강
-      'High': '#7c4616',        // 텍스트: 주황
-      'Average': '#5e5e5e',     // 텍스트: 회색
-      'Low': '#30557b',         // 텍스트: 하늘
-      'Very Low': '#002860'     // 텍스트: 파랑
-    };
-  
-    return isText ? textColors[level] : circleColors[level];
+  getColor(level) {
+    // 혼잡도 수준에 따른 색상
+    switch (level.toLowerCase()) {
+      case 'high': return '#e74c3c';
+      case 'medium': return '#f39c12';
+      case 'low': return '#2ecc71';
+      default: return '#3498db';
+    }
   }
-  
-  createPopupContent(data) {
-    const level = data.congestion_level || 'Unknown';
-    
+
+  createTooltipContent(data) {
     return `
-      <div class="rail-tooltip">
-        <h4>${data.location || 'Unknown Location'}</h4>
-        <p><strong>Company:</strong> ${data.company || 'Unknown'}</p>
-        <p><strong>Congestion Level:</strong> 
-          <span style="color: ${this.getColor(level, true)}"> <!-- 텍스트용 진한 색상 -->
-            ${level}
-          </span>
-        </p>
-        <p><strong>Dwell Time:</strong> ${data.congestion_score?.toFixed(1) || 'N/A'} hours</p>
-      </div>
+      <h4>${data.location}</h4>
+      <p><strong>Company:</strong> ${data.company || 'N/A'}</p>
+      <p><strong>Congestion Level:</strong> 
+        <span style="color: ${this.getColor(data.congestion_level)}">
+          ${data.congestion_level || 'N/A'}
+        </span>
+      </p>
+      <p><strong>Score:</strong> ${data.congestion_score || 'N/A'}</p>
+      <p><strong>Last Updated:</strong> ${data.date || 'N/A'}</p>
     `;
   }
-}
 
-window.RailCongestionMap = RailCongestionMap;
+  clearMarkers() {
+    this.markers.forEach(marker => this.map.removeLayer(marker));
+    this.markers = [];
+  }
+
+  addResetButton() {
+    const resetControl = L.control({ position: 'topright' });
+    
+    resetControl.onAdd = () => {
+      const container = L.DomUtil.create('div', 'reset-control-container');
+      const button = L.DomUtil.create('button', 'reset-btn', container);
+      button.innerHTML = '<i class="fas fa-expand"></i> Reset View';
+      button.onclick = () => {
+        if (this.markers.length > 0) {
+          const group = new L.featureGroup(this.markers);
+          this.map.fitBounds(group.getBounds());
+        } else {
+          this.map.setView([37.8, -96], 4);
+        }
+      };
+      return container;
+    };
+    
+    resetControl.addTo(this.map);
+  }
+
+  searchLocations({ country, city, keyword }) {
+    // 검색 기능 구현
+    console.log('Searching rail locations:', { country, city, keyword });
+    // 실제 구현에서는 필터링 로직 추가
+  }
+}
