@@ -16,32 +16,22 @@ class TruckCongestionMap {
 
   async initializeMap() {
     try {
-      const [geoJson, sheetData] = await Promise.all([
+      const [geoJson, truckData] = await Promise.all([
         fetch('data/us-states.json').then(res => res.json()),
-        this.fetchSheetData()
+        fetch('data/us-truck.json').then(res => res.json())
       ]);
       
-      this.metricData = sheetData;
+      this.metricData = this.processTruckData(truckData);
       this.renderMap(geoJson);
       this.initialized = true;
     } catch (error) {
       console.error("Initialization failed:", error);
-      this.showError();
+      this.metricData = this.useFallbackData();
+      this.renderMap(await fetch('data/us-states.json').then(res => res.json()));
     }
   }
 
-  async fetchSheetData() {
-    try {
-      const response = await fetch('data/us-truck.json');
-      if (!response.ok) throw new Error("Failed to load truck data");
-      return this.processData(await response.json());
-    } catch (e) {
-      console.error("Truck data loading failed:", e);
-      return this.useFallbackData();
-    }
-  }
-
-  processData(rawData) {
+  processTruckData(rawData) {
     return Object.fromEntries(
       Object.entries(rawData).map(([code, data]) => [
         code,
@@ -59,6 +49,7 @@ class TruckCongestionMap {
   }
 
   useFallbackData() {
+    console.warn("Using fallback truck data");
     return {
       'TN': {
         name: 'Tennessee',
@@ -148,24 +139,26 @@ class TruckCongestionMap {
 
   addControls() {
     const container = L.DomUtil.create('div', 'map-control-container');
+    container.style.height = '40px'; // 고정 높이 설정
     
     container.innerHTML = `
-      <div class="truck-toggle-wrapper">
-        <button class="truck-toggle-btn ${this.currentMode === 'inbound' ? 'truck-active' : ''}" 
-                data-mode="inbound">INBOUND</button>
-        <button class="truck-toggle-btn ${this.currentMode === 'outbound' ? 'truck-active' : ''}" 
-                data-mode="outbound">OUTBOUND</button>
+      <div style="display: flex; align-items: center; height: 100%;">
+        <div class="truck-toggle-wrapper">
+          <button class="truck-toggle-btn ${this.currentMode === 'inbound' ? 'truck-active' : ''}" 
+                  data-mode="inbound">INBOUND</button>
+          <button class="truck-toggle-btn ${this.currentMode === 'outbound' ? 'truck-active' : ''}" 
+                  data-mode="outbound">OUTBOUND</button>
+        </div>
+        <button class="reset-view-btn" style="margin-left: 10px;">Reset View</button>
       </div>
-      <button class="reset-view-btn">Reset View</button>
     `;
 
+    // 이벤트 리스너
     container.querySelectorAll('.truck-toggle-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         this.currentMode = btn.dataset.mode;
-        this.renderControls(container);
-        if (this.stateLayer) {
-          this.stateLayer.setStyle(feature => this.getStyle(feature));
-        }
+        this.updateControls(container);
+        if (this.stateLayer) this.stateLayer.setStyle(feature => this.getStyle(feature));
       });
     });
 
@@ -175,9 +168,14 @@ class TruckCongestionMap {
 
     this.map.getContainer().appendChild(container);
   }
+
+  updateControls(container) {
+    container.querySelectorAll('.truck-toggle-btn').forEach(btn => {
+      btn.classList.toggle('truck-active', btn.dataset.mode === this.currentMode);
+    });
+  }
 }
 
-// 전역 변수로 노출
 if (typeof window !== 'undefined') {
   window.TruckCongestionMap = TruckCongestionMap;
 }
