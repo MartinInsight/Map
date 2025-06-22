@@ -1,224 +1,177 @@
 class TruckCongestionMap {
-  constructor(mapElementId) {
-    this.map = L.map(mapElementId).setView([37.8, -96], 4);
-    this.stateLayer = null;
-    this.currentMode = 'inbound';
-    this.metricData = null;
-    this.initialized = false;
-    this.controlDiv = null;
+  constructor(mapId) {
+    this.mapId = mapId;
+    this.map = null;
+    this.geojson = null;
+    this.initMap();
+    this.loadData();
+    this.addResetButton();
+  }
 
+  initMap() {
+    // 지도 초기화
+    this.map = L.map(this.mapId, {
+      zoomControl: false,
+      preferCanvas: true
+    }).setView([37.8, -96], 4);
+
+    // 타일 레이어 추가
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap'
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      maxZoom: 18
     }).addTo(this.map);
 
-    this.addControls();
-    this.initializeMap();
+    // 줌 컨트롤 추가
+    L.control.zoom({ position: 'topright' }).addTo(this.map);
   }
 
-  async initializeMap() {
-    try {
-      const [geoJson, sheetData] = await Promise.all([
-        fetch('data/us-states.json').then(res => res.json()),
-        this.fetchSheetData()
-      ]);
-      
-      this.metricData = sheetData;
-      this.renderMap(geoJson);
-      this.initialized = true;
-    } catch (error) {
-      console.error("Initialization failed:", error);
-      this.showError();
+  loadData() {
+    fetch('data/us-truck.json')
+      .then(response => response.json())
+      .then(data => {
+        this.truckData = data;
+        this.renderMap();
+      })
+      .catch(error => console.error('Error loading truck data:', error));
+  }
+
+  renderMap() {
+    // 기존 GeoJSON 레이어 제거
+    if (this.geojson) {
+      this.map.removeLayer(this.geojson);
     }
-  }
 
-  async fetchSheetData() {
-    try {
-      const response = await fetch('data/us-truck.json');
-      if (!response.ok) throw new Error("Failed to load truck data");
-      
-      const rawData = await response.json();
-      return Object.fromEntries(
-        Object.entries(rawData).map(([code, data]) => [
-          code,
-          {
-            name: data.name,
-            inboundDelay: Number(data.inboundDelay) || 0,
-            inboundColor: Number(data.inboundColor) || 0,
-            outboundDelay: Number(data.outboundDelay) || 0,
-            outboundColor: Number(data.outboundColor) || 0,
-            dwellInbound: Number(data.dwellInbound) || 0,
-            dwellOutbound: Number(data.dwellOutbound) || 0
-          }
-        ])
-      );
-    } catch (e) {
-      console.error("Truck data loading failed:", e);
-      return this.useFallbackData();
-    }
-  }
+    // GeoJSON 데이터 생성
+    const geojsonFeatures = Object.keys(this.truckData).map(stateCode => {
+      const stateData = this.truckData[stateCode];
+      return {
+        type: 'Feature',
+        properties: {
+          stateCode,
+          ...stateData
+        },
+        geometry: {
+          type: 'Point',
+          coordinates: [this.getStateLongitude(stateCode), this.getStateLatitude(stateCode)]
+        }
+      };
+    });
 
-  useFallbackData() {
-    console.warn("Using fallback data");
-    return {
-      'TN': {
-        name: 'Tennessee',
-        inboundDelay: 0,
-        inboundColor: 0,
-        outboundDelay: 0,
-        outboundColor: 0,
-        dwellInbound: 0,
-        dwellOutbound: 0
+    // GeoJSON 레이어 생성 및 추가
+    this.geojson = L.geoJSON(
+      { type: 'FeatureCollection', features: geojsonFeatures },
+      {
+        pointToLayer: (feature, latlng) => {
+          const color = this.getColor(feature.properties.inboundColor);
+          return L.circleMarker(latlng, {
+            radius: 8,
+            fillColor: color,
+            color: '#fff',
+            weight: 1,
+            opacity: 1,
+            fillOpacity: 0.8
+          });
+        },
+        onEachFeature: (feature, layer) => {
+          // 툴팁 바인딩 (호버 시 표시)
+          layer.bindTooltip(this.createTooltipContent(feature.properties), {
+            permanent: false,
+            direction: 'top',
+            className: 'truck-tooltip',
+            offset: [0, -10]
+          });
+        }
       }
-    };
+    ).addTo(this.map);
+
+    // 지도 범위 조정
+    this.map.fitBounds(this.geojson.getBounds());
   }
 
-  renderMap(geoJson) {
-    if (this.stateLayer) {
-      this.map.removeLayer(this.stateLayer);
-    }
-
-    this.stateLayer = L.geoJSON(geoJson, {
-      style: (feature) => this.getStyle(feature),
-      onEachFeature: (feature, layer) => this.bindEvents(feature, layer)
-    }).addTo(this.map);
+  getStateLatitude(stateCode) {
+    // 간단한 예시 - 실제로는 정확한 좌표 데이터 사용
+    const stateCoords = {
+      'CA': 36.7783, 'TX': 31.9686, 'FL': 27.6648, 'NY': 43.2994,
+      'IL': 40.6331, 'PA': 41.2033, 'OH': 40.4173, 'GA': 32.1656,
+      // 다른 주들 추가...
+    };
+    return stateCoords[stateCode] || 39.8283; // 기본값
   }
 
-  getStyle(feature) {
-    const data = this.metricData[feature.id] || {};
-    const colorValue = this.currentMode === 'inbound' 
-      ? data.inboundColor 
-      : data.outboundColor;
-    
-    return {
-      fillColor: this.getColor(colorValue),
-      weight: 1,
-      opacity: 1,
-      color: 'white',
-      fillOpacity: 0.7
+  getStateLongitude(stateCode) {
+    // 간단한 예시 - 실제로는 정확한 좌표 데이터 사용
+    const stateCoords = {
+      'CA': -119.4179, 'TX': -99.9018, 'FL': -81.5158, 'NY': -74.2179,
+      'IL': -89.3985, 'PA': -77.1945, 'OH': -82.9071, 'GA': -82.9001,
+      // 다른 주들 추가...
     };
+    return stateCoords[stateCode] || -98.5795; // 기본값
   }
 
   getColor(value) {
-    const colors = {
-      '-3': '#d73027',
-      '-2': '#f46d43',
-      '-1': '#fdae61',
-      '0': '#ffffbf',
-      '1': '#a6d96a',
-      '2': '#66bd63',
-      '3': '#1a9850'
-    };
-    return colors[value] || '#cccccc';
+    // 색상 범위: -3(빨강) ~ 0(노랑) ~ 3(초록)
+    const hue = value > 0 ? 
+      120 * (value / 3) : // 초록색 범위
+      60 * (1 + value / 3); // 노랑-빨강 범위
+    return `hsl(${hue}, 100%, 50%)`;
   }
 
-  bindEvents(feature, layer) {
-    const stateCode = feature.id;
-    const data = this.metricData?.[stateCode] || {};
+  createTooltipContent(properties) {
+    const { name, inboundDelay, outboundDelay, dwellInbound, dwellOutbound } = properties;
     
-    layer.on({
-      mouseover: (e) => this.showTooltip(e, data),
-      mouseout: () => this.hideTooltip(),
-      click: () => this.zoomToState(feature)
-    });
-  }
-
-  showTooltip(event, data) {
-    if (!this.initialized) return;
-  
-    const formatValue = (val) => {
-      const num = Number(val);
-      return isNaN(num) ? 0 : Math.abs(num).toFixed(2);
+    const formatDelay = (delay) => {
+      if (delay === null || delay === undefined) return 'N/A';
+      return `${delay > 0 ? '+' : ''}${delay.toFixed(1)} days`;
     };
-  
-    const isInbound = this.currentMode === 'inbound';
-    const delay = isInbound ? data.inboundDelay : data.outboundDelay;
-    const dwell = isInbound ? data.dwellInbound : data.dwellOutbound;
-  
-    // 더 간결한 HTML 구조로 변경
-    const content = `
-      <div class="truck-tooltip">
-        <h4>${data.name || 'Unknown'}</h4>
-        <div>
-          <strong>Truck Movement</strong>
-          <p class="${delay >= 0 ? 'truck-positive' : 'truck-negative'}">
-            ${delay >= 0 ? '↑' : '↓'} ${formatValue(delay)}%
-            <span class="truck-normal-text">
-              ${delay >= 0 ? ' above ' : ' below '}2 weeks moving average
-            </span>
-          </p>
-        </div>
-        <div>
-          <strong>Dwell Time</strong>
-          <p class="${dwell >= 0 ? 'truck-positive' : 'truck-negative'}">
-            ${dwell >= 0 ? '↑' : '↓'} ${formatValue(dwell)}%
-            <span class="truck-normal-text">
-              ${dwell >= 0 ? ' above ' : ' below '}2 weeks moving average
-            </span>
-          </p>
-        </div>
+
+    return `
+      <h4>${name}</h4>
+      <div class="truck-metric-box">
+        <strong>Inbound Delay</strong>
+        <span class="${inboundDelay > 0 ? 'truck-negative' : 'truck-positive'}">
+          ${formatDelay(inboundDelay)}
+        </span>
+      </div>
+      <div class="truck-metric-box">
+        <strong>Outbound Delay</strong>
+        <span class="${outboundDelay > 0 ? 'truck-negative' : 'truck-positive'}">
+          ${formatDelay(outboundDelay)}
+        </span>
+      </div>
+      <div class="truck-metric-box">
+        <strong>Dwell Time (Inbound)</strong>
+        <span class="truck-normal-text">${dwellInbound?.toFixed(1) || 'N/A'} days</span>
+      </div>
+      <div class="truck-metric-box">
+        <strong>Dwell Time (Outbound)</strong>
+        <span class="truck-normal-text">${dwellOutbound?.toFixed(1) || 'N/A'} days</span>
       </div>
     `;
-  
-    L.popup({
-      className: 'truck-tooltip-container', // 새 클래스 추가
-      maxWidth: 300,
-      autoClose: false,
-      closeButton: false,
-      closeOnClick: false
-    })
-    .setLatLng(event.latlng)
-    .setContent(content)
-    .openOn(this.map);
-  }
-  hideTooltip() {
-    this.map.closePopup();
-  }
-  
-  zoomToState(feature) {
-    const bounds = L.geoJSON(feature).getBounds();
-    this.map.fitBounds(bounds);
   }
 
-  addControls() {
-    const controlContainer = L.control({ position: 'topright' });
+  addResetButton() {
+    const resetControl = L.control({ position: 'topright' });
     
-    controlContainer.onAdd = () => {
-      this.controlDiv = L.DomUtil.create('div', 'truck-control-container');
-      this.renderControls();
-      return this.controlDiv;
-    };
-    
-    controlContainer.addTo(this.map);
-  }
-
-  renderControls() {
-    this.controlDiv.innerHTML = `
-      <div class="truck-toggle-container">
-        <div class="truck-toggle-wrapper">
-          <button class="truck-toggle-btn ${this.currentMode === 'inbound' ? 'truck-active' : ''}" 
-                  data-mode="inbound">INBOUND</button>
-          <button class="truck-toggle-btn ${this.currentMode === 'outbound' ? 'truck-active' : ''}" 
-                  data-mode="outbound">OUTBOUND</button>
-        </div>
-        <button class="truck-reset-btn" id="truck-reset-view">Reset View</button>
-      </div>
-    `;
-
-    this.controlDiv.querySelectorAll('.truck-toggle-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        this.currentMode = btn.dataset.mode;
-        this.renderControls();
-        if (this.stateLayer) {
-          this.stateLayer.setStyle(feature => this.getStyle(feature));
+    resetControl.onAdd = () => {
+      const container = L.DomUtil.create('div', 'reset-control-container');
+      const button = L.DomUtil.create('button', 'reset-btn', container);
+      button.innerHTML = '<i class="fas fa-expand"></i> Reset View';
+      button.onclick = () => {
+        if (this.geojson) {
+          this.map.fitBounds(this.geojson.getBounds());
+        } else {
+          this.map.setView([37.8, -96], 4);
         }
-      });
-    });
+      };
+      return container;
+    };
+    
+    resetControl.addTo(this.map);
+  }
 
-    this.controlDiv.querySelector('#truck-reset-view').addEventListener('click', () => {
-      this.map.setView([37.8, -96], 4);
-    });
+  searchLocations({ country, city, keyword }) {
+    // 검색 기능 구현
+    console.log('Searching truck locations:', { country, city, keyword });
+    // 실제 구현에서는 필터링 로직 추가
   }
 }
-
-// 전역 변수로 노출
-window.TruckCongestionMap = TruckCongestionMap;
