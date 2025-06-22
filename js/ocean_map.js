@@ -1,140 +1,112 @@
+// js/ocean_map.js
 class OceanCongestionMap {
-  constructor(mapId) {
-    this.mapId = mapId;
-    this.map = null;
+  constructor(mapElementId) {
+    this.map = L.map(mapElementId).setView([20, 0], 2);
     this.markers = [];
-    this.allData = [];
-    this.filteredData = [];
-    this.initMap();
-    this.loadData();
-    this.addResetButton();
-  }
-
-  initMap() {
-    this.map = L.map(this.mapId, {
-      zoomControl: false,
-      preferCanvas: true,
-      worldCopyJump: true
-    }).setView([20, 0], 2);
+    this.currentData = null;
+    this.lastUpdated = null;
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-      maxZoom: 18,
-      noWrap: true
+      attribution: '© OpenStreetMap'
     }).addTo(this.map);
 
-    L.control.zoom({ position: 'topright' }).addTo(this.map);
+    this.loadData();
   }
 
   async loadData() {
     try {
-      const response = await fetch('../data/global-ports.json');
-      const data = await response.json();
-      this.allData = Array.isArray(data) ? data : data.data || [];
-      this.filteredData = [...this.allData];
+      const response = await fetch('data/global-ports.json');
+      this.currentData = await response.json();
+      if (this.currentData.length > 0) {
+        this.lastUpdated = this.currentData[0].date;
+      }
       this.renderMarkers();
+      this.addLastUpdatedText();
     } catch (error) {
-      console.error('Error loading ocean data:', error);
-      alert('항구 데이터 로드 실패: ' + error.message);
+      console.error("Failed to load ocean data:", error);
     }
   }
 
-  renderMarkers(data = this.filteredData) {
-    this.clearMarkers();
+  addLastUpdatedText() {
+    if (this.lastUpdated) {
+      const date = new Date(this.lastUpdated);
+      const formattedDate = `${date.getMonth()+1}-${date.getDate()}-${date.getFullYear()}`;
+      
+      const infoControl = L.control({ position: 'bottomleft' });
+      
+      infoControl.onAdd = () => {
+        const div = L.DomUtil.create('div', 'last-updated-info');
+        div.innerHTML = `<strong>Last Updated:</strong> ${formattedDate}`;
+        div.style.backgroundColor = 'white';
+        div.style.padding = '5px 10px';
+        div.style.borderRadius = '5px';
+        div.style.boxShadow = '0 0 5px rgba(0,0,0,0.2)';
+        return div;
+      };
+      
+      infoControl.addTo(this.map);
+    }
+  }
 
-    this.markers = data.map(item => {
-      const marker = L.circleMarker([item.Latitude, item.Longitude], {
-        radius: this.getRadius(item['Current Delay (days)']),
-        fillColor: this.getColor(item['Delay Level']),
-        color: '#fff',
+  renderMarkers() {
+    this.markers.forEach(marker => this.map.removeLayer(marker));
+    this.markers = [];
+
+    this.currentData.forEach(port => {
+      const marker = L.circleMarker([port.lat, port.lng], {
+        radius: this.getRadiusByDelay(port.current_delay_days),
+        fillColor: this.getColor(port.delay_level),
+        color: "#000",
         weight: 1,
         opacity: 1,
         fillOpacity: 0.8
       });
 
-      marker.bindTooltip(this.createTooltipContent(item), {
-        permanent: false,
-        direction: 'top',
-        className: 'ocean-tooltip'
-      });
-
+      marker.bindPopup(this.createPopupContent(port));
       marker.addTo(this.map);
-      return marker;
+      this.markers.push(marker);
     });
-
-    this.adjustMapView();
   }
 
-  getRadius(delayDays) {
+  getRadiusByDelay(delayDays) {
+    if (!delayDays) return 5;
     return Math.min(20, Math.max(5, delayDays * 1.5));
   }
 
   getColor(level) {
     const colors = {
-      'low': '#2ecc71',
-      'medium': '#f39c12',
-      'high': '#e74c3c',
-      'extreme': '#8e44ad'
+      'low': '#4CAF50',    // Green
+      'medium': '#FFC107', // Amber
+      'high': '#F44336'    // Red
     };
-    return colors[level?.toLowerCase()] || '#3498db';
+    return colors[level] || '#555';
   }
-
-  createTooltipContent(data) {
+  
+  createPopupContent(port) {
     return `
       <div class="ocean-tooltip">
-        <h4>${data.Port || 'N/A'}, ${data.Country || 'N/A'}</h4>
-        <p><strong>Current Delay:</strong> ${data['Current Delay (days)'] || '0'} days</p>
-        <p><strong>Weekly Max:</strong> ${data['Weekly Max Delay'] || 'N/A'} days</p>
-        <p><strong>Monthly Max:</strong> ${data['Monthly Max Delay'] || 'N/A'} days</p>
-        <p><strong>Status:</strong> <span style="color:${this.getColor(data['Delay Level'])}">
-          ${data['Delay Level'] || 'N/A'}
-        </span></p>
+        <h4>${port.port}, ${port.country}</h4>
+        <p><strong>Current Delay:</strong> ${port.current_delay}</p>
+        <p><strong>Delay Level:</strong> 
+          <span style="color: ${this.getTextColor(port.delay_level)}">
+            ${port.delay_level}
+          </span>
+        </p>
+        <p><strong>Port Code:</strong> ${port.port_code}</p>
+        <p><strong>Weekly Median:</strong> ${port.weekly_median_delay} days</p>
+        <p><strong>Monthly Max:</strong> ${port.monthly_max_delay} days</p>
       </div>
     `;
   }
-
-  searchLocations({ country, keyword }) {
-    const countryTerm = country?.toLowerCase() || '';
-    const keywordTerm = keyword?.toLowerCase() || '';
-    
-    this.filteredData = this.allData.filter(item =>
-      (item.Country.toLowerCase().includes(countryTerm) ||
-       item['Country Code'].toLowerCase().includes(countryTerm)) &&
-      (item.Port.toLowerCase().includes(keywordTerm) ||
-       item['Port Code'].toLowerCase().includes(keywordTerm))
-    );
-    
-    this.renderMarkers();
-  }
-
-  clearMarkers() {
-    this.markers.forEach(marker => this.map.removeLayer(marker));
-    this.markers = [];
-  }
-
-  addResetButton() {
-    const resetControl = L.control({ position: 'topright' });
-    resetControl.onAdd = () => {
-      const container = L.DomUtil.create('div', 'reset-control');
-      const button = L.DomUtil.create('button', 'reset-btn', container);
-      button.innerHTML = '<i class="fas fa-sync-alt"></i> Reset';
-      button.onclick = () => {
-        this.filteredData = [...this.allData];
-        this.renderMarkers();
-      };
-      return container;
+  
+  getTextColor(level) {
+    const colors = {
+      'low': '#2E7D32',    // Dark Green
+      'medium': '#FF8F00', // Dark Amber
+      'high': '#C62828'    // Dark Red
     };
-    resetControl.addTo(this.map);
-  }
-
-  adjustMapView() {
-    if (this.markers.length > 0) {
-      this.map.fitBounds(L.featureGroup(this.markers).getBounds(), {
-        padding: [50, 50],
-        maxZoom: 5
-      });
-    } else {
-      this.map.setView([20, 0], 2);
-    }
+    return colors[level] || '#333';
   }
 }
+
+window.OceanCongestionMap = OceanCongestionMap;
