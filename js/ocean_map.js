@@ -34,7 +34,7 @@ class OceanCongestionMap {
     try {
       const response = await fetch('data/global-ports.json');
       const rawData = await response.json();
-
+  
       this.currentData = rawData.map(p => ({
         lat: p.lat || p.Latitude,
         lng: p.lng || p.Longitude,
@@ -48,13 +48,17 @@ class OceanCongestionMap {
         monthly_max_delay: p.monthly_max_delay,
         date: p.date
       }));
-
+  
       if (this.currentData.length > 0) {
         this.lastUpdated = this.currentData[0].date;
       }
-
+  
       this.renderMarkers();
       this.addLastUpdatedText();
+  
+      // ✅ 이 부분 추가해야 country 목록이 나옴!
+      this.addFilterControl();
+  
     } catch (error) {
       console.error("Failed to load ocean data:", error);
     }
