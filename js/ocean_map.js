@@ -27,7 +27,6 @@ class OceanCongestionMap {
     
     this.loadData();
     this.addControls();
-    this.addFilterControl();
   }
 
   async loadData() {
