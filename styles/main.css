@@ -1,5 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600&display=swap');
 
+/* 기본 스타일 */
 html, body {
   height: 100%;
   margin: 0;
@@ -8,7 +9,7 @@ html, body {
   font-family: 'Noto Sans KR', sans-serif;
 }
 
-/* 상단 탭 스타일 - 50/50 분할 레이아웃 */
+/* 탭 메뉴 스타일 */
 .transport-tab-container {
   position: fixed;
   top: 0;
@@ -21,55 +22,51 @@ html, body {
 }
 
 .transport-tab {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: none;
-    background: white;
-    cursor: pointer;
-    font-family: 'Noto Sans KR', sans-serif;
-    font-weight: 400;
-    font-size: 14px;
-    color: black;
-    position: relative; /* 필수 */
-    transition: all 0.3s ease;
-    padding: 0; /* 버튼 기본 패딩 제거 */
-    margin: 0; /* 버튼 기본 마진 제거 */
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: white;
+  cursor: pointer;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-weight: 400;
+  font-size: 14px;
+  color: black;
+  position: relative;
+  transition: all 0.3s ease;
+  padding: 0;
+  margin: 0;
 }
 
-/* 모든 탭의 하단 라인 (초기 상태) */
 .transport-tab::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: 2px;
-    background-color: #00657E;
-    opacity: 0;
-    transition: opacity 0.3s ease;
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background-color: #00657E;
+  opacity: 0;
+  transition: opacity 0.3s ease;
 }
 
-/* 활성 탭 라인 */
 .transport-tab.active::after {
-    opacity: 1;
+  opacity: 1;
 }
 
-/* 비활성 탭 호버 시 */
 .transport-tab:not(.active):hover::after {
-    opacity: 1;
+  opacity: 1;
 }
 
-/* 활성 탭이 아닌 다른 요소 호버 시 */
 .transport-tab-container:hover .transport-tab.active:not(:hover)::after {
-    opacity: 0;
+  opacity: 0;
 }
 
-/* 맵 컨테이너 - 50/50 분할 */
+/* 맵 컨테이너 */
 .transport-map {
   position: fixed;
-  top: 5%; /* 탭 높이만큼 아래로 */
+  top: 5%;
   left: 0;
   width: 100%;
   height: 95%;
@@ -80,160 +77,58 @@ html, body {
   display: block;
 }
 
-#rail-map, #truck-map {
-  left: 0;
-  width: 100%;
+/* 공통 컨트롤 스타일 */
+.map-control-container {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.8);
+  padding: 5px;
+  border-radius: 5px;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
 }
 
-/* 트럭 툴팁 스타일 */
-.truck-tooltip {
+.reset-btn {
+  padding: 0 15px;
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 5px;
+  cursor: pointer;
   font-family: 'Noto Sans KR', sans-serif;
   font-weight: 400;
-  min-width: 220px;
-  padding: 15px;
+  font-size: 13px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  height: 30px;
+  white-space: nowrap;
+}
+
+.reset-btn:hover {
+  background: #f5f5f5;
+}
+
+/* 필터 컨트롤 스타일 */
+.filter-control {
   background: white;
-  border-radius: 6px;
-  box-shadow: 0 3px 10px rgba(0,0,0,0.2);
-  border: none;
-  margin: 0;
-}
-
-.truck-tooltip h4 {
-  font-weight: 600;
-  margin: 0 0 15px 0;
-  font-size: 16px;
-  color: #333;
-  border-bottom: 1px solid #eee;
-  padding-bottom: 8px;
-}
-
-.truck-tooltip-container .leaflet-popup-content-wrapper {
-  background: transparent !important;
-  padding: 0 !important;
-}
-
-.truck-tooltip-container .leaflet-popup-content {
-  width: 100% !important;
-}
-
-.truck-metric-box {
-  margin-bottom: 10px;
-}
-
-.truck-metric-box:last-child {
-  margin-bottom: 0;
-}
-
-.truck-metric-box strong {
-  font-weight: 600;
-  display: block;
-  margin-bottom: 5px;
-  font-size: 14px;
-  color: #555;
-}
-
-.truck-positive {
-  color: #27ae60;
-  font-weight: 600;
-}
-
-.truck-negative {
-  color: #e74c3c;
-  font-weight: 600;
-}
-
-.truck-normal-text {
-  font-weight: 400;
-  color: #333;
-}
-
-/* 레일 툴팁 스타일 */
-.rail-tooltip {
+  padding: 10px;
+  border-radius: 5px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
   font-family: 'Noto Sans KR', sans-serif;
-  min-width: 200px;
-  padding: 12px;
-  background: white;
-  border-radius: 6px;
-  box-shadow: 0 3px 10px rgba(0,0,0,0.2);
-}
-
-.rail-tooltip h4 {
-  margin: 0 0 12px 0;
-  font-size: 16px;
-  font-weight: 600;
-  color: #333;
-  border-bottom: 1px solid #eee;
-  padding-bottom: 8px;
-}
-
-.rail-tooltip p {
-  margin: 8px 0;
-  font-size: 14px;
-}
-
-.rail-tooltip strong {
-  color: #555;
-}
-
-/* Ocean 툴팁 스타일 */
-.ocean-tooltip {
-  font-family: 'Noto Sans KR', sans-serif;
-  min-width: 220px;
-  padding: 15px;
-  background: white;
-  border-radius: 6px;
-  box-shadow: 0 3px 10px rgba(0,0,0,0.2);
-}
-
-.ocean-tooltip h4 {
-  margin: 0 0 12px 0;
-  font-size: 16px;
-  font-weight: 600;
-  color: #333;
-  border-bottom: 1px solid #eee;
-  padding-bottom: 8px;
-}
-
-.ocean-tooltip p {
-  margin: 8px 0;
-  font-size: 14px;
-}
-
-.ocean-tooltip strong {
-  color: #555;
-}
-
-/* 공통 툴팁 위치 */
-.leaflet-tooltip {
-  transform: translate(-50%, 0) !important;
-  left: 50% !important;
-  margin-top: 15px !important;
-}
-
-.leaflet-popup-content-wrapper {
-  all: initial !important; /* 기본 스타일 완전 제거 */
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-}
-
-.leaflet-popup-content {
-  margin: 0 !important;
-  width: auto !important;
-}
-
-.leaflet-popup-tip {
-  display: none !important; /* 팝업 화살표 제거 */
-}
-
-/* 트럭 맵 컨트롤 패널 (새 디자인) */
-.truck-control-container {
-  position: absolute;
-  top: 10px;
-  right: 10px;
   z-index: 1000;
 }
 
+.filter-control select {
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  min-width: 150px;
+}
+
+.filter-control .port-filter {
+  margin-left: 5px;
+}
+
+/* 트럭 전용 스타일 */
 .truck-toggle-container {
   display: flex;
   align-items: center;
@@ -245,7 +140,7 @@ html, body {
   border-radius: 5px;
   overflow: hidden;
   background: white;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
   border: 1px solid #e0e0e0;
 }
 
@@ -266,62 +161,110 @@ html, body {
   color: black;
 }
 
-/* 선택된 버튼 스타일 */
 .truck-toggle-btn.truck-active {
   background: #00657E;
   color: white;
   font-weight: 600;
 }
 
-/* 호버 시 버튼 스타일 */
 .truck-toggle-btn:not(.truck-active):hover {
   font-weight: 600;
 }
 
-.truck-reset-btn {
-  padding: 0 15px;
-  background: white;
-  border: 1px solid #e0e0e0;
-  border-radius: 5px;
-  cursor: pointer;
+/* 툴팁 공통 스타일 */
+.map-tooltip {
   font-family: 'Noto Sans KR', sans-serif;
+  min-width: 220px;
+  padding: 15px;
+  background: white;
+  border-radius: 6px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+}
+
+.map-tooltip h4 {
+  margin: 0 0 12px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 8px;
+}
+
+.map-tooltip p {
+  margin: 8px 0;
+  font-size: 14px;
+}
+
+.map-tooltip strong {
+  color: #555;
+}
+
+.truck-positive {
+  color: #27ae60;
+  font-weight: 600;
+}
+
+.truck-negative {
+  color: #e74c3c;
+  font-weight: 600;
+}
+
+.truck-normal-text {
   font-weight: 400;
-  font-size: 13px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-  height: 30px;
+  color: #333;
 }
 
-.truck-reset-btn:hover {
-  background: #f5f5f5;
+/* 팝업 스타일 */
+.leaflet-popup {
+  pointer-events: none;
 }
 
-/* 새로 추가: 반응형 스타일 */
-@media (max-width: 768px) {
-    .transport-tab {
-        font-size: 12px;
-        padding: 8px 5px;
-    }
-    
-    .transport-tab-container {
-        height: 7%;
-    }
-    
-    .transport-map {
-        top: 7%;
-        height: 93%;
-    }
-    
-    .truck-toggle-btn, 
-    .truck-reset-btn,
-    .rail-reset-btn,
-    .ocean-reset-btn {
-        font-size: 11px;
-        padding: 0 8px;
-        height: 28px;
-    }
+.leaflet-popup-content-wrapper {
+  all: initial !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
 }
 
-/* 오류 메시지 스타일 */
+.leaflet-popup-content {
+  margin: 0 !important;
+  width: auto !important;
+}
+
+.leaflet-popup-tip {
+  display: none !important;
+}
+
+.leaflet-tooltip {
+  transform: translate(-50%, 0) !important;
+  left: 50% !important;
+  margin-top: 15px !important;
+}
+
+/* 컨트롤 위치 조정 */
+.leaflet-top.leaflet-right {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.leaflet-bottom.leaflet-right {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* 마지막 업데이트 정보 */
+.last-updated-info {
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 14px;
+  background-color: white;
+  padding: 5px 10px;
+  border-radius: 5px;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+}
+
+/* 오류 메시지 */
 .error-message {
   font-family: 'Noto Sans KR', sans-serif;
   font-size: 14px;
@@ -332,106 +275,44 @@ html, body {
   border-radius: 5px;
 }
 
-/* styles/main.css에 추가 */
-.truck-reset-btn,
-.rail-reset-btn,
-.ocean-reset-btn {
-    padding: 0 15px;
-    background: white;
-    border: 1px solid #e0e0e0;
-    border-radius: 5px;
-    cursor: pointer;
-    font-family: 'Noto Sans KR', sans-serif;
-    font-weight: 400;
-    font-size: 13px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    height: 30px;
-    margin-left: 10px;
-    white-space: nowrap; /* 줄바꿈 방지 */
-}
-
-.truck-reset-btn:hover,
-.rail-reset-btn:hover,
-.ocean-reset-btn:hover {
-    background: #f5f5f5;
-}
-
-/* 컨트롤 컨테이너 통일 */
-.truck-control-container,
-.rail-control-container,
-.ocean-control-container {
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
-    background: rgba(255,255,255,0.8);
-    padding: 5px;
-    border-radius: 5px;
-    box-shadow: 0 0 5px rgba(0,0,0,0.2);
-}
-
-/* 필터 컨트롤 스타일 */
-.filter-control {
-    background: white;
-    padding: 10px;
-    border-radius: 5px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.2);
-    font-family: 'Noto Sans KR', sans-serif;
-    z-index: 1000; /* 다른 요소 위에 표시 */
-    margin-bottom: 20px; /* 하단 여백 추가 */
-    margin-right: 10px; /* 우측 여백 추가 */
-}
-
-
-.filter-control select {
-    padding: 8px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    font-size: 14px;
-    margin-right: 5px;
-    min-width: 150px;
-}
-
-/* 오션 필터 스타일 */
-.filter-control .port-filter {
-    margin-left: 5px;
-}
-
-/* 모바일 대응 보강 */
+/* 반응형 디자인 */
 @media (max-width: 768px) {
-    .filter-control {
-        max-width: 90vw;
-        overflow: auto;
-    }
-    
-    .leaflet-bottom.leaflet-right {
-        width: 100%;
-        padding: 0 10px;
-    }
-}
-    
-    .filter-control select {
-        padding: 6px;
-        font-size: 12px;
-        min-width: 120px;
-    }
-}
-
-/* 새로 추가: 호버 툴팁 스타일 */
-.leaflet-popup {
-    pointer-events: none;
-}
-
-.leaflet-popup-content-wrapper {
-    transition: all 0.2s;
-}
-
-.leaflet-popup-content {
-    min-width: 200px;
-}
-
-/* 컨트롤 패널 위치 조정 */
-.leaflet-bottom.leaflet-right {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
+  .transport-tab {
+    font-size: 12px;
+    padding: 8px 5px;
+  }
+  
+  .transport-tab-container {
+    height: 7%;
+  }
+  
+  .transport-map {
+    top: 7%;
+    height: 93%;
+  }
+  
+  .reset-btn,
+  .truck-toggle-btn {
+    font-size: 11px;
+    padding: 0 8px;
+    height: 28px;
+    min-width: 70px;
+  }
+  
+  .filter-control {
+    max-width: 90vw;
+    overflow: auto;
+    padding: 8px;
+  }
+  
+  .leaflet-bottom.leaflet-right {
+    width: 100%;
+    padding: 0 10px;
+  }
+  
+  .filter-control select {
+    padding: 6px;
+    font-size: 12px;
+    min-width: 120px;
+  }
 }
