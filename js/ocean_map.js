@@ -1,17 +1,26 @@
-class OceanCongestionMap {
-  constructor(mapElementId) {
-    this.map = L.map(mapElementId).setView([20, 0], 2);
-    this.markers = [];
-    this.currentData = [];
-    this.lastUpdated = null;
+constructor(mapElementId) {
+  // 초기 뷰를 미국 중심으로 변경 (트럭/레일과 동일)
+  this.map = L.map(mapElementId).setView([37.8, -96], 4); // 수정된 부분
+  this.markers = [];
+  this.currentData = [];
+  this.lastUpdated = null;
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap'
-    }).addTo(this.map);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap',
+    maxZoom: 18,
+    minZoom: 2 // 최소 줌 레벨 설정
+  }).addTo(this.map);
 
-    this.loadData();
-    this.addControls();
-  }
+  // 줌 아웃 제한 설정
+  this.map.setMaxBounds([
+    [-85, -180],
+    [85, 180]
+  ]);
+
+  this.loadData();
+  this.addControls();
+  this.addFilterControl();
+}
 
   async loadData() {
     try {
