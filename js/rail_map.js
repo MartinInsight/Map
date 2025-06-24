@@ -94,36 +94,39 @@ class RailCongestionMap {
     });
   }
 
+  // rail_map.js의 addControls 및 addFilterControl 수정
   addControls() {
-    const controlContainer = L.control({ position: 'topright' });
-
-    controlContainer.onAdd = () => {
-      const div = L.DomUtil.create('div', 'rail-control-container');
-      div.innerHTML = `
-        <button class="rail-reset-btn">Reset View</button>
-      `;
-
-      div.querySelector('.rail-reset-btn').addEventListener('click', () => {
-        this.map.setView([37.8, -96], 4);
-      });
-
-      return div;
-    };
-
-    controlContainer.addTo(this.map);
+      const controlContainer = L.control({ position: 'topright' });
+  
+      controlContainer.onAdd = () => {
+          const div = L.DomUtil.create('div', 'rail-control-container');
+          div.innerHTML = `
+              <button class="rail-reset-btn">Reset View</button>
+          `;
+  
+          div.querySelector('.rail-reset-btn').addEventListener('click', () => {
+              this.map.setView([37.8, -96], 4);
+              this.renderMarkers();
+          });
+  
+          return div;
+      };
+  
+      controlContainer.addTo(this.map);
   }
-
+  
   addFilterControl() {
       const control = L.control({ position: 'bottomright' });
   
       control.onAdd = () => {
           const div = L.DomUtil.create('div', 'filter-control');
-  
-          // 야드 목록 생성 (중복 제거 및 알파벳 순 정렬)
-          const yards = [...new Set(this.currentData
-              .filter(item => item.Yard) // undefined 제거
-              .map(item => item.Yard)
-          )].sort((a, b) => a.localeCompare(b));
+          
+          // 데이터에서 유효한 야드만 추출 및 정렬
+          const validYards = this.currentData
+              .filter(item => item.Yard && item.Yard.trim() !== '')
+              .map(item => item.Yard);
+          
+          const yards = [...new Set(validYards)].sort((a, b) => a.localeCompare(b));
   
           div.innerHTML = `
               <select class="yard-filter">
@@ -142,12 +145,11 @@ class RailCongestionMap {
                   return;
               }
   
-              const yard = this.currentData.find(item => item.Yard === yardName);
-              if (yard) {
-                  this.map.setView([yard.Latitude, yard.Longitude], 8);
-                  this.renderMarkers(this.currentData.filter(item => 
-                      item.Yard === yardName
-                  ));
+              const yardData = this.currentData.filter(item => item.Yard === yardName);
+              if (yardData.length > 0) {
+                  const bounds = L.latLngBounds(yardData.map(item => [item.lat, item.lng]));
+                  this.map.fitBounds(bounds.pad(0.5)); // 일관된 줌 레벨 유지
+                  this.renderMarkers(yardData);
               }
           });
   
