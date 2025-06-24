@@ -18,15 +18,13 @@ class TruckCongestionMap {
       [85, 180]
     ]);
     
-    // 화면 높이에 맞는 최대 줌 아웃 계산
+    // 수정된 줌 아웃 제한 코드 (다른 맵과 동일하게 적용)
     this.map.on('zoomend', () => {
       const currentZoom = this.map.getZoom();
       const bounds = this.map.getBounds();
       const mapHeight = bounds.getNorth() - bounds.getSouth();
-      
-      // 화면 높이 기준으로 최소 줌 제한
-      if (mapHeight > 150) { // 약 150도 이상이면 더 이상 줌 아웃 안됨
-        this.map.setZoom(currentZoom - 0.5);
+      if (mapHeight > 140) { // 150에서 140으로 변경
+        this.map.setZoom(Math.max(2, currentZoom - 1)); // 0.5에서 1로 변경, 최소 줌 레벨 2로 제한
       }
     });
 
@@ -172,9 +170,9 @@ class TruckCongestionMap {
     const control = L.control({ position: 'topright' });
 
     control.onAdd = () => {
-      const div = L.DomUtil.create('div', 'truck-control-container');
+      const div = L.DomUtil.create('div', 'map-control-container'); // 클래스명 변경
       this.controlDiv = div;
-      this.renderControls(); // 내부에서 div 채움
+      this.renderControls();
       return div;
     };
 
@@ -188,7 +186,7 @@ class TruckCongestionMap {
           <button class="truck-toggle-btn ${this.currentMode === 'inbound' ? 'truck-active' : ''}" data-mode="inbound">INBOUND</button>
           <button class="truck-toggle-btn ${this.currentMode === 'outbound' ? 'truck-active' : ''}" data-mode="outbound">OUTBOUND</button>
         </div>
-        <button class="truck-reset-btn" id="truck-reset-view">Reset View</button>
+        <button class="reset-btn">Reset View</button> <!-- 클래스명 통일 -->
       </div>
     `;
 
@@ -200,53 +198,52 @@ class TruckCongestionMap {
       });
     });
 
-    this.controlDiv.querySelector('#truck-reset-view').addEventListener('click', () => {
+    this.controlDiv.querySelector('.reset-btn').addEventListener('click', () => {
       this.map.setView([37.8, -96], 4);
     });
   }
 
   addFilterControl() {
-      const control = L.control({ position: 'bottomright' });
+    const control = L.control({ position: 'bottomright' });
   
-      control.onAdd = () => {
-          const div = L.DomUtil.create('div', 'filter-control');
-          
-          // 주 목록 정렬
-          const states = this.geoJsonData.features
-              .map(f => ({
-                  id: f.id,
-                  name: f.properties.name
-              }))
-              .sort((a, b) => a.name.localeCompare(b.name));
+    control.onAdd = () => {
+      const div = L.DomUtil.create('div', 'filter-control');
+      
+      // 주 목록 정렬
+      const states = this.geoJsonData.features
+        .map(f => ({
+          id: f.id,
+          name: f.properties.name
+        }))
+        .sort((a, b) => a.name.localeCompare(b.name));
+
+      div.innerHTML = `
+        <select class="state-filter">
+          <option value="">Select State</option>
+          ${states.map(state => 
+            `<option value="${state.id}">${state.name}</option>`
+          ).join('')}
+        </select>
+      `;
   
-          div.innerHTML = `
-              <select class="state-filter">
-                  <option value="">Select State</option>
-                  ${states.map(state => 
-                      `<option value="${state.id}">${state.name}</option>`
-                  ).join('')}
-              </select>
-          `;
+      div.querySelector('.state-filter').addEventListener('change', (e) => {
+        const stateId = e.target.value;
+        if (!stateId) {
+          this.map.setView([37.8, -96], 4);
+          return;
+        }
   
-          div.querySelector('.state-filter').addEventListener('change', (e) => {
-              const stateId = e.target.value;
-              if (!stateId) {
-                  this.map.setView([37.8, -96], 4);
-                  return;
-              }
+        const state = this.geoJsonData.features.find(f => f.id === stateId);
+        if (state) {
+          const bounds = L.geoJSON(state).getBounds();
+          this.map.fitBounds(bounds.pad(0.3));
+        }
+      });
   
-              const state = this.geoJsonData.features.find(f => f.id === stateId);
-              if (state) {
-                  // 주 중심으로 이동 (고정 줌 레벨 6)
-                  const bounds = L.geoJSON(state).getBounds();
-                  this.map.fitBounds(bounds.pad(0.3));
-              }
-          });
+      return div;
+    };
   
-          return div;
-      };
-  
-      control.addTo(this.map);
+    control.addTo(this.map);
   }
   
   showError() {
