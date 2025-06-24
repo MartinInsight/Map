@@ -24,7 +24,7 @@ class OceanCongestionMap {
       }
       this.renderMarkers();
       this.addLastUpdatedText();
-      this.addSearchControl(); // 새로 추가: 검색 기능
+      this.addFilterControl();
     } catch (error) {
       console.error("Failed to load ocean data:", error);
     }
@@ -89,110 +89,74 @@ class OceanCongestionMap {
     });
   }
 
-  // 새로 추가: 컨트롤 패널 (리셋 버튼)
-  addControls() {
-    const controlContainer = L.control({ position: 'topright' });
-    
-    controlContainer.onAdd = () => {
-      const div = L.DomUtil.create('div', 'ocean-control-container');
-      div.innerHTML = `
-        <button class="ocean-reset-btn">Reset View</button>
-      `;
+  addFilterControl() {
+      const control = L.control({position: 'bottomright'});
       
-      div.querySelector('.ocean-reset-btn').addEventListener('click', () => {
-        this.map.setView([20, 0], 2);
-      });
+      control.onAdd = () => {
+          const div = L.DomUtil.create('div', 'filter-control');
+          
+          // 국가 목록 생성 (중복 제거)
+          const countries = [...new Set(this.currentData.map(port => port.Country))];
+          
+          div.innerHTML = `
+              <select class="country-filter">
+                  <option value="">Select Country</option>
+                  ${countries.map(country => 
+                      `<option value="${country}">${country}</option>`
+                  ).join('')}
+              </select>
+              <select class="port-filter" disabled>
+                  <option value="">Select Port</option>
+              </select>
+          `;
+          
+          const countryFilter = div.querySelector('.country-filter');
+          const portFilter = div.querySelector('.port-filter');
+          
+          countryFilter.addEventListener('change', (e) => {
+              const country = e.target.value;
+              portFilter.innerHTML = '<option value="">Select Port</option>';
+              portFilter.disabled = !country;
+              
+              if (!country) {
+                  this.map.setView([20, 0], 2);
+                  return;
+              }
+              
+              // 해당 국가의 포트 목록 필터링
+              const countryPorts = this.currentData.filter(p => p.Country === country);
+              
+              // 포트 선택 옵션 추가
+              countryPorts.forEach(port => {
+                  const option = document.createElement('option');
+                  option.value = port.Port;
+                  option.textContent = port.Port;
+                  portFilter.appendChild(option);
+              });
+              
+              // 국가 중심으로 줌인
+              const countryBounds = L.latLngBounds(
+                  countryPorts.map(p => [p.Latitude, p.Longitude])
+              );
+              this.map.fitBounds(countryBounds.pad(0.3));
+          });
+          
+          portFilter.addEventListener('change', (e) => {
+              const portName = e.target.value;
+              if (!portName) return;
+              
+              const port = this.currentData.find(p => p.Port === portName);
+              if (port) {
+                  this.map.setView([port.Latitude, port.Longitude], 8);
+              }
+          });
+          
+          return div;
+      };
       
-      return div;
-    };
-    
-    controlContainer.addTo(this.map);
+      control.addTo(this.map);
   }
-
-  // 새로 추가: 검색 컨트롤
-  addSearchControl() {
-    const control = L.control({position: 'bottomright'});
-    
-    control.onAdd = () => {
-      const div = L.DomUtil.create('div', 'search-control');
-      div.innerHTML = `
-        <div class="search-container">
-          <select class="search-type">
-            <option value="country">Country</option>
-            <option value="port">Port</option>
-            <option value="city">City</option>
-          </select>
-          <input type="text" class="search-input" placeholder="Search...">
-          <button class="search-btn">Search</button>
-          <button class="clear-btn">Clear</button>
-        </div>
-      `;
-      
-      div.querySelector('.search-btn').addEventListener('click', () => this.search());
-      div.querySelector('.clear-btn').addEventListener('click', () => this.clear());
-      div.querySelector('.search-input').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') this.search();
-      });
-      
-      return div;
-    };
-    
-    control.addTo(this.map);
-  }
-
-  // 새로 추가: 검색 기능
-  search() {
-    const type = document.querySelector('.search-type').value;
-    const keyword = document.querySelector('.search-input').value.toLowerCase();
-    
-    if (!keyword) return;
-    
-    this.markers.forEach(marker => this.map.removeLayer(marker));
-    
-    this.markers = this.currentData.filter(port => {
-      if (type === 'country' && port.country?.toLowerCase().includes(keyword)) {
-        return true;
-      }
-      if (type === 'port' && port.port?.toLowerCase().includes(keyword)) {
-        return true;
-      }
-      if (type === 'city' && port.city?.toLowerCase().includes(keyword)) {
-        return true;
-      }
-      return false;
-    }).map(port => {
-      const marker = L.circleMarker([port.lat, port.lng], {
-        radius: this.getRadiusByDelay(port.current_delay_days),
-        fillColor: this.getColor(port.delay_level),
-        color: "#000",
-        weight: 1,
-        opacity: 1,
-        fillOpacity: 0.8
-      });
-
-      marker.on({
-        mouseover: (e) => {
-          const popup = L.popup()
-            .setLatLng(e.latlng)
-            .setContent(this.createPopupContent(port))
-            .openOn(this.map);
-        },
-        mouseout: () => {
-          this.map.closePopup();
-        }
-      });
-
-      marker.addTo(this.map);
-      return marker;
-    });
-  }
-
-  // 새로 추가: 검색 초기화
-  clear() {
-    this.renderMarkers();
-    document.querySelector('.search-input').value = '';
-  }
-
+  
   // 기존 유틸리티 메서드들 유지
   getRadiusByDelay(delayDays) {
     if (!delayDays) return 5;
