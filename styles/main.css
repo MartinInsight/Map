@@ -220,19 +220,25 @@ html, body {
 }
 
 .leaflet-popup-content-wrapper {
-  all: initial !important;
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
+  background-color: white !important;
+  border-radius: 5px !important;
+  box-shadow: 0 0 10px rgba(0,0,0,0.2) !important;
+  padding: 0 !important;
 }
 
 .leaflet-popup-content {
   margin: 0 !important;
-  width: auto !important;
+  padding: 15px !important;
+  min-width: 200px !important;
+}
+
+.leaflet-popup-tip-container {
+  margin-top: -1px !important;
 }
 
 .leaflet-popup-tip {
-  display: none !important;
+  background-color: white !important;
+  box-shadow: 0 0 10px rgba(0,0,0,0.2) !important;
 }
 
 .leaflet-tooltip {
