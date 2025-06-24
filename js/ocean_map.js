@@ -108,23 +108,22 @@ constructor(mapElementId) {
 
   // ocean_map.js의 addControls 및 addFilterControl 수정
   addControls() {
-      const controlContainer = L.control({ position: 'topright' });
+    const controlContainer = L.control({ position: 'topright' });
   
-      controlContainer.onAdd = () => {
-          const div = L.DomUtil.create('div', 'ocean-control-container');
-          div.innerHTML = `
-              <button class="ocean-reset-btn">Reset View</button>
-          `;
+    controlContainer.onAdd = () => {
+      const div = L.DomUtil.create('div', 'map-control-container');
+      div.innerHTML = `
+        <button class="ocean-reset-btn reset-btn">Reset View</button>
+      `;
   
-          div.querySelector('.ocean-reset-btn').addEventListener('click', () => {
-              this.map.setView([20, 0], 2);
-              this.renderMarkers();
-          });
+      div.querySelector('.ocean-reset-btn').addEventListener('click', () => {
+        this.map.setView([37.8, -96], 4); // 트럭/레일과 동일한 뷰로 리셋
+      });
   
-          return div;
-      };
+      return div;
+    };
   
-      controlContainer.addTo(this.map);
+    controlContainer.addTo(this.map);
   }
   
   addFilterControl() {
