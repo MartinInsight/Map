@@ -34,6 +34,34 @@ class TruckCongestionMap {
     }
   }
 
+  // truck_map.js에 추가할 메서드들
+  async fetchSheetData() {
+    try {
+      const response = await fetch('data/us-truck.json');
+      if (!response.ok) throw new Error("Failed to load truck data");
+      return await response.json();
+    } catch (e) {
+      console.error("Truck data loading failed:", e);
+      return this.useFallbackData();
+    }
+  }
+  
+  showError() {
+    const errorControl = L.control({ position: 'center' });
+    
+    errorControl.onAdd = () => {
+      const div = L.DomUtil.create('div', 'error-message');
+      div.innerHTML = 'Failed to load truck data. Using fallback data.';
+      div.style.backgroundColor = 'white';
+      div.style.padding = '10px';
+      div.style.borderRadius = '5px';
+      div.style.boxShadow = '0 0 10px rgba(0,0,0,0.2)';
+      return div;
+    };
+    
+    errorControl.addTo(this.map);
+  }
+  
   addFilterControl(geoJson) {
       const control = L.control({position: 'bottomright'});
       
