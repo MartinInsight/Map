@@ -236,15 +236,40 @@ class TruckCongestionMap {
   }
 
   addControls() {
-    const controlContainer = L.control({ position: 'topright' });
-    
-    controlContainer.onAdd = () => {
-      this.controlDiv = L.DomUtil.create('div', 'truck-control-container');
-      this.renderControls();
-      return this.controlDiv;
-    };
-    
-    controlContainer.addTo(this.map);
+      const controlContainer = L.control({ position: 'topright' });
+      
+      controlContainer.onAdd = () => {
+        const div = L.DomUtil.create('div', 'truck-control-container');
+        div.innerHTML = `
+          <div class="truck-toggle-container">
+            <div class="truck-toggle-wrapper">
+              <button class="truck-toggle-btn ${this.currentMode === 'inbound' ? 'truck-active' : ''}" 
+                      data-mode="inbound">INBOUND</button>
+              <button class="truck-toggle-btn ${this.currentMode === 'outbound' ? 'truck-active' : ''}" 
+                      data-mode="outbound">OUTBOUND</button>
+            </div>
+            <button class="truck-reset-btn" id="truck-reset-view">Reset View</button>
+          </div>
+        `;
+  
+        div.querySelectorAll('.truck-toggle-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            this.currentMode = btn.dataset.mode;
+            this.renderControls();
+            if (this.stateLayer) {
+              this.stateLayer.setStyle(feature => this.getStyle(feature));
+            }
+          });
+        });
+  
+        div.querySelector('#truck-reset-view').addEventListener('click', () => {
+          this.map.setView([37.8, -96], 4);
+        });
+        
+        return div;
+      };
+      
+      controlContainer.addTo(this.map);
   }
 
   renderControls() {
