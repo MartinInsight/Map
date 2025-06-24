@@ -147,8 +147,9 @@ class RailCongestionMap {
   
               const yardData = this.currentData.filter(item => item.Yard === yardName);
               if (yardData.length > 0) {
-                  const bounds = L.latLngBounds(yardData.map(item => [item.lat, item.lng]));
-                  this.map.fitBounds(bounds.pad(0.5)); // 일관된 줌 레벨 유지
+                  // 야드 중심으로 이동 (고정 줌 레벨 8)
+                  const center = this.getYardCenter(yardData);
+                  this.map.setView(center, 8);
                   this.renderMarkers(yardData);
               }
           });
@@ -157,6 +158,24 @@ class RailCongestionMap {
       };
   
       control.addTo(this.map);
+  }
+  
+  // 야드 중심 좌표 계산 메서드 추가
+  getYardCenter(yardData) {
+      if (!yardData || yardData.length === 0) return [37.8, -96];
+      
+      const lats = yardData.map(item => item.lat);
+      const lngs = yardData.map(item => item.lng);
+      
+      const minLat = Math.min(...lats);
+      const maxLat = Math.max(...lats);
+      const minLng = Math.min(...lngs);
+      const maxLng = Math.max(...lngs);
+      
+      return [
+          (minLat + maxLat) / 2,
+          (minLng + maxLng) / 2
+      ];
   }
 
   getRadiusByIndicator(indicator) {
