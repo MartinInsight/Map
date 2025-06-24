@@ -104,40 +104,47 @@ class RailCongestionMap {
   }
 
   addFilterControl() {
-    const control = L.control({ position: 'bottomright' });
-
-    control.onAdd = () => {
-      const div = L.DomUtil.create('div', 'filter-control');
-
-      // 야드 목록 생성 (중복 제거)
-      const yards = [...new Set(this.currentData.map(item => item.Yard))];
-
-      div.innerHTML = `
-        <select class="yard-filter">
-          <option value="">Select Yard</option>
-          ${yards.map(yard =>
-            `<option value="${yard}">${yard}</option>`
-          ).join('')}
-        </select>
-      `;
-
-      div.querySelector('.yard-filter').addEventListener('change', (e) => {
-        const yardName = e.target.value;
-        if (!yardName) {
-          this.map.setView([37.8, -96], 4);
-          return;
-        }
-
-        const yard = this.currentData.find(item => item.Yard === yardName);
-        if (yard) {
-          this.map.setView([yard.Latitude, yard.Longitude], 10);
-        }
-      });
-
-      return div;
-    };
-
-    control.addTo(this.map);
+      const control = L.control({ position: 'bottomright' });
+  
+      control.onAdd = () => {
+          const div = L.DomUtil.create('div', 'filter-control');
+  
+          // 야드 목록 생성 (중복 제거 및 알파벳 순 정렬)
+          const yards = [...new Set(this.currentData
+              .filter(item => item.Yard) // undefined 제거
+              .map(item => item.Yard)
+          )].sort((a, b) => a.localeCompare(b));
+  
+          div.innerHTML = `
+              <select class="yard-filter">
+                  <option value="">Select Yard</option>
+                  ${yards.map(yard => 
+                      `<option value="${yard}">${yard}</option>`
+                  ).join('')}
+              </select>
+          `;
+  
+          div.querySelector('.yard-filter').addEventListener('change', (e) => {
+              const yardName = e.target.value;
+              if (!yardName) {
+                  this.map.setView([37.8, -96], 4);
+                  this.renderMarkers();
+                  return;
+              }
+  
+              const yard = this.currentData.find(item => item.Yard === yardName);
+              if (yard) {
+                  this.map.setView([yard.Latitude, yard.Longitude], 8);
+                  this.renderMarkers(this.currentData.filter(item => 
+                      item.Yard === yardName
+                  ));
+              }
+          });
+  
+          return div;
+      };
+  
+      control.addTo(this.map);
   }
 
   getRadiusByIndicator(indicator) {
