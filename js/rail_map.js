@@ -60,11 +60,11 @@ class RailCongestionMap {
     }
   }
 
-  renderMarkers() {
+  renderMarkers(data = this.currentData) {
     this.markers.forEach(marker => this.map.removeLayer(marker));
     this.markers = [];
-
-    this.currentData.forEach(item => {
+  
+    data.forEach(item => {
       const marker = L.circleMarker([item.lat, item.lng], {
         radius: this.getRadiusByIndicator(item.indicator),
         fillColor: this.getColor(item.congestion_level),
@@ -73,7 +73,7 @@ class RailCongestionMap {
         opacity: 1,
         fillOpacity: 0.8
       });
-
+  
       marker.on({
         mouseover: (e) => {
           const popup = L.popup()
@@ -88,12 +88,12 @@ class RailCongestionMap {
           this.map.closePopup();
         }
       });
-
+  
       marker.addTo(this.map);
       this.markers.push(marker);
     });
   }
-
+  
   // rail_map.js의 addControls 및 addFilterControl 수정
   addControls() {
       const controlContainer = L.control({ position: 'topright' });
