@@ -10,6 +10,23 @@ class RailCongestionMap {
       attribution: '© OpenStreetMap'
     }).addTo(this.map);
 
+    this.map.setMaxBounds([
+      [-85, -180],
+      [85, 180]
+    ]);
+    
+    // 화면 높이에 맞는 최대 줌 아웃 계산
+    this.map.on('zoomend', () => {
+      const currentZoom = this.map.getZoom();
+      const bounds = this.map.getBounds();
+      const mapHeight = bounds.getNorth() - bounds.getSouth();
+      
+      // 화면 높이 기준으로 최소 줌 제한
+      if (mapHeight > 150) { // 약 150도 이상이면 더 이상 줌 아웃 안됨
+        this.map.setZoom(currentZoom - 0.5);
+      }
+    });
+    
     this.loadData();
     this.addControls(); // 컨트롤 패널 추가 (리셋 버튼)
   }
