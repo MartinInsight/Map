@@ -1,4 +1,3 @@
-// js/rail_map.js
 class RailCongestionMap {
   constructor(mapElementId) {
     this.map = L.map(mapElementId).setView([37.8, -96], 4);
@@ -15,45 +14,43 @@ class RailCongestionMap {
       [85, 180]
     ]);
     
-    // 화면 높이에 맞는 최대 줌 아웃 계산
+    // 수정된 줌 아웃 제한 코드 (오션 맵과 동일하게 적용)
     this.map.on('zoomend', () => {
       const currentZoom = this.map.getZoom();
       const bounds = this.map.getBounds();
       const mapHeight = bounds.getNorth() - bounds.getSouth();
-      
-      // 화면 높이 기준으로 최소 줌 제한
-      if (mapHeight > 150) { // 약 150도 이상이면 더 이상 줌 아웃 안됨
-        this.map.setZoom(currentZoom - 0.5);
+      if (mapHeight > 140) { // 150에서 140으로 변경
+        this.map.setZoom(Math.max(2, currentZoom - 1)); // 0.5에서 1로 변경, 최소 줌 레벨 2로 제한
       }
     });
     
     this.loadData();
-    this.addControls(); // 컨트롤 패널 추가 (리셋 버튼)
+    this.addControls();
   }
   
   async loadData() {
-      try {
-          const response = await fetch('data/us-rail.json');
-          const rawData = await response.json();
-          
-          // 데이터 정규화
-          this.currentData = rawData.map(item => ({
-            ...item,
-            lat: item.lat || item.Latitude,
-            lng: item.lng || item.Longitude,
-            Yard: item.location || 'Unknown' // 🔁 location을 기준으로 Yard 필드 대신 사용
-          })).filter(item => item.lat && item.lng && item.Yard);
-            
-          if (this.currentData.length > 0) {
-              this.lastUpdated = this.currentData[0].date;
-          }
-          
-          this.renderMarkers();
-          this.addLastUpdatedText();
-          this.addFilterControl();
-      } catch (error) {
-          console.error("Failed to load rail data:", error);
+    try {
+      const response = await fetch('data/us-rail.json');
+      const rawData = await response.json();
+      
+      // 데이터 정규화
+      this.currentData = rawData.map(item => ({
+        ...item,
+        lat: item.lat || item.Latitude,
+        lng: item.lng || item.Longitude,
+        Yard: item.location || 'Unknown'
+      })).filter(item => item.lat && item.lng && item.Yard);
+        
+      if (this.currentData.length > 0) {
+        this.lastUpdated = this.currentData[0].date;
       }
+      
+      this.renderMarkers();
+      this.addLastUpdatedText();
+      this.addFilterControl();
+    } catch (error) {
+      console.error("Failed to load rail data:", error);
+    }
   }
 
   addLastUpdatedText() {
@@ -111,17 +108,16 @@ class RailCongestionMap {
     });
   }
   
-  // rail_map.js의 addControls 및 addFilterControl 수정
   addControls() {
     const controlContainer = L.control({ position: 'topright' });
   
     controlContainer.onAdd = () => {
       const div = L.DomUtil.create('div', 'map-control-container');
       div.innerHTML = `
-        <button class="rail-reset-btn reset-btn">Reset View</button>
+        <button class="reset-btn">Reset View</button> <!-- 클래스명 통일 -->
       `;
   
-      div.querySelector('.rail-reset-btn').addEventListener('click', () => {
+      div.querySelector('.reset-btn').addEventListener('click', () => {
         this.map.setView([37.8, -96], 4);
       });
   
@@ -132,66 +128,65 @@ class RailCongestionMap {
   }
   
   addFilterControl() {
-      const control = L.control({ position: 'bottomright' });
+    const control = L.control({ position: 'bottomright' });
   
-      control.onAdd = () => {
-          const div = L.DomUtil.create('div', 'filter-control');
-          
-          // 데이터에서 유효한 야드만 추출 및 정렬
-          const validYards = this.currentData
-              .filter(item => item.Yard && item.Yard.trim() !== '')
-              .map(item => item.Yard);
-          
-          const yards = [...new Set(validYards)].sort((a, b) => a.localeCompare(b));
+    control.onAdd = () => {
+      const div = L.DomUtil.create('div', 'filter-control');
+      
+      // 데이터에서 유효한 야드만 추출 및 정렬
+      const validYards = this.currentData
+        .filter(item => item.Yard && item.Yard.trim() !== '')
+        .map(item => item.Yard);
+      
+      const yards = [...new Set(validYards)].sort((a, b) => a.localeCompare(b));
+
+      div.innerHTML = `
+        <select class="yard-filter">
+          <option value="">Select Yard</option>
+          ${yards.map(yard => 
+            `<option value="${yard}">${yard}</option>`
+          ).join('')}
+        </select>
+      `;
   
-          div.innerHTML = `
-              <select class="yard-filter">
-                  <option value="">Select Yard</option>
-                  ${yards.map(yard => 
-                      `<option value="${yard}">${yard}</option>`
-                  ).join('')}
-              </select>
-          `;
+      div.querySelector('.yard-filter').addEventListener('change', (e) => {
+        const yardName = e.target.value;
+        if (!yardName) {
+          this.map.setView([37.8, -96], 4);
+          this.renderMarkers();
+          return;
+        }
   
-          div.querySelector('.yard-filter').addEventListener('change', (e) => {
-              const yardName = e.target.value;
-              if (!yardName) {
-                  this.map.setView([37.8, -96], 4);
-                  this.renderMarkers();
-                  return;
-              }
+        const yardData = this.currentData.filter(item => item.Yard === yardName);
+        if (yardData.length > 0) {
+          // 야드 중심으로 이동 (고정 줌 레벨 8)
+          const center = this.getYardCenter(yardData);
+          this.map.setView(center, 8);
+          this.renderMarkers(yardData);
+        }
+      });
   
-              const yardData = this.currentData.filter(item => item.Yard === yardName);
-              if (yardData.length > 0) {
-                  // 야드 중심으로 이동 (고정 줌 레벨 8)
-                  const center = this.getYardCenter(yardData);
-                  this.map.setView(center, 8);
-                  this.renderMarkers(yardData);
-              }
-          });
+      return div;
+    };
   
-          return div;
-      };
-  
-      control.addTo(this.map);
+    control.addTo(this.map);
   }
   
-  // 야드 중심 좌표 계산 메서드 추가
   getYardCenter(yardData) {
-      if (!yardData || yardData.length === 0) return [37.8, -96];
-      
-      const lats = yardData.map(item => item.lat);
-      const lngs = yardData.map(item => item.lng);
-      
-      const minLat = Math.min(...lats);
-      const maxLat = Math.max(...lats);
-      const minLng = Math.min(...lngs);
-      const maxLng = Math.max(...lngs);
-      
-      return [
-          (minLat + maxLat) / 2,
-          (minLng + maxLng) / 2
-      ];
+    if (!yardData || yardData.length === 0) return [37.8, -96];
+    
+    const lats = yardData.map(item => item.lat);
+    const lngs = yardData.map(item => item.lng);
+    
+    const minLat = Math.min(...lats);
+    const maxLat = Math.max(...lats);
+    const minLng = Math.min(...lngs);
+    const maxLng = Math.max(...lngs);
+    
+    return [
+      (minLat + maxLat) / 2,
+      (minLng + maxLng) / 2
+    ];
   }
 
   getRadiusByIndicator(indicator) {
