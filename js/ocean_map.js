@@ -1,111 +1,53 @@
+// js/ocean_map.js
 class OceanCongestionMap {
   constructor(mapElementId) {
-    // 기존 생성자 코드 유지
-    
-    // 리셋 버튼 추가
-    this.addResetButton();
-    // 검색 기능 추가
-    this.addSearchControl();
-    
-    // 호버 이벤트를 위해 마커에 이벤트 리스너 추가
-    this.map.on('popupclose', () => {
-      this.currentPopup = null;
-    });
+    this.map = L.map(mapElementId).setView([20, 0], 2);
+    this.markers = [];
+    this.currentData = null;
+    this.lastUpdated = null;
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap'
+    }).addTo(this.map);
+
+    this.loadData();
   }
 
-  addResetButton() {
-    const resetBtn = L.DomUtil.create('button', 'reset-view-btn');
-    resetBtn.textContent = 'Reset View';
-    resetBtn.onclick = () => {
-      this.map.setView([20, 0], 2);
-    };
-    
-    this.map.getContainer().appendChild(resetBtn);
-  }
-
-  addSearchControl() {
-    const searchContainer = L.DomUtil.create('div', 'search-container');
-    
-    const countrySelect = L.DomUtil.create('select', '', searchContainer);
-    countrySelect.innerHTML = '<option value="">Select Country</option>';
-    
-    const portSelect = L.DomUtil.create('select', '', searchContainer);
-    portSelect.innerHTML = '<option value="">Select Port</option>';
-    
-    const keywordInput = L.DomUtil.create('input', '', searchContainer);
-    keywordInput.placeholder = 'Enter keyword';
-    
-    const searchBtn = L.DomUtil.create('button', '', searchContainer);
-    searchBtn.textContent = 'Search';
-    
-    // 국가 및 포트 데이터 채우기
-    this.populateSearchOptions(countrySelect, portSelect);
-    
-    searchBtn.onclick = () => {
-      this.filterMarkers(
-        countrySelect.value,
-        portSelect.value,
-        keywordInput.value
-      );
-    };
-    
-    this.map.getContainer().appendChild(searchContainer);
-  }
-
-  populateSearchOptions(countrySelect, portSelect) {
-    const countries = new Set();
-    const portsByCountry = {};
-    
-    this.currentData.forEach(port => {
-      if (port.country) countries.add(port.country);
-      if (port.port && port.country) {
-        if (!portsByCountry[port.country]) {
-          portsByCountry[port.country] = new Set();
-        }
-        portsByCountry[port.country].add(port.port);
+  async loadData() {
+    try {
+      const response = await fetch('data/global-ports.json');
+      this.currentData = await response.json();
+      if (this.currentData.length > 0) {
+        this.lastUpdated = this.currentData[0].date;
       }
-    });
-    
-    // 국가 옵션 채우기
-    countries.forEach(country => {
-      const option = L.DomUtil.create('option', '', countrySelect);
-      option.value = country;
-      option.textContent = country;
-    });
-    
-    // 국가 선택 시 포트 옵션 업데이트
-    countrySelect.onchange = () => {
-      portSelect.innerHTML = '<option value="">Select Port</option>';
+      this.renderMarkers();
+      this.addLastUpdatedText();
+    } catch (error) {
+      console.error("Failed to load ocean data:", error);
+    }
+  }
+
+  addLastUpdatedText() {
+    if (this.lastUpdated) {
+      const date = new Date(this.lastUpdated);
+      const formattedDate = `${date.getMonth()+1}-${date.getDate()}-${date.getFullYear()}`;
       
-      if (countrySelect.value && portsByCountry[countrySelect.value]) {
-        portsByCountry[countrySelect.value].forEach(port => {
-          const option = L.DomUtil.create('option', '', portSelect);
-          option.value = port;
-          option.textContent = port;
-        });
-      }
-    };
+      const infoControl = L.control({ position: 'bottomleft' });
+      
+      infoControl.onAdd = () => {
+        const div = L.DomUtil.create('div', 'last-updated-info');
+        div.innerHTML = `<strong>Last Updated:</strong> ${formattedDate}`;
+        div.style.backgroundColor = 'white';
+        div.style.padding = '5px 10px';
+        div.style.borderRadius = '5px';
+        div.style.boxShadow = '0 0 5px rgba(0,0,0,0.2)';
+        return div;
+      };
+      
+      infoControl.addTo(this.map);
+    }
   }
 
-  filterMarkers(country, port, keyword) {
-    const lowerKeyword = keyword.toLowerCase();
-    
-    this.markers.forEach(marker => {
-      const data = marker.options.data;
-      const matchesCountry = !country || data.country === country;
-      const matchesPort = !port || data.port === port;
-      const matchesKeyword = !keyword || 
-        (data.port && data.port.toLowerCase().includes(lowerKeyword)) ||
-        (data.port_code && data.port_code.toLowerCase().includes(lowerKeyword));
-      
-      if (matchesCountry && matchesPort && matchesKeyword) {
-        marker.setStyle({ opacity: 1, fillOpacity: 0.8 });
-      } else {
-        marker.setStyle({ opacity: 0.3, fillOpacity: 0.2 });
-      }
-    });
-  }
-  
   renderMarkers() {
     this.markers.forEach(marker => this.map.removeLayer(marker));
     this.markers = [];
@@ -117,26 +59,7 @@ class OceanCongestionMap {
         color: "#000",
         weight: 1,
         opacity: 1,
-        fillOpacity: 0.8,
-        data: port // 데이터를 마커에 저장
-      });
-
-      // 호버 이벤트 추가
-      marker.on('mouseover', () => {
-        if (this.currentPopup) {
-          this.map.closePopup(this.currentPopup);
-        }
-        this.currentPopup = L.popup()
-          .setLatLng([port.lat, port.lng])
-          .setContent(this.createPopupContent(port))
-          .openOn(this.map);
-      });
-
-      marker.on('mouseout', () => {
-        if (this.currentPopup) {
-          this.map.closePopup(this.currentPopup);
-          this.currentPopup = null;
-        }
+        fillOpacity: 0.8
       });
 
       marker.bindPopup(this.createPopupContent(port));
@@ -144,7 +67,6 @@ class OceanCongestionMap {
       this.markers.push(marker);
     });
   }
-}
 
   getRadiusByDelay(delayDays) {
     if (!delayDays) return 5;
