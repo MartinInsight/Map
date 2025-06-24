@@ -188,37 +188,46 @@ class TruckCongestionMap {
   }
 
   addFilterControl() {
-    const control = L.control({ position: 'bottomright' });
-
-    control.onAdd = () => {
-      const div = L.DomUtil.create('div', 'filter-control');
-      div.innerHTML = `
-        <select class="state-filter">
-          <option value="">Select State</option>
-          ${this.geoJsonData.features.map(f => 
-            `<option value="${f.id}">${f.properties.name}</option>`
-          ).join('')}
-        </select>
-      `;
-
-      div.querySelector('.state-filter').addEventListener('change', (e) => {
-        const stateId = e.target.value;
-        if (!stateId) {
-          this.map.setView([37.8, -96], 4);
-          return;
-        }
-
-        const state = this.geoJsonData.features.find(f => f.id === stateId);
-        if (state) {
-          const bounds = L.geoJSON(state).getBounds();
-          this.map.fitBounds(bounds.pad(0.3));
-        }
-      });
-
-      return div;
-    };
-
-    control.addTo(this.map);
+      const control = L.control({ position: 'bottomright' });
+  
+      control.onAdd = () => {
+          const div = L.DomUtil.create('div', 'filter-control');
+          
+          // 주 목록 정렬
+          const states = this.geoJsonData.features
+              .map(f => ({
+                  id: f.id,
+                  name: f.properties.name
+              }))
+              .sort((a, b) => a.name.localeCompare(b.name));
+  
+          div.innerHTML = `
+              <select class="state-filter">
+                  <option value="">Select State</option>
+                  ${states.map(state => 
+                      `<option value="${state.id}">${state.name}</option>`
+                  ).join('')}
+              </select>
+          `;
+  
+          div.querySelector('.state-filter').addEventListener('change', (e) => {
+              const stateId = e.target.value;
+              if (!stateId) {
+                  this.map.setView([37.8, -96], 4);
+                  return;
+              }
+  
+              const state = this.geoJsonData.features.find(f => f.id === stateId);
+              if (state) {
+                  const bounds = L.geoJSON(state).getBounds();
+                  this.map.fitBounds(bounds.pad(0.3)); // 일관된 패딩 적용
+              }
+          });
+  
+          return div;
+      };
+  
+      control.addTo(this.map);
   }
 
   showError() {
