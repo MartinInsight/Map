@@ -1,111 +1,51 @@
 // js/rail_map.js
-// 기존 코드에 추가할 내용
 class RailCongestionMap {
   constructor(mapElementId) {
-    // 기존 생성자 코드 유지
-    
-    // 리셋 버튼 추가
-    this.addResetButton();
-    // 검색 기능 추가
-    this.addSearchControl();
-    
-    // 호버 이벤트를 위해 마커에 이벤트 리스너 추가
-    this.map.on('popupclose', () => {
-      this.currentPopup = null;
-    });
+    this.map = L.map(mapElementId).setView([37.8, -96], 4);
+    this.markers = [];
+    this.currentData = null;
+    this.lastUpdated = null;
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap'
+    }).addTo(this.map);
+
+    this.loadData();
   }
 
-  addResetButton() {
-    const resetBtn = L.DomUtil.create('button', 'reset-view-btn');
-    resetBtn.textContent = 'Reset View';
-    resetBtn.onclick = () => {
-      this.map.setView([37.8, -96], 4);
-    };
-    
-    this.map.getContainer().appendChild(resetBtn);
-  }
-
-  addSearchControl() {
-    const searchContainer = L.DomUtil.create('div', 'search-container');
-    
-    const countrySelect = L.DomUtil.create('select', '', searchContainer);
-    countrySelect.innerHTML = '<option value="">Select Country</option>';
-    
-    const citySelect = L.DomUtil.create('select', '', searchContainer);
-    citySelect.innerHTML = '<option value="">Select City</option>';
-    
-    const keywordInput = L.DomUtil.create('input', '', searchContainer);
-    keywordInput.placeholder = 'Enter keyword';
-    
-    const searchBtn = L.DomUtil.create('button', '', searchContainer);
-    searchBtn.textContent = 'Search';
-    
-    // 국가 및 도시 데이터 채우기
-    this.populateSearchOptions(countrySelect, citySelect);
-    
-    searchBtn.onclick = () => {
-      this.filterMarkers(
-        countrySelect.value,
-        citySelect.value,
-        keywordInput.value
-      );
-    };
-    
-    this.map.getContainer().appendChild(searchContainer);
-  }
-
-  populateSearchOptions(countrySelect, citySelect) {
-    const countries = new Set();
-    const citiesByCountry = {};
-    
-    this.currentData.forEach(item => {
-      if (item.country) countries.add(item.country);
-      if (item.city && item.country) {
-        if (!citiesByCountry[item.country]) {
-          citiesByCountry[item.country] = new Set();
-        }
-        citiesByCountry[item.country].add(item.city);
+  async loadData() {
+    try {
+      const response = await fetch('data/us-rail.json');
+      this.currentData = await response.json();
+      if (this.currentData.length > 0) {
+        this.lastUpdated = this.currentData[0].date;
       }
-    });
-    
-    // 국가 옵션 채우기
-    countries.forEach(country => {
-      const option = L.DomUtil.create('option', '', countrySelect);
-      option.value = country;
-      option.textContent = country;
-    });
-    
-    // 국가 선택 시 도시 옵션 업데이트
-    countrySelect.onchange = () => {
-      citySelect.innerHTML = '<option value="">Select City</option>';
+      this.renderMarkers();
+      this.addLastUpdatedText();
+    } catch (error) {
+      console.error("Failed to load rail data:", error);
+    }
+  }
+
+  addLastUpdatedText() {
+    if (this.lastUpdated) {
+      const date = new Date(this.lastUpdated);
+      const formattedDate = `${date.getMonth()+1}-${date.getDate()}-${date.getFullYear()}`;
       
-      if (countrySelect.value && citiesByCountry[countrySelect.value]) {
-        citiesByCountry[countrySelect.value].forEach(city => {
-          const option = L.DomUtil.create('option', '', citySelect);
-          option.value = city;
-          option.textContent = city;
-        });
-      }
-    };
-  }
-
-  filterMarkers(country, city, keyword) {
-    const lowerKeyword = keyword.toLowerCase();
-    
-    this.markers.forEach(marker => {
-      const data = marker.options.data;
-      const matchesCountry = !country || data.country === country;
-      const matchesCity = !city || data.city === city;
-      const matchesKeyword = !keyword || 
-        (data.location && data.location.toLowerCase().includes(lowerKeyword)) ||
-        (data.company && data.company.toLowerCase().includes(lowerKeyword));
+      const infoControl = L.control({ position: 'bottomleft' });
       
-      if (matchesCountry && matchesCity && matchesKeyword) {
-        marker.setStyle({ opacity: 1, fillOpacity: 0.8 });
-      } else {
-        marker.setStyle({ opacity: 0.3, fillOpacity: 0.2 });
-      }
-    });
+      infoControl.onAdd = () => {
+        const div = L.DomUtil.create('div', 'last-updated-info');
+        div.innerHTML = `<strong>Last Updated:</strong> ${formattedDate}`;
+        div.style.backgroundColor = 'white';
+        div.style.padding = '5px 10px';
+        div.style.borderRadius = '5px';
+        div.style.boxShadow = '0 0 5px rgba(0,0,0,0.2)';
+        return div;
+      };
+      
+      infoControl.addTo(this.map);
+    }
   }
 
   renderMarkers() {
@@ -114,31 +54,12 @@ class RailCongestionMap {
 
     this.currentData.forEach(item => {
       const marker = L.circleMarker([item.lat, item.lng], {
-        radius: this.getRadiusByIndicator(item.indicator),
+        radius: this.getRadiusByIndicator(item.indicator), // Indicator로 크기 결정
         fillColor: this.getColor(item.congestion_level),
         color: "#000",
         weight: 1,
         opacity: 1,
-        fillOpacity: 0.8,
-        data: item // 데이터를 마커에 저장
-      });
-
-      // 호버 이벤트 추가
-      marker.on('mouseover', () => {
-        if (this.currentPopup) {
-          this.map.closePopup(this.currentPopup);
-        }
-        this.currentPopup = L.popup()
-          .setLatLng([item.lat, item.lng])
-          .setContent(this.createPopupContent(item))
-          .openOn(this.map);
-      });
-
-      marker.on('mouseout', () => {
-        if (this.currentPopup) {
-          this.map.closePopup(this.currentPopup);
-          this.currentPopup = null;
-        }
+        fillOpacity: 0.8
       });
 
       marker.bindPopup(this.createPopupContent(item));
@@ -146,7 +67,6 @@ class RailCongestionMap {
       this.markers.push(marker);
     });
   }
-}
 
   getRadiusByIndicator(indicator) {
     // Indicator 값에 따른 원 크기 (명확한 5단계 구분)
