@@ -27,90 +27,45 @@ class TruckCongestionMap {
       this.metricData = sheetData;
       this.renderMap(geoJson);
       this.initialized = true;
-      this.addSearchControl(geoJson); // 새로 추가: 검색 기능
+      this.addFilterControl(geoJson);
     } catch (error) {
       console.error("Initialization failed:", error);
       this.showError();
     }
   }
 
-  // 새로 추가: 검색 컨트롤
-  addSearchControl(geoJson) {
-    const control = L.control({position: 'bottomright'});
-    
-    control.onAdd = () => {
-      const div = L.DomUtil.create('div', 'search-control');
-      div.innerHTML = `
-        <div class="search-container">
-          <select class="search-type">
-            <option value="state">State</option>
-          </select>
-          <input type="text" class="search-input" placeholder="Search...">
-          <button class="search-btn">Search</button>
-          <button class="clear-btn">Clear</button>
-        </div>
-      `;
+  addFilterControl(geoJson) {
+      const control = L.control({position: 'bottomright'});
       
-      div.querySelector('.search-btn').addEventListener('click', () => this.search(geoJson));
-      div.querySelector('.clear-btn').addEventListener('click', () => this.clear(geoJson));
-      div.querySelector('.search-input').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') this.search(geoJson);
-      });
+      control.onAdd = () => {
+          const div = L.DomUtil.create('div', 'filter-control');
+          div.innerHTML = `
+              <select class="state-filter">
+                  <option value="">Select State</option>
+                  ${geoJson.features.map(f => 
+                      `<option value="${f.id}">${f.properties.name}</option>`
+                  ).join('')}
+              </select>
+          `;
+          
+          div.querySelector('.state-filter').addEventListener('change', (e) => {
+              const stateId = e.target.value;
+              if (!stateId) {
+                  this.map.setView([37.8, -96], 4);
+                  return;
+              }
+              
+              const state = geoJson.features.find(f => f.id === stateId);
+              if (state) {
+                  const bounds = L.geoJSON(state).getBounds();
+                  this.map.fitBounds(bounds.pad(0.5)); // 주변 지역 포함
+              }
+          });
+          
+          return div;
+      };
       
-      return div;
-    };
-    
-    control.addTo(this.map);
-  }
-
-  // 새로 추가: 검색 기능
-  search(geoJson) {
-    const keyword = document.querySelector('.search-input').value.toLowerCase();
-    
-    if (!keyword) return;
-    
-    this.stateLayer.setStyle({fillOpacity: 0});
-    
-    geoJson.features.forEach(feature => {
-      const data = this.metricData[feature.id];
-      if (data && data.name.toLowerCase().includes(keyword)) {
-        this.stateLayer.setStyle(feature, {
-          fillOpacity: 0.7
-        });
-      }
-    });
-  }
-
-  // 새로 추가: 검색 초기화
-  clear(geoJson) {
-    this.stateLayer.setStyle(feature => this.getStyle(feature));
-    document.querySelector('.search-input').value = '';
-  }
-
-  async fetchSheetData() {
-    try {
-      const response = await fetch('data/us-truck.json');
-      if (!response.ok) throw new Error("Failed to load truck data");
-      
-      const rawData = await response.json();
-      return Object.fromEntries(
-        Object.entries(rawData).map(([code, data]) => [
-          code,
-          {
-            name: data.name,
-            inboundDelay: Number(data.inboundDelay) || 0,
-            inboundColor: Number(data.inboundColor) || 0,
-            outboundDelay: Number(data.outboundDelay) || 0,
-            outboundColor: Number(data.outboundColor) || 0,
-            dwellInbound: Number(data.dwellInbound) || 0,
-            dwellOutbound: Number(data.dwellOutbound) || 0
-          }
-        ])
-      );
-    } catch (e) {
-      console.error("Truck data loading failed:", e);
-      return this.useFallbackData();
-    }
+      control.addTo(this.map);
   }
 
   useFallbackData() {
