@@ -1,45 +1,40 @@
-constructor(mapElementId) {
-  // 초기 뷰를 미국 중심으로 변경 (트럭/레일과 동일)
-  this.map = L.map(mapElementId).setView([37.8, -96], 4); // 수정된 부분
-  this.markers = [];
-  this.currentData = [];
-  this.lastUpdated = null;
+class OceanCongestionMap {
+  constructor(mapElementId) {
+    this.map = L.map(mapElementId).setView([37.8, -96], 4);
+    this.markers = [];
+    this.currentData = [];
+    this.lastUpdated = null;
 
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap',
-    maxZoom: 18,
-    minZoom: 2 // 최소 줌 레벨 설정
-  }).addTo(this.map);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap',
+      maxZoom: 18,
+      minZoom: 2
+    }).addTo(this.map);
 
-  // 최대 줌 아웃 범위 제한
-  this.map.setMaxBounds([
-    [-85, -180],
-    [85, 180]
-  ]);
-  
-  // 화면 높이에 맞는 최대 줌 아웃 계산
-  this.map.on('zoomend', () => {
-    const currentZoom = this.map.getZoom();
-    const bounds = this.map.getBounds();
-    const mapHeight = bounds.getNorth() - bounds.getSouth();
+    this.map.setMaxBounds([
+      [-85, -180],
+      [85, 180]
+    ]);
     
-    // 화면 높이 기준으로 최소 줌 제한
-    if (mapHeight > 150) { // 약 150도 이상이면 더 이상 줌 아웃 안됨
-      this.map.setZoom(currentZoom - 0.5);
-    }
-  });
-  
-  this.loadData();
-  this.addControls();
-  this.addFilterControl();
-}
+    this.map.on('zoomend', () => {
+      const currentZoom = this.map.getZoom();
+      const bounds = this.map.getBounds();
+      const mapHeight = bounds.getNorth() - bounds.getSouth();
+      if (mapHeight > 150) {
+        this.map.setZoom(currentZoom - 0.5);
+      }
+    });
+    
+    this.loadData();
+    this.addControls();
+    this.addFilterControl();
+  }
 
   async loadData() {
     try {
       const response = await fetch('data/global-ports.json');
       const rawData = await response.json();
 
-      // 데이터 정규화
       this.currentData = rawData.map(p => ({
         lat: p.lat || p.Latitude,
         lng: p.lng || p.Longitude,
@@ -60,7 +55,6 @@ constructor(mapElementId) {
 
       this.renderMarkers();
       this.addLastUpdatedText();
-      this.addFilterControl();
     } catch (error) {
       console.error("Failed to load ocean data:", error);
     }
@@ -118,7 +112,6 @@ constructor(mapElementId) {
     }
   }
 
-  // ocean_map.js의 addControls 및 addFilterControl 수정
   addControls() {
     const controlContainer = L.control({ position: 'topright' });
   
@@ -129,7 +122,7 @@ constructor(mapElementId) {
       `;
   
       div.querySelector('.ocean-reset-btn').addEventListener('click', () => {
-        this.map.setView([37.8, -96], 4); // 트럭/레일과 동일한 뷰로 리셋
+        this.map.setView([37.8, -96], 4);
       });
   
       return div;
@@ -139,91 +132,80 @@ constructor(mapElementId) {
   }
   
   addFilterControl() {
-      const control = L.control({ position: 'bottomright' });
+    const control = L.control({ position: 'bottomright' });
   
-      control.onAdd = () => {
-          const div = L.DomUtil.create('div', 'filter-control');
+    control.onAdd = () => {
+      const div = L.DomUtil.create('div', 'filter-control');
+      const countries = [...new Set(this.currentData
+        .map(p => p.country)
+        .filter(c => c && c.trim() !== '')
+      )].sort((a, b) => a.localeCompare(b));
   
-          // 국가 목록 생성 (알파벳 순 정렬)
-          const countries = [...new Set(this.currentData
-              .map(p => p.country)
-              .filter(c => c && c.trim() !== '')
-          )].sort((a, b) => a.localeCompare(b));
+      div.innerHTML = `
+        <select class="country-filter">
+          <option value="">Select Country</option>
+          ${countries.map(c => `<option value="${c}">${c}</option>`).join('')}
+        </select>
+        <select class="port-filter" disabled>
+          <option value="">Select Port</option>
+        </select>
+      `;
   
-          div.innerHTML = `
-              <select class="country-filter">
-                  <option value="">Select Country</option>
-                  ${countries.map(c => `<option value="${c}">${c}</option>`).join('')}
-              </select>
-              <select class="port-filter" disabled>
-                  <option value="">Select Port</option>
-              </select>
-          `;
+      const countryFilter = div.querySelector('.country-filter');
+      const portFilter = div.querySelector('.port-filter');
   
-          const countryFilter = div.querySelector('.country-filter');
-          const portFilter = div.querySelector('.port-filter');
+      countryFilter.addEventListener('change', (e) => {
+        const country = e.target.value;
+        portFilter.innerHTML = '<option value="">Select Port</option>';
+        portFilter.disabled = !country;
   
-          countryFilter.addEventListener('change', (e) => {
-              const country = e.target.value;
-              portFilter.innerHTML = '<option value="">Select Port</option>';
-              portFilter.disabled = !country;
+        if (!country) {
+          this.map.setView([37.8, -96], 4);
+          this.renderMarkers();
+          return;
+        }
   
-              if (!country) {
-                  this.map.setView([20, 0], 2);
-                  this.renderMarkers();
-                  return;
-              }
+        const countryPorts = this.currentData
+          .filter(p => p.country === country)
+          .sort((a, b) => a.port.localeCompare(b.port));
   
-              const countryPorts = this.currentData
-                  .filter(p => p.country === country)
-                  .sort((a, b) => a.port.localeCompare(b.port));
+        countryPorts.forEach(port => {
+          const option = document.createElement('option');
+          option.value = port.port;
+          option.textContent = port.port;
+          portFilter.appendChild(option);
+        });
   
-              countryPorts.forEach(port => {
-                  const option = document.createElement('option');
-                  option.value = port.port;
-                  option.textContent = port.port;
-                  portFilter.appendChild(option);
-              });
+        const countryCenter = this.getCountryCenter(countryPorts);
+        this.map.setView(countryCenter, 5);
+        this.renderMarkers(countryPorts);
+      });
   
-              // 국가 중심으로 이동 (고정 줌 레벨 5)
-              const countryCenter = this.getCountryCenter(countryPorts);
-              this.map.setView(countryCenter, 5);
-              this.renderMarkers(countryPorts);
-          });
+      portFilter.addEventListener('change', (e) => {
+        const portName = e.target.value;
+        if (!portName) return;
   
-          portFilter.addEventListener('change', (e) => {
-              const portName = e.target.value;
-              if (!portName) return;
+        const port = this.currentData.find(p => p.port === portName);
+        if (port) {
+          this.map.setView([port.lat, port.lng], 8);
+          this.renderMarkers([port]);
+        }
+      });
   
-              const port = this.currentData.find(p => p.port === portName);
-              if (port) {
-                  this.map.setView([port.lat, port.lng], 8); // 포트 선택 시 일관된 줌 레벨
-                  this.renderMarkers([port]);
-              }
-          });
+      return div;
+    };
   
-          return div;
-      };
-  
-      control.addTo(this.map);
+    control.addTo(this.map);
   }
   
-  // 국가 중심 좌표 계산 메서드 추가
   getCountryCenter(ports) {
-      if (!ports || ports.length === 0) return [20, 0];
-      
-      const lats = ports.map(p => p.lat);
-      const lngs = ports.map(p => p.lng);
-      
-      const minLat = Math.min(...lats);
-      const maxLat = Math.max(...lats);
-      const minLng = Math.min(...lngs);
-      const maxLng = Math.max(...lngs);
-      
-      return [
-          (minLat + maxLat) / 2,
-          (minLng + maxLng) / 2
-      ];
+    if (!ports || ports.length === 0) return [37.8, -96];
+    const lats = ports.map(p => p.lat);
+    const lngs = ports.map(p => p.lng);
+    return [
+      (Math.min(...lats) + Math.max(...lats)) / 2,
+      (Math.min(...lngs) + Math.max(...lngs)) / 2
+    ];
   }
   
   getRadiusByDelay(delayDays) {
@@ -267,4 +249,7 @@ constructor(mapElementId) {
   }
 }
 
-window.OceanCongestionMap = OceanCongestionMap;
+// 반드시 추가해야 하는 부분
+if (typeof window !== 'undefined') {
+  window.OceanCongestionMap = OceanCongestionMap;
+}
