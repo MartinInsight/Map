@@ -116,73 +116,79 @@ class OceanCongestionMap {
     controlContainer.addTo(this.map);
   }
 
+  // ocean_map.js의 addFilterControl 수정
   addFilterControl() {
-    const control = L.control({ position: 'topright' });
-
-    control.onAdd = () => {
-      const div = L.DomUtil.create('div', 'filter-control');
-
-      const countries = [...new Set(this.currentData.map(p => p.country))];
-
-      div.innerHTML = `
-        <select class="country-filter">
-          <option value="">Select Country</option>
-          ${countries.map(c => `<option value="${c}">${c}</option>`).join('')}
-        </select>
-        <select class="port-filter" disabled>
-          <option value="">Select Port</option>
-        </select>
-      `;
-
-      const countryFilter = div.querySelector('.country-filter');
-      const portFilter = div.querySelector('.port-filter');
-
-      countryFilter.addEventListener('change', (e) => {
-        const country = e.target.value;
-        portFilter.innerHTML = '<option value="">Select Port</option>';
-        portFilter.disabled = !country;
-
-        if (!country) {
-          this.map.setView([20, 0], 2);
-          this.renderMarkers();
-          return;
-        }
-
-        const countryPorts = this.currentData.filter(p => p.country === country);
-
-        countryPorts.forEach(port => {
-          const option = document.createElement('option');
-          option.value = port.port;
-          option.textContent = port.port;
-          portFilter.appendChild(option);
-        });
-
-        if (countryPorts.length === 1) {
-          const [p] = countryPorts;
-          this.map.setView([p.lat, p.lng], 6);
-        } else {
-          const bounds = L.latLngBounds(countryPorts.map(p => [p.lat, p.lng]));
-          this.map.fitBounds(bounds.pad(0.3));
-        }
-
-        this.renderMarkers(countryPorts);
-      });
-
-      portFilter.addEventListener('change', (e) => {
-        const portName = e.target.value;
-        if (!portName) return;
-
-        const port = this.currentData.find(p => p.port === portName);
-        if (port) {
-          this.map.setView([port.lat, port.lng], 8);
-          this.renderMarkers([port]);
-        }
-      });
-
-      return div;
-    };
-
-    control.addTo(this.map);
+      const control = L.control({ position: 'bottomright' });
+  
+      control.onAdd = () => {
+          const div = L.DomUtil.create('div', 'filter-control');
+  
+          // 국가 목록 생성 (알파벳 순 정렬)
+          const countries = [...new Set(this.currentData
+              .map(p => p.country)
+          )].sort((a, b) => a.localeCompare(b));
+  
+          div.innerHTML = `
+              <select class="country-filter">
+                  <option value="">Select Country</option>
+                  ${countries.map(c => `<option value="${c}">${c}</option>`).join('')}
+              </select>
+              <select class="port-filter" disabled>
+                  <option value="">Select Port</option>
+              </select>
+          `;
+  
+          const countryFilter = div.querySelector('.country-filter');
+          const portFilter = div.querySelector('.port-filter');
+  
+          countryFilter.addEventListener('change', (e) => {
+              const country = e.target.value;
+              portFilter.innerHTML = '<option value="">Select Port</option>';
+              portFilter.disabled = !country;
+  
+              if (!country) {
+                  this.map.setView([20, 0], 2);
+                  this.renderMarkers();
+                  return;
+              }
+  
+              const countryPorts = this.currentData
+                  .filter(p => p.country === country)
+                  .sort((a, b) => a.port.localeCompare(b.port));
+  
+              countryPorts.forEach(port => {
+                  const option = document.createElement('option');
+                  option.value = port.port;
+                  option.textContent = port.port;
+                  portFilter.appendChild(option);
+              });
+  
+              if (countryPorts.length === 1) {
+                  const [p] = countryPorts;
+                  this.map.setView([p.lat, p.lng], 8);
+                  this.renderMarkers([p]);
+              } else {
+                  const bounds = L.latLngBounds(countryPorts.map(p => [p.lat, p.lng]));
+                  this.map.fitBounds(bounds.pad(0.3));
+                  this.renderMarkers(countryPorts);
+              }
+          });
+  
+          portFilter.addEventListener('change', (e) => {
+              const portName = e.target.value;
+              if (!portName) return;
+  
+              const port = this.currentData.find(p => p.port === portName);
+              if (port) {
+                  this.map.setView([port.lat, port.lng], 10);
+                  this.renderMarkers([port]);
+              }
+          });
+  
+          return div;
+      };
+  
+      control.addTo(this.map);
   }
 
   getRadiusByDelay(delayDays) {
