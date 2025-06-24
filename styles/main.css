@@ -321,25 +321,38 @@ html, body {
     }
 }
 
-/* 새로 추가: 리셋 버튼 스타일 */
-.rail-reset-btn, 
-.ocean-reset-btn {
-    padding: 0 15px;
-    background: white;
-    border: 1px solid #e0e0e0;
-    border-radius: 5px;
-    cursor: pointer;
-    font-family: 'Noto Sans KR', sans-serif;
-    font-weight: 400;
-    font-size: 13px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    height: 30px;
-    margin-left: 10px;
+/* 오류 메시지 스타일 */
+.error-message {
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 14px;
+  color: #d63031;
+  padding: 10px 15px;
+  border: 1px solid #ff7675;
+  background-color: #ffeaa7;
+  border-radius: 5px;
 }
 
-.rail-reset-btn:hover, 
+/* 리셋 버튼 공통 스타일 */
+.truck-reset-btn,
+.rail-reset-btn,
+.ocean-reset-btn {
+  padding: 0 15px;
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 5px;
+  cursor: pointer;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-weight: 400;
+  font-size: 13px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  height: 30px;
+  margin-left: 10px;
+}
+
+.truck-reset-btn:hover,
+.rail-reset-btn:hover,
 .ocean-reset-btn:hover {
-    background: #f5f5f5;
+  background: #f5f5f5;
 }
 
 /* 필터 컨트롤 스타일 */
