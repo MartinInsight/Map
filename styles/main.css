@@ -361,8 +361,12 @@ html, body {
 .rail-control-container,
 .ocean-control-container {
     display: flex;
+    justify-content: flex-end;
     gap: 10px;
-    align-items: center;
+    background: rgba(255,255,255,0.8);
+    padding: 5px;
+    border-radius: 5px;
+    box-shadow: 0 0 5px rgba(0,0,0,0.2);
 }
 
 /* 필터 컨트롤 스타일 */
@@ -372,7 +376,11 @@ html, body {
     border-radius: 5px;
     box-shadow: 0 0 10px rgba(0,0,0,0.2);
     font-family: 'Noto Sans KR', sans-serif;
+    z-index: 1000; /* 다른 요소 위에 표시 */
+    margin-bottom: 20px; /* 하단 여백 추가 */
+    margin-right: 10px; /* 우측 여백 추가 */
 }
+
 
 .filter-control select {
     padding: 8px;
@@ -388,11 +396,18 @@ html, body {
     margin-left: 5px;
 }
 
-/* 모바일 대응 */
+/* 모바일 대응 보강 */
 @media (max-width: 768px) {
     .filter-control {
-        padding: 8px;
+        max-width: 90vw;
+        overflow: auto;
     }
+    
+    .leaflet-bottom.leaflet-right {
+        width: 100%;
+        padding: 0 10px;
+    }
+}
     
     .filter-control select {
         padding: 6px;
@@ -412,4 +427,11 @@ html, body {
 
 .leaflet-popup-content {
     min-width: 200px;
+}
+
+/* 컨트롤 패널 위치 조정 */
+.leaflet-bottom.leaflet-right {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
