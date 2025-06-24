@@ -13,20 +13,30 @@ class RailCongestionMap {
     this.loadData();
     this.addControls(); // 컨트롤 패널 추가 (리셋 버튼)
   }
-
+  
   async loadData() {
-    try {
-      const response = await fetch('data/us-rail.json');
-      this.currentData = await response.json();
-      if (this.currentData.length > 0) {
-        this.lastUpdated = this.currentData[0].date;
+      try {
+          const response = await fetch('data/us-rail.json');
+          const rawData = await response.json();
+          
+          // 데이터 정규화
+          this.currentData = rawData.map(item => ({
+              ...item,
+              lat: item.lat || item.Latitude,
+              lng: item.lng || item.Longitude,
+              Yard: item.Yard || item.yard // Yard 필드 통일
+          })).filter(item => item.Yard); // Yard가 없는 항목 제거
+  
+          if (this.currentData.length > 0) {
+              this.lastUpdated = this.currentData[0].date;
+          }
+          
+          this.renderMarkers();
+          this.addLastUpdatedText();
+          this.addFilterControl();
+      } catch (error) {
+          console.error("Failed to load rail data:", error);
       }
-      this.renderMarkers();
-      this.addLastUpdatedText();
-      this.addFilterControl();
-    } catch (error) {
-      console.error("Failed to load rail data:", error);
-    }
   }
 
   addLastUpdatedText() {
