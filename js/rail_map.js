@@ -24,7 +24,7 @@ class RailCongestionMap {
       }
       this.renderMarkers();
       this.addLastUpdatedText();
-      this.addSearchControl(); // 새로 추가: 검색 기능
+      this.addFilterControl();
     } catch (error) {
       console.error("Failed to load rail data:", error);
     }
@@ -109,88 +109,41 @@ class RailCongestionMap {
     controlContainer.addTo(this.map);
   }
 
-  // 새로 추가: 검색 컨트롤
-  addSearchControl() {
-    const control = L.control({position: 'bottomright'});
-    
-    control.onAdd = () => {
-      const div = L.DomUtil.create('div', 'search-control');
-      div.innerHTML = `
-        <div class="search-container">
-          <select class="search-type">
-            <option value="country">Country</option>
-            <option value="company">Company</option>
-            <option value="city">City</option>
-          </select>
-          <input type="text" class="search-input" placeholder="Search...">
-          <button class="search-btn">Search</button>
-          <button class="clear-btn">Clear</button>
-        </div>
-      `;
+  addFilterControl() {
+      const control = L.control({position: 'bottomright'});
       
-      div.querySelector('.search-btn').addEventListener('click', () => this.search());
-      div.querySelector('.clear-btn').addEventListener('click', () => this.clear());
-      div.querySelector('.search-input').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') this.search();
-      });
+      control.onAdd = () => {
+          const div = L.DomUtil.create('div', 'filter-control');
+          
+          // 야드 목록 생성 (중복 제거)
+          const yards = [...new Set(this.currentData.map(item => item.Yard))];
+          
+          div.innerHTML = `
+              <select class="yard-filter">
+                  <option value="">Select Yard</option>
+                  ${yards.map(yard => 
+                      `<option value="${yard}">${yard}</option>`
+                  ).join('')}
+              </select>
+          `;
+          
+          div.querySelector('.yard-filter').addEventListener('change', (e) => {
+              const yardName = e.target.value;
+              if (!yardName) {
+                  this.map.setView([37.8, -96], 4);
+                  return;
+              }
+              
+              const yard = this.currentData.find(item => item.Yard === yardName);
+              if (yard) {
+                  this.map.setView([yard.Latitude, yard.Longitude], 10);
+              }
+          });
+          
+          return div;
+      };
       
-      return div;
-    };
-    
-    control.addTo(this.map);
-  }
-
-  // 새로 추가: 검색 기능
-  search() {
-    const type = document.querySelector('.search-type').value;
-    const keyword = document.querySelector('.search-input').value.toLowerCase();
-    
-    if (!keyword) return;
-    
-    this.markers.forEach(marker => this.map.removeLayer(marker));
-    
-    this.markers = this.currentData.filter(item => {
-      if (type === 'country' && item.country?.toLowerCase().includes(keyword)) {
-        return true;
-      }
-      if (type === 'company' && item.company?.toLowerCase().includes(keyword)) {
-        return true;
-      }
-      if (type === 'city' && item.city?.toLowerCase().includes(keyword)) {
-        return true;
-      }
-      return false;
-    }).map(item => {
-      const marker = L.circleMarker([item.lat, item.lng], {
-        radius: this.getRadiusByIndicator(item.indicator),
-        fillColor: this.getColor(item.congestion_level),
-        color: "#000",
-        weight: 1,
-        opacity: 1,
-        fillOpacity: 0.8
-      });
-
-      marker.on({
-        mouseover: (e) => {
-          const popup = L.popup()
-            .setLatLng(e.latlng)
-            .setContent(this.createPopupContent(item))
-            .openOn(this.map);
-        },
-        mouseout: () => {
-          this.map.closePopup();
-        }
-      });
-
-      marker.addTo(this.map);
-      return marker;
-    });
-  }
-
-  // 새로 추가: 검색 초기화
-  clear() {
-    this.renderMarkers();
-    document.querySelector('.search-input').value = '';
+      control.addTo(this.map);
   }
 
   // 기존 유틸리티 메서드들 유지
