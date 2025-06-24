@@ -1,10 +1,10 @@
-// js/truck_map.js
 class TruckCongestionMap {
   constructor(mapElementId) {
     this.map = L.map(mapElementId).setView([37.8, -96], 4);
     this.stateLayer = null;
     this.currentMode = 'inbound';
     this.metricData = null;
+    this.geoJsonData = null;
     this.initialized = false;
     this.controlDiv = null;
 
@@ -12,122 +12,66 @@ class TruckCongestionMap {
       attribution: '© OpenStreetMap'
     }).addTo(this.map);
 
-    this.addControls();
-    this.initializeMap();
+    this.init();
   }
 
-  // 기존 initializeMap 메서드 유지
-  async initializeMap() {
+  async init() {
     try {
       const [geoJson, sheetData] = await Promise.all([
         fetch('data/us-states.json').then(res => res.json()),
         this.fetchSheetData()
       ]);
-      
+
+      this.geoJsonData = geoJson;
       this.metricData = sheetData;
-      this.renderMap(geoJson);
+
+      this.renderMap();
+      this.addControls();
+      this.addFilterControl();
       this.initialized = true;
-      this.addFilterControl(geoJson);
-    } catch (error) {
-      console.error("Initialization failed:", error);
+    } catch (err) {
+      console.error("Initialization failed:", err);
       this.showError();
     }
   }
 
-  // truck_map.js에 추가할 메서드들
   async fetchSheetData() {
     try {
-      const response = await fetch('data/us-truck.json');
-      if (!response.ok) throw new Error("Failed to load truck data");
-      return await response.json();
-    } catch (e) {
-      console.error("Truck data loading failed:", e);
-      return this.useFallbackData();
-    }
-  }
-  
-  showError() {
-    const errorControl = L.control({ position: 'center' });
-    
-    errorControl.onAdd = () => {
-      const div = L.DomUtil.create('div', 'error-message');
-      div.innerHTML = 'Failed to load truck data. Using fallback data.';
-      div.style.backgroundColor = 'white';
-      div.style.padding = '10px';
-      div.style.borderRadius = '5px';
-      div.style.boxShadow = '0 0 10px rgba(0,0,0,0.2)';
-      return div;
-    };
-    
-    errorControl.addTo(this.map);
-  }
-  
-  addFilterControl(geoJson) {
-      const control = L.control({position: 'bottomright'});
-      
-      control.onAdd = () => {
-          const div = L.DomUtil.create('div', 'filter-control');
-          div.innerHTML = `
-              <select class="state-filter">
-                  <option value="">Select State</option>
-                  ${geoJson.features.map(f => 
-                      `<option value="${f.id}">${f.properties.name}</option>`
-                  ).join('')}
-              </select>
-          `;
-          
-          div.querySelector('.state-filter').addEventListener('change', (e) => {
-              const stateId = e.target.value;
-              if (!stateId) {
-                  this.map.setView([37.8, -96], 4);
-                  return;
-              }
-              
-              const state = geoJson.features.find(f => f.id === stateId);
-              if (state) {
-                  const bounds = L.geoJSON(state).getBounds();
-                  this.map.fitBounds(bounds.pad(0.5)); // 주변 지역 포함
-              }
-          });
-          
-          return div;
+      const res = await fetch('data/us-truck.json');
+      if (!res.ok) throw new Error("Truck data fetch error");
+      return await res.json();
+    } catch (err) {
+      console.warn("Fallback data in use.");
+      return {
+        'TN': {
+          name: 'Tennessee',
+          inboundDelay: 0,
+          inboundColor: 0,
+          outboundDelay: 0,
+          outboundColor: 0,
+          dwellInbound: 0,
+          dwellOutbound: 0
+        }
       };
-      
-      control.addTo(this.map);
-  }
-
-  useFallbackData() {
-    console.warn("Using fallback data");
-    return {
-      'TN': {
-        name: 'Tennessee',
-        inboundDelay: 0,
-        inboundColor: 0,
-        outboundDelay: 0,
-        outboundColor: 0,
-        dwellInbound: 0,
-        dwellOutbound: 0
-      }
-    };
-  }
-
-  renderMap(geoJson) {
-    if (this.stateLayer) {
-      this.map.removeLayer(this.stateLayer);
     }
+  }
 
-    this.stateLayer = L.geoJSON(geoJson, {
-      style: (feature) => this.getStyle(feature),
-      onEachFeature: (feature, layer) => this.bindEvents(feature, layer)
+  renderMap() {
+    if (this.stateLayer) this.map.removeLayer(this.stateLayer);
+
+    this.stateLayer = L.geoJSON(this.geoJsonData, {
+      style: this.getStyle.bind(this),
+      onEachFeature: this.bindEvents.bind(this)
     }).addTo(this.map);
   }
 
   getStyle(feature) {
-    const data = this.metricData[feature.id] || {};
-    const colorValue = this.currentMode === 'inbound' 
-      ? data.inboundColor 
+    const stateCode = feature.id;
+    const data = this.metricData[stateCode] || {};
+    const colorValue = this.currentMode === 'inbound'
+      ? data.inboundColor
       : data.outboundColor;
-    
+
     return {
       fillColor: this.getColor(colorValue),
       weight: 1,
@@ -152,117 +96,79 @@ class TruckCongestionMap {
 
   bindEvents(feature, layer) {
     const stateCode = feature.id;
-    const data = this.metricData?.[stateCode] || {};
-    
+    const data = this.metricData[stateCode] || {};
+
     layer.on({
       mouseover: (e) => this.showTooltip(e, data),
-      mouseout: () => this.hideTooltip(),
+      mouseout: () => this.map.closePopup(),
       click: () => this.zoomToState(feature)
     });
   }
 
-  showTooltip(event, data) {
+  showTooltip(e, data) {
     if (!this.initialized) return;
-  
-    const formatValue = (val) => {
-      const num = Number(val);
-      return isNaN(num) ? 0 : Math.abs(num).toFixed(2);
-    };
-  
+
+    const format = (v) => isNaN(Number(v)) ? '0.00' : Math.abs(Number(v)).toFixed(2);
     const isInbound = this.currentMode === 'inbound';
     const delay = isInbound ? data.inboundDelay : data.outboundDelay;
     const dwell = isInbound ? data.dwellInbound : data.dwellOutbound;
-  
-    // 더 간결한 HTML 구조로 변경
+
     const content = `
       <div class="truck-tooltip">
         <h4>${data.name || 'Unknown'}</h4>
         <div>
           <strong>Truck Movement</strong>
           <p class="${delay >= 0 ? 'truck-positive' : 'truck-negative'}">
-            ${delay >= 0 ? '↑' : '↓'} ${formatValue(delay)}%
-            <span class="truck-normal-text">
-              ${delay >= 0 ? ' above ' : ' below '}2 weeks moving average
-            </span>
+            ${delay >= 0 ? '↑' : '↓'} ${format(delay)}%
+            <span class="truck-normal-text">${delay >= 0 ? 'above' : 'below'} 2-week avg</span>
           </p>
         </div>
         <div>
           <strong>Dwell Time</strong>
           <p class="${dwell >= 0 ? 'truck-positive' : 'truck-negative'}">
-            ${dwell >= 0 ? '↑' : '↓'} ${formatValue(dwell)}%
-            <span class="truck-normal-text">
-              ${dwell >= 0 ? ' above ' : ' below '}2 weeks moving average
-            </span>
+            ${dwell >= 0 ? '↑' : '↓'} ${format(dwell)}%
+            <span class="truck-normal-text">${dwell >= 0 ? 'above' : 'below'} 2-week avg</span>
           </p>
         </div>
       </div>
     `;
-  
+
     L.popup({
-      className: 'truck-tooltip-container', // 새 클래스 추가
+      className: 'truck-tooltip-container',
       maxWidth: 300,
       autoClose: false,
       closeButton: false,
       closeOnClick: false
     })
-    .setLatLng(event.latlng)
+    .setLatLng(e.latlng)
     .setContent(content)
     .openOn(this.map);
   }
-  hideTooltip() {
-    this.map.closePopup();
-  }
-  
+
   zoomToState(feature) {
     const bounds = L.geoJSON(feature).getBounds();
-    this.map.fitBounds(bounds);
+    this.map.fitBounds(bounds.pad(0.3));
   }
 
   addControls() {
-      const controlContainer = L.control({ position: 'topright' });
-      
-      controlContainer.onAdd = () => {
-        const div = L.DomUtil.create('div', 'truck-control-container');
-        div.innerHTML = `
-          <div class="truck-toggle-container">
-            <div class="truck-toggle-wrapper">
-              <button class="truck-toggle-btn ${this.currentMode === 'inbound' ? 'truck-active' : ''}" 
-                      data-mode="inbound">INBOUND</button>
-              <button class="truck-toggle-btn ${this.currentMode === 'outbound' ? 'truck-active' : ''}" 
-                      data-mode="outbound">OUTBOUND</button>
-            </div>
-            <button class="truck-reset-btn" id="truck-reset-view">Reset View</button>
-          </div>
-        `;
-  
-        div.querySelectorAll('.truck-toggle-btn').forEach(btn => {
-          btn.addEventListener('click', () => {
-            this.currentMode = btn.dataset.mode;
-            this.renderControls();
-            if (this.stateLayer) {
-              this.stateLayer.setStyle(feature => this.getStyle(feature));
-            }
-          });
-        });
-  
-        div.querySelector('#truck-reset-view').addEventListener('click', () => {
-          this.map.setView([37.8, -96], 4);
-        });
-        
-        return div;
-      };
-      
-      controlContainer.addTo(this.map);
+    const control = L.control({ position: 'topright' });
+
+    control.onAdd = () => {
+      const div = L.DomUtil.create('div', 'truck-control-container');
+      this.controlDiv = div;
+      this.renderControls(); // 내부에서 div 채움
+      return div;
+    };
+
+    control.addTo(this.map);
   }
 
   renderControls() {
     this.controlDiv.innerHTML = `
       <div class="truck-toggle-container">
         <div class="truck-toggle-wrapper">
-          <button class="truck-toggle-btn ${this.currentMode === 'inbound' ? 'truck-active' : ''}" 
-                  data-mode="inbound">INBOUND</button>
-          <button class="truck-toggle-btn ${this.currentMode === 'outbound' ? 'truck-active' : ''}" 
-                  data-mode="outbound">OUTBOUND</button>
+          <button class="truck-toggle-btn ${this.currentMode === 'inbound' ? 'truck-active' : ''}" data-mode="inbound">INBOUND</button>
+          <button class="truck-toggle-btn ${this.currentMode === 'outbound' ? 'truck-active' : ''}" data-mode="outbound">OUTBOUND</button>
         </div>
         <button class="truck-reset-btn" id="truck-reset-view">Reset View</button>
       </div>
@@ -272,9 +178,7 @@ class TruckCongestionMap {
       btn.addEventListener('click', () => {
         this.currentMode = btn.dataset.mode;
         this.renderControls();
-        if (this.stateLayer) {
-          this.stateLayer.setStyle(feature => this.getStyle(feature));
-        }
+        this.stateLayer.setStyle(this.getStyle.bind(this));
       });
     });
 
@@ -282,7 +186,56 @@ class TruckCongestionMap {
       this.map.setView([37.8, -96], 4);
     });
   }
+
+  addFilterControl() {
+    const control = L.control({ position: 'bottomright' });
+
+    control.onAdd = () => {
+      const div = L.DomUtil.create('div', 'filter-control');
+      div.innerHTML = `
+        <select class="state-filter">
+          <option value="">Select State</option>
+          ${this.geoJsonData.features.map(f => 
+            `<option value="${f.id}">${f.properties.name}</option>`
+          ).join('')}
+        </select>
+      `;
+
+      div.querySelector('.state-filter').addEventListener('change', (e) => {
+        const stateId = e.target.value;
+        if (!stateId) {
+          this.map.setView([37.8, -96], 4);
+          return;
+        }
+
+        const state = this.geoJsonData.features.find(f => f.id === stateId);
+        if (state) {
+          const bounds = L.geoJSON(state).getBounds();
+          this.map.fitBounds(bounds.pad(0.3));
+        }
+      });
+
+      return div;
+    };
+
+    control.addTo(this.map);
+  }
+
+  showError() {
+    const errorControl = L.control({ position: 'topright' });
+
+    errorControl.onAdd = () => {
+      const div = L.DomUtil.create('div', 'error-message');
+      div.innerHTML = 'Failed to load truck data.';
+      div.style.backgroundColor = 'white';
+      div.style.padding = '10px';
+      div.style.borderRadius = '5px';
+      div.style.boxShadow = '0 0 10px rgba(0,0,0,0.2)';
+      return div;
+    };
+
+    errorControl.addTo(this.map);
+  }
 }
 
-// 전역 변수로 노출
 window.TruckCongestionMap = TruckCongestionMap;
