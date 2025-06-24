@@ -21,12 +21,12 @@ class RailCongestionMap {
           
           // 데이터 정규화
           this.currentData = rawData.map(item => ({
-              ...item,
-              lat: item.lat || item.Latitude,
-              lng: item.lng || item.Longitude,
-              Yard: item.Yard || item.yard // Yard 필드 통일
-          })).filter(item => item.Yard); // Yard가 없는 항목 제거
-  
+            ...item,
+            lat: item.lat || item.Latitude,
+            lng: item.lng || item.Longitude,
+            Yard: item.location || 'Unknown' // 🔁 location을 기준으로 Yard 필드 대신 사용
+          })).filter(item => item.lat && item.lng && item.Yard);
+            
           if (this.currentData.length > 0) {
               this.lastUpdated = this.currentData[0].date;
           }
