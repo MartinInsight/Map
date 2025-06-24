@@ -97,26 +97,27 @@ class OceanCongestionMap {
     }
   }
 
+  // ocean_map.js의 addControls 및 addFilterControl 수정
   addControls() {
-    const controlContainer = L.control({ position: 'bottomright' });
-
-    controlContainer.onAdd = () => {
-      const div = L.DomUtil.create('div', 'ocean-control-container');
-      div.innerHTML = `
-        <button class="ocean-reset-btn">Reset View</button>
-      `;
-
-      div.querySelector('.ocean-reset-btn').addEventListener('click', () => {
-        this.map.setView([20, 0], 2);
-      });
-
-      return div;
-    };
-
-    controlContainer.addTo(this.map);
+      const controlContainer = L.control({ position: 'topright' });
+  
+      controlContainer.onAdd = () => {
+          const div = L.DomUtil.create('div', 'ocean-control-container');
+          div.innerHTML = `
+              <button class="ocean-reset-btn">Reset View</button>
+          `;
+  
+          div.querySelector('.ocean-reset-btn').addEventListener('click', () => {
+              this.map.setView([20, 0], 2);
+              this.renderMarkers();
+          });
+  
+          return div;
+      };
+  
+      controlContainer.addTo(this.map);
   }
-
-  // ocean_map.js의 addFilterControl 수정
+  
   addFilterControl() {
       const control = L.control({ position: 'bottomright' });
   
@@ -126,6 +127,7 @@ class OceanCongestionMap {
           // 국가 목록 생성 (알파벳 순 정렬)
           const countries = [...new Set(this.currentData
               .map(p => p.country)
+              .filter(c => c && c.trim() !== '')
           )].sort((a, b) => a.localeCompare(b));
   
           div.innerHTML = `
@@ -163,15 +165,10 @@ class OceanCongestionMap {
                   portFilter.appendChild(option);
               });
   
-              if (countryPorts.length === 1) {
-                  const [p] = countryPorts;
-                  this.map.setView([p.lat, p.lng], 8);
-                  this.renderMarkers([p]);
-              } else {
-                  const bounds = L.latLngBounds(countryPorts.map(p => [p.lat, p.lng]));
-                  this.map.fitBounds(bounds.pad(0.3));
-                  this.renderMarkers(countryPorts);
-              }
+              // 모든 국가에 동일한 줌 레벨 적용 (레벨 5)
+              const bounds = L.latLngBounds(countryPorts.map(p => [p.lat, p.lng]));
+              this.map.fitBounds(bounds.pad(0.3));
+              this.renderMarkers(countryPorts);
           });
   
           portFilter.addEventListener('change', (e) => {
@@ -180,7 +177,7 @@ class OceanCongestionMap {
   
               const port = this.currentData.find(p => p.port === portName);
               if (port) {
-                  this.map.setView([port.lat, port.lng], 10);
+                  this.map.setView([port.lat, port.lng], 8); // 포트 선택 시 일관된 줌 레벨
                   this.renderMarkers([port]);
               }
           });
@@ -190,7 +187,7 @@ class OceanCongestionMap {
   
       control.addTo(this.map);
   }
-
+  
   getRadiusByDelay(delayDays) {
     if (!delayDays) return 5;
     return Math.min(20, Math.max(5, delayDays * 1.5));
