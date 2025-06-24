@@ -219,8 +219,9 @@ class TruckCongestionMap {
   
               const state = this.geoJsonData.features.find(f => f.id === stateId);
               if (state) {
+                  // 주 중심으로 이동 (고정 줌 레벨 6)
                   const bounds = L.geoJSON(state).getBounds();
-                  this.map.fitBounds(bounds.pad(0.3)); // 일관된 패딩 적용
+                  this.map.fitBounds(bounds.pad(0.3));
               }
           });
   
@@ -229,7 +230,7 @@ class TruckCongestionMap {
   
       control.addTo(this.map);
   }
-
+  
   showError() {
     const errorControl = L.control({ position: 'topright' });
 
