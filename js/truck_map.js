@@ -1,3 +1,4 @@
+// js/truck_map.js
 class TruckCongestionMap {
   constructor(mapElementId) {
     this.map = L.map(mapElementId).setView([37.8, -96], 4);
@@ -15,6 +16,7 @@ class TruckCongestionMap {
     this.initializeMap();
   }
 
+  // 기존 initializeMap 메서드 유지
   async initializeMap() {
     try {
       const [geoJson, sheetData] = await Promise.all([
@@ -25,10 +27,64 @@ class TruckCongestionMap {
       this.metricData = sheetData;
       this.renderMap(geoJson);
       this.initialized = true;
+      this.addSearchControl(geoJson); // 새로 추가: 검색 기능
     } catch (error) {
       console.error("Initialization failed:", error);
       this.showError();
     }
+  }
+
+  // 새로 추가: 검색 컨트롤
+  addSearchControl(geoJson) {
+    const control = L.control({position: 'bottomright'});
+    
+    control.onAdd = () => {
+      const div = L.DomUtil.create('div', 'search-control');
+      div.innerHTML = `
+        <div class="search-container">
+          <select class="search-type">
+            <option value="state">State</option>
+          </select>
+          <input type="text" class="search-input" placeholder="Search...">
+          <button class="search-btn">Search</button>
+          <button class="clear-btn">Clear</button>
+        </div>
+      `;
+      
+      div.querySelector('.search-btn').addEventListener('click', () => this.search(geoJson));
+      div.querySelector('.clear-btn').addEventListener('click', () => this.clear(geoJson));
+      div.querySelector('.search-input').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') this.search(geoJson);
+      });
+      
+      return div;
+    };
+    
+    control.addTo(this.map);
+  }
+
+  // 새로 추가: 검색 기능
+  search(geoJson) {
+    const keyword = document.querySelector('.search-input').value.toLowerCase();
+    
+    if (!keyword) return;
+    
+    this.stateLayer.setStyle({fillOpacity: 0});
+    
+    geoJson.features.forEach(feature => {
+      const data = this.metricData[feature.id];
+      if (data && data.name.toLowerCase().includes(keyword)) {
+        this.stateLayer.setStyle(feature, {
+          fillOpacity: 0.7
+        });
+      }
+    });
+  }
+
+  // 새로 추가: 검색 초기화
+  clear(geoJson) {
+    this.stateLayer.setStyle(feature => this.getStyle(feature));
+    document.querySelector('.search-input').value = '';
   }
 
   async fetchSheetData() {
