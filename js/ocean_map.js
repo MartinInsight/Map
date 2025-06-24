@@ -11,8 +11,10 @@ class OceanCongestionMap {
     }).addTo(this.map);
 
     this.loadData();
+    this.addControls(); // 새로 추가: 컨트롤 패널
   }
 
+  // 기존 loadData 메서드 유지
   async loadData() {
     try {
       const response = await fetch('data/global-ports.json');
@@ -22,11 +24,13 @@ class OceanCongestionMap {
       }
       this.renderMarkers();
       this.addLastUpdatedText();
+      this.addSearchControl(); // 새로 추가: 검색 기능
     } catch (error) {
       console.error("Failed to load ocean data:", error);
     }
   }
 
+  // 기존 addLastUpdatedText 메서드 유지
   addLastUpdatedText() {
     if (this.lastUpdated) {
       const date = new Date(this.lastUpdated);
@@ -48,6 +52,7 @@ class OceanCongestionMap {
     }
   }
 
+  // 수정된 renderMarkers 메서드 (호버 툴팁 기능 추가)
   renderMarkers() {
     this.markers.forEach(marker => this.map.removeLayer(marker));
     this.markers = [];
@@ -62,12 +67,133 @@ class OceanCongestionMap {
         fillOpacity: 0.8
       });
 
-      marker.bindPopup(this.createPopupContent(port));
+      // 기존: marker.bindPopup(this.createPopupContent(port));
+      // 변경: 호버 이벤트로 툴팁 표시
+      marker.on({
+        mouseover: (e) => {
+          const popup = L.popup()
+            .setLatLng(e.latlng)
+            .setContent(this.createPopupContent(port))
+            .openOn(this.map);
+        },
+        mouseout: () => {
+          this.map.closePopup();
+        },
+        click: () => {
+          this.map.closePopup();
+        }
+      });
+
       marker.addTo(this.map);
       this.markers.push(marker);
     });
   }
 
+  // 새로 추가: 컨트롤 패널 (리셋 버튼)
+  addControls() {
+    const controlContainer = L.control({ position: 'topright' });
+    
+    controlContainer.onAdd = () => {
+      const div = L.DomUtil.create('div', 'ocean-control-container');
+      div.innerHTML = `
+        <button class="ocean-reset-btn">Reset View</button>
+      `;
+      
+      div.querySelector('.ocean-reset-btn').addEventListener('click', () => {
+        this.map.setView([20, 0], 2);
+      });
+      
+      return div;
+    };
+    
+    controlContainer.addTo(this.map);
+  }
+
+  // 새로 추가: 검색 컨트롤
+  addSearchControl() {
+    const control = L.control({position: 'bottomright'});
+    
+    control.onAdd = () => {
+      const div = L.DomUtil.create('div', 'search-control');
+      div.innerHTML = `
+        <div class="search-container">
+          <select class="search-type">
+            <option value="country">Country</option>
+            <option value="port">Port</option>
+            <option value="city">City</option>
+          </select>
+          <input type="text" class="search-input" placeholder="Search...">
+          <button class="search-btn">Search</button>
+          <button class="clear-btn">Clear</button>
+        </div>
+      `;
+      
+      div.querySelector('.search-btn').addEventListener('click', () => this.search());
+      div.querySelector('.clear-btn').addEventListener('click', () => this.clear());
+      div.querySelector('.search-input').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') this.search();
+      });
+      
+      return div;
+    };
+    
+    control.addTo(this.map);
+  }
+
+  // 새로 추가: 검색 기능
+  search() {
+    const type = document.querySelector('.search-type').value;
+    const keyword = document.querySelector('.search-input').value.toLowerCase();
+    
+    if (!keyword) return;
+    
+    this.markers.forEach(marker => this.map.removeLayer(marker));
+    
+    this.markers = this.currentData.filter(port => {
+      if (type === 'country' && port.country?.toLowerCase().includes(keyword)) {
+        return true;
+      }
+      if (type === 'port' && port.port?.toLowerCase().includes(keyword)) {
+        return true;
+      }
+      if (type === 'city' && port.city?.toLowerCase().includes(keyword)) {
+        return true;
+      }
+      return false;
+    }).map(port => {
+      const marker = L.circleMarker([port.lat, port.lng], {
+        radius: this.getRadiusByDelay(port.current_delay_days),
+        fillColor: this.getColor(port.delay_level),
+        color: "#000",
+        weight: 1,
+        opacity: 1,
+        fillOpacity: 0.8
+      });
+
+      marker.on({
+        mouseover: (e) => {
+          const popup = L.popup()
+            .setLatLng(e.latlng)
+            .setContent(this.createPopupContent(port))
+            .openOn(this.map);
+        },
+        mouseout: () => {
+          this.map.closePopup();
+        }
+      });
+
+      marker.addTo(this.map);
+      return marker;
+    });
+  }
+
+  // 새로 추가: 검색 초기화
+  clear() {
+    this.renderMarkers();
+    document.querySelector('.search-input').value = '';
+  }
+
+  // 기존 유틸리티 메서드들 유지
   getRadiusByDelay(delayDays) {
     if (!delayDays) return 5;
     return Math.min(20, Math.max(5, delayDays * 1.5));
