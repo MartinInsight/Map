@@ -16,9 +16,11 @@ html, body {
   left: 0;
   width: 100%;
   height: 5%;
+  min-height: 40px;
   z-index: 1000;
   display: flex;
   background: white;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 }
 
 .transport-tab {
@@ -45,10 +47,15 @@ html, body {
   bottom: 0;
   left: 0;
   width: 100%;
-  height: 2px;
+  height: 3px;
   background-color: #00657E;
   opacity: 0;
   transition: opacity 0.3s ease;
+}
+
+.transport-tab.active {
+  font-weight: 600;
+  color: #003A52;
 }
 
 .transport-tab.active::after {
@@ -56,11 +63,7 @@ html, body {
 }
 
 .transport-tab:not(.active):hover::after {
-  opacity: 1;
-}
-
-.transport-tab-container:hover .transport-tab.active:not(:hover)::after {
-  opacity: 0;
+  opacity: 0.5;
 }
 
 /* 맵 컨테이너 */
@@ -82,83 +85,103 @@ html, body {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
-  background: rgba(255, 255, 255, 0.8);
-  padding: 5px;
-  border-radius: 5px;
-  box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+  background: white;
+  padding: 8px 12px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.15);
 }
 
-.reset-btn {
+/* 리셋 버튼 스타일 통일 */
+.reset-btn, 
+.ocean-reset-btn, 
+.rail-reset-btn {
   padding: 0 15px;
   background: white;
   border: 1px solid #e0e0e0;
-  border-radius: 5px;
+  border-radius: 6px;
   cursor: pointer;
   font-family: 'Noto Sans KR', sans-serif;
-  font-weight: 400;
+  font-weight: 500;
   font-size: 13px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-  height: 30px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  height: 34px;
   white-space: nowrap;
+  transition: all 0.2s;
+  color: #333;
 }
 
-.reset-btn:hover {
+.reset-btn:hover, 
+.ocean-reset-btn:hover, 
+.rail-reset-btn:hover {
   background: #f5f5f5;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 7px rgba(0,0,0,0.15);
 }
 
 /* 필터 컨트롤 스타일 */
 .filter-control {
   background: white;
-  padding: 10px;
-  border-radius: 5px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+  padding: 12px 15px;
+  border-radius: 8px;
+  box-shadow: 0 3px 12px rgba(0,0,0,0.15);
   font-family: 'Noto Sans KR', sans-serif;
   z-index: 1000;
+  display: flex;
+  gap: 8px;
 }
 
 .filter-control select {
-  padding: 8px;
+  padding: 8px 12px;
   border: 1px solid #ddd;
-  border-radius: 4px;
+  border-radius: 6px;
   font-size: 14px;
-  min-width: 150px;
+  min-width: 160px;
+  font-family: 'Noto Sans KR', sans-serif;
+  background-color: #f9f9f9;
+  transition: all 0.2s;
+}
+
+.filter-control select:focus {
+  outline: none;
+  border-color: #00657E;
+  box-shadow: 0 0 0 2px rgba(0,101,126,0.2);
 }
 
 .filter-control .port-filter {
-  margin-left: 5px;
+  margin-left: 0;
 }
 
 /* 트럭 전용 스타일 */
 .truck-toggle-container {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
 
 .truck-toggle-wrapper {
   display: flex;
-  border-radius: 5px;
+  border-radius: 6px;
   overflow: hidden;
   background: white;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
   border: 1px solid #e0e0e0;
 }
 
 .truck-toggle-btn {
-  padding: 0 15px;
+  padding: 0 16px;
   border: none;
   background: transparent;
   cursor: pointer;
   font-family: 'Noto Sans KR', sans-serif;
-  font-weight: 400;
+  font-weight: 500;
   font-size: 13px;
   transition: all 0.3s;
-  min-width: 80px;
-  height: 30px;
+  min-width: 85px;
+  height: 34px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: black;
+  color: #333;
 }
 
 .truck-toggle-btn.truck-active {
@@ -168,35 +191,37 @@ html, body {
 }
 
 .truck-toggle-btn:not(.truck-active):hover {
-  font-weight: 600;
+  background: #f0f0f0;
 }
 
 /* 툴팁 공통 스타일 */
 .map-tooltip {
   font-family: 'Noto Sans KR', sans-serif;
-  min-width: 220px;
-  padding: 15px;
+  min-width: 240px;
+  padding: 16px;
   background: white;
-  border-radius: 6px;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
 }
 
 .map-tooltip h4 {
   margin: 0 0 12px 0;
   font-size: 16px;
   font-weight: 600;
-  color: #333;
+  color: #222;
   border-bottom: 1px solid #eee;
   padding-bottom: 8px;
 }
 
 .map-tooltip p {
-  margin: 8px 0;
+  margin: 10px 0;
   font-size: 14px;
+  line-height: 1.4;
 }
 
 .map-tooltip strong {
-  color: #555;
+  color: #444;
+  font-weight: 500;
 }
 
 .truck-positive {
@@ -211,7 +236,7 @@ html, body {
 
 .truck-normal-text {
   font-weight: 400;
-  color: #333;
+  color: #555;
 }
 
 /* 팝업 스타일 */
@@ -221,15 +246,17 @@ html, body {
 
 .leaflet-popup-content-wrapper {
   background-color: white !important;
-  border-radius: 5px !important;
-  box-shadow: 0 0 10px rgba(0,0,0,0.2) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2) !important;
   padding: 0 !important;
+  overflow: hidden;
 }
 
 .leaflet-popup-content {
   margin: 0 !important;
-  padding: 15px !important;
-  min-width: 200px !important;
+  padding: 16px !important;
+  min-width: 220px !important;
+  font-family: 'Noto Sans KR', sans-serif !important;
 }
 
 .leaflet-popup-tip-container {
@@ -238,7 +265,7 @@ html, body {
 
 .leaflet-popup-tip {
   background-color: white !important;
-  box-shadow: 0 0 10px rgba(0,0,0,0.2) !important;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2) !important;
 }
 
 .leaflet-tooltip {
@@ -251,13 +278,20 @@ html, body {
 .leaflet-top.leaflet-right {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
+  margin-top: 60px;
 }
 
 .leaflet-bottom.leaflet-right {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
+  bottom: 40px !important;
+  right: 10px !important;
+}
+
+.leaflet-bottom.leaflet-left {
+  margin-bottom: 10px;
 }
 
 /* 마지막 업데이트 정보 */
@@ -265,9 +299,10 @@ html, body {
   font-family: 'Noto Sans KR', sans-serif;
   font-size: 14px;
   background-color: white;
-  padding: 5px 10px;
-  border-radius: 5px;
-  box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+  padding: 8px 12px;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  border: 1px solid #eee;
 }
 
 /* 오류 메시지 */
@@ -275,21 +310,23 @@ html, body {
   font-family: 'Noto Sans KR', sans-serif;
   font-size: 14px;
   color: #d63031;
-  padding: 10px 15px;
+  padding: 12px 16px;
   border: 1px solid #ff7675;
   background-color: #ffeaa7;
-  border-radius: 5px;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
-/* 반응형 디자인 */
+/* 반응형 디자인 - 모바일 */
 @media (max-width: 768px) {
-  .transport-tab {
-    font-size: 12px;
-    padding: 8px 5px;
-  }
-  
   .transport-tab-container {
     height: 7%;
+    min-height: 36px;
+  }
+  
+  .transport-tab {
+    font-size: 12px;
+    padding: 0 3px;
   }
   
   .transport-map {
@@ -297,28 +334,82 @@ html, body {
     height: 93%;
   }
   
+  .map-control-container {
+    padding: 6px 8px;
+    gap: 6px;
+  }
+  
   .reset-btn,
+  .ocean-reset-btn,
+  .rail-reset-btn,
   .truck-toggle-btn {
-    font-size: 11px;
-    padding: 0 8px;
-    height: 28px;
+    padding: 0 10px;
+    font-size: 12px;
+    height: 30px;
     min-width: 70px;
   }
   
   .filter-control {
+    padding: 8px 10px;
+    flex-direction: column;
     max-width: 90vw;
-    overflow: auto;
-    padding: 8px;
-  }
-  
-  .leaflet-bottom.leaflet-right {
-    width: 100%;
-    padding: 0 10px;
   }
   
   .filter-control select {
-    padding: 6px;
+    padding: 6px 8px;
     font-size: 12px;
-    min-width: 120px;
+    min-width: 130px;
+  }
+  
+  .leaflet-top.leaflet-right {
+    margin-top: 50px;
+    gap: 8px;
+  }
+  
+  .leaflet-bottom.leaflet-right {
+    bottom: 30px !important;
+    right: 5px !important;
+  }
+  
+  .map-tooltip,
+  .leaflet-popup-content {
+    min-width: 180px !important;
+    padding: 12px !important;
+    font-size: 13px !important;
+  }
+  
+  .truck-toggle-wrapper {
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  .truck-toggle-btn {
+    width: 100%;
+    min-width: unset;
+    padding: 0 8px;
+  }
+}
+
+/* 반응형 디자인 - 매우 작은 화면 */
+@media (max-width: 480px) {
+  .transport-tab {
+    font-size: 11px;
+  }
+  
+  .leaflet-top.leaflet-right {
+    margin-top: 40px;
+  }
+  
+  .leaflet-bottom.leaflet-right {
+    bottom: 20px !important;
+  }
+  
+  .filter-control {
+    padding: 6px;
+  }
+  
+  .last-updated-info {
+    font-size: 12px;
+    padding: 6px 8px;
   }
 }
