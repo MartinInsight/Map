@@ -98,7 +98,7 @@ class OceanCongestionMap {
   }
 
   addControls() {
-    const controlContainer = L.control({ position: 'topright' });
+    const controlContainer = L.control({ position: 'bottomright' });
 
     controlContainer.onAdd = () => {
       const div = L.DomUtil.create('div', 'ocean-control-container');
