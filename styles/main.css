@@ -342,8 +342,8 @@ html, body {
     background: #f5f5f5;
 }
 
-/* 새로 추가: 검색 컨트롤 스타일 */
-.search-control {
+/* 필터 컨트롤 스타일 */
+.filter-control {
     background: white;
     padding: 10px;
     border-radius: 5px;
@@ -351,46 +351,30 @@ html, body {
     font-family: 'Noto Sans KR', sans-serif;
 }
 
-.search-container {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.search-control select, 
-.search-control input {
+.filter-control select {
     padding: 8px;
     border: 1px solid #ddd;
     border-radius: 4px;
     font-size: 14px;
+    margin-right: 5px;
+    min-width: 150px;
 }
 
-.search-control button {
-    padding: 8px 12px;
-    background: #00657E;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 14px;
-}
-
-.search-control button:hover {
-    background: #004d63;
+/* 오션 필터 스타일 */
+.filter-control .port-filter {
+    margin-left: 5px;
 }
 
 /* 모바일 대응 */
 @media (max-width: 768px) {
-    .search-control {
+    .filter-control {
         padding: 8px;
-        font-size: 12px;
     }
     
-    .search-control select, 
-    .search-control input,
-    .search-control button {
+    .filter-control select {
         padding: 6px;
         font-size: 12px;
+        min-width: 120px;
     }
 }
 
