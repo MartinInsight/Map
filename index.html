@@ -88,9 +88,9 @@
 
   <!-- 스크립트 -->
   <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
-  <script src="js/truck_map.js"></script>
+  <script src="js/ocean_map.js"></script>  <!-- 1순위로 로드 -->
   <script src="js/rail_map.js"></script>
-  <script src="js/ocean_map.js"></script>
+  <script src="js/truck_map.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       const truckMap = new TruckCongestionMap('truck-map');
