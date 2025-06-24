@@ -165,9 +165,9 @@ class OceanCongestionMap {
                   portFilter.appendChild(option);
               });
   
-              // 모든 국가에 동일한 줌 레벨 적용 (레벨 5)
-              const bounds = L.latLngBounds(countryPorts.map(p => [p.lat, p.lng]));
-              this.map.fitBounds(bounds.pad(0.3));
+              // 국가 중심으로 이동 (고정 줌 레벨 5)
+              const countryCenter = this.getCountryCenter(countryPorts);
+              this.map.setView(countryCenter, 5);
               this.renderMarkers(countryPorts);
           });
   
@@ -186,6 +186,24 @@ class OceanCongestionMap {
       };
   
       control.addTo(this.map);
+  }
+  
+  // 국가 중심 좌표 계산 메서드 추가
+  getCountryCenter(ports) {
+      if (!ports || ports.length === 0) return [20, 0];
+      
+      const lats = ports.map(p => p.lat);
+      const lngs = ports.map(p => p.lng);
+      
+      const minLat = Math.min(...lats);
+      const maxLat = Math.max(...lats);
+      const minLng = Math.min(...lngs);
+      const maxLng = Math.max(...lngs);
+      
+      return [
+          (minLat + maxLat) / 2,
+          (minLng + maxLng) / 2
+      ];
   }
   
   getRadiusByDelay(delayDays) {
