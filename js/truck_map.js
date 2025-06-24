@@ -1,65 +1,19 @@
 class TruckCongestionMap {
   constructor(mapElementId) {
-    // 기존 생성자 코드 유지
-    
-    // 검색 기능 추가
-    this.addSearchControl();
-  }
+    this.map = L.map(mapElementId).setView([37.8, -96], 4);
+    this.stateLayer = null;
+    this.currentMode = 'inbound';
+    this.metricData = null;
+    this.initialized = false;
+    this.controlDiv = null;
 
-  addSearchControl() {
-    const searchContainer = L.DomUtil.create('div', 'search-container');
-    
-    const stateSelect = L.DomUtil.create('select', '', searchContainer);
-    stateSelect.innerHTML = '<option value="">Select State</option>';
-    
-    const keywordInput = L.DomUtil.create('input', '', searchContainer);
-    keywordInput.placeholder = 'Enter keyword';
-    
-    const searchBtn = L.DomUtil.create('button', '', searchContainer);
-    searchBtn.textContent = 'Search';
-    
-    // 주 옵션 채우기
-    this.populateStateOptions(stateSelect);
-    
-    searchBtn.onclick = () => {
-      this.filterStates(
-        stateSelect.value,
-        keywordInput.value
-      );
-    };
-    
-    this.map.getContainer().appendChild(searchContainer);
-  }
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap'
+    }).addTo(this.map);
 
-  populateStateOptions(stateSelect) {
-    if (!this.metricData) return;
-    
-    Object.keys(this.metricData).forEach(stateCode => {
-      const state = this.metricData[stateCode];
-      const option = L.DomUtil.create('option', '', stateSelect);
-      option.value = stateCode;
-      option.textContent = state.name;
-    });
+    this.addControls();
+    this.initializeMap();
   }
-
-  filterStates(stateCode, keyword) {
-    const lowerKeyword = keyword.toLowerCase();
-    
-    this.stateLayer.eachLayer(layer => {
-      const feature = layer.feature;
-      const data = this.metricData[feature.id];
-      const matchesState = !stateCode || feature.id === stateCode;
-      const matchesKeyword = !keyword || 
-        (data.name && data.name.toLowerCase().includes(lowerKeyword));
-      
-      if (matchesState && matchesKeyword) {
-        layer.setStyle({ opacity: 1, fillOpacity: 0.7 });
-      } else {
-        layer.setStyle({ opacity: 0.3, fillOpacity: 0.2 });
-      }
-    });
-  }
-}
 
   async initializeMap() {
     try {
