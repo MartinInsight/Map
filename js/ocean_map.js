@@ -20,8 +20,8 @@ class OceanCongestionMap {
       const currentZoom = this.map.getZoom();
       const bounds = this.map.getBounds();
       const mapHeight = bounds.getNorth() - bounds.getSouth();
-      if (mapHeight > 150) {
-        this.map.setZoom(currentZoom - 0.5);
+      if (mapHeight > 140) { // 150에서 140으로 변경
+        this.map.setZoom(Math.max(2, currentZoom - 1)); // 0.5에서 1로 변경, 최소 줌 레벨 2로 제한
       }
     });
     
