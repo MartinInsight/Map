@@ -11,8 +11,10 @@ class RailCongestionMap {
     }).addTo(this.map);
 
     this.loadData();
+    this.addControls(); // 새로 추가: 컨트롤 패널
   }
 
+  // 기존 loadData 메서드 유지
   async loadData() {
     try {
       const response = await fetch('data/us-rail.json');
@@ -22,11 +24,13 @@ class RailCongestionMap {
       }
       this.renderMarkers();
       this.addLastUpdatedText();
+      this.addSearchControl(); // 새로 추가: 검색 기능
     } catch (error) {
       console.error("Failed to load rail data:", error);
     }
   }
 
+  // 기존 addLastUpdatedText 메서드 유지
   addLastUpdatedText() {
     if (this.lastUpdated) {
       const date = new Date(this.lastUpdated);
@@ -48,13 +52,14 @@ class RailCongestionMap {
     }
   }
 
+  // 수정된 renderMarkers 메서드 (호버 툴팁 기능 추가)
   renderMarkers() {
     this.markers.forEach(marker => this.map.removeLayer(marker));
     this.markers = [];
 
     this.currentData.forEach(item => {
       const marker = L.circleMarker([item.lat, item.lng], {
-        radius: this.getRadiusByIndicator(item.indicator), // Indicator로 크기 결정
+        radius: this.getRadiusByIndicator(item.indicator),
         fillColor: this.getColor(item.congestion_level),
         color: "#000",
         weight: 1,
@@ -62,38 +67,156 @@ class RailCongestionMap {
         fillOpacity: 0.8
       });
 
-      marker.bindPopup(this.createPopupContent(item));
+      // 기존: marker.bindPopup(this.createPopupContent(item));
+      // 변경: 호버 이벤트로 툴팁 표시
+      marker.on({
+        mouseover: (e) => {
+          const popup = L.popup()
+            .setLatLng(e.latlng)
+            .setContent(this.createPopupContent(item))
+            .openOn(this.map);
+        },
+        mouseout: () => {
+          this.map.closePopup();
+        },
+        click: () => {
+          this.map.closePopup();
+        }
+      });
+
       marker.addTo(this.map);
       this.markers.push(marker);
     });
   }
 
+  // 새로 추가: 컨트롤 패널 (리셋 버튼)
+  addControls() {
+    const controlContainer = L.control({ position: 'topright' });
+    
+    controlContainer.onAdd = () => {
+      const div = L.DomUtil.create('div', 'rail-control-container');
+      div.innerHTML = `
+        <button class="rail-reset-btn">Reset View</button>
+      `;
+      
+      div.querySelector('.rail-reset-btn').addEventListener('click', () => {
+        this.map.setView([37.8, -96], 4);
+      });
+      
+      return div;
+    };
+    
+    controlContainer.addTo(this.map);
+  }
+
+  // 새로 추가: 검색 컨트롤
+  addSearchControl() {
+    const control = L.control({position: 'bottomright'});
+    
+    control.onAdd = () => {
+      const div = L.DomUtil.create('div', 'search-control');
+      div.innerHTML = `
+        <div class="search-container">
+          <select class="search-type">
+            <option value="country">Country</option>
+            <option value="company">Company</option>
+            <option value="city">City</option>
+          </select>
+          <input type="text" class="search-input" placeholder="Search...">
+          <button class="search-btn">Search</button>
+          <button class="clear-btn">Clear</button>
+        </div>
+      `;
+      
+      div.querySelector('.search-btn').addEventListener('click', () => this.search());
+      div.querySelector('.clear-btn').addEventListener('click', () => this.clear());
+      div.querySelector('.search-input').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') this.search();
+      });
+      
+      return div;
+    };
+    
+    control.addTo(this.map);
+  }
+
+  // 새로 추가: 검색 기능
+  search() {
+    const type = document.querySelector('.search-type').value;
+    const keyword = document.querySelector('.search-input').value.toLowerCase();
+    
+    if (!keyword) return;
+    
+    this.markers.forEach(marker => this.map.removeLayer(marker));
+    
+    this.markers = this.currentData.filter(item => {
+      if (type === 'country' && item.country?.toLowerCase().includes(keyword)) {
+        return true;
+      }
+      if (type === 'company' && item.company?.toLowerCase().includes(keyword)) {
+        return true;
+      }
+      if (type === 'city' && item.city?.toLowerCase().includes(keyword)) {
+        return true;
+      }
+      return false;
+    }).map(item => {
+      const marker = L.circleMarker([item.lat, item.lng], {
+        radius: this.getRadiusByIndicator(item.indicator),
+        fillColor: this.getColor(item.congestion_level),
+        color: "#000",
+        weight: 1,
+        opacity: 1,
+        fillOpacity: 0.8
+      });
+
+      marker.on({
+        mouseover: (e) => {
+          const popup = L.popup()
+            .setLatLng(e.latlng)
+            .setContent(this.createPopupContent(item))
+            .openOn(this.map);
+        },
+        mouseout: () => {
+          this.map.closePopup();
+        }
+      });
+
+      marker.addTo(this.map);
+      return marker;
+    });
+  }
+
+  // 새로 추가: 검색 초기화
+  clear() {
+    this.renderMarkers();
+    document.querySelector('.search-input').value = '';
+  }
+
+  // 기존 유틸리티 메서드들 유지
   getRadiusByIndicator(indicator) {
-    // Indicator 값에 따른 원 크기 (명확한 5단계 구분)
-    if (indicator > 2) return 20;    // 제일 큼
-    if (indicator > 1) return 16;    // 중간 큼
-    if (indicator > -1) return 12;   // 중간
-    if (indicator > -2) return 8;    // 중간 작음
-    return 5;                        // 제일 작음
+    if (indicator > 2) return 20;
+    if (indicator > 1) return 16;
+    if (indicator > -1) return 12;
+    if (indicator > -2) return 8;
+    return 5;
   }
 
   getColor(level, isText = false) {
-    // 원 색상 (기존보다 약간 연하게)
     const circleColors = {
-      'Very High': '#d62828',   // 원: 빨강
-      'High': '#f88c2b',        // 원: 주황
-      'Average': '#bcbcbc',     // 원: 회색
-      'Low': '#5fa9f6',         // 원: 하늘
-      'Very Low': '#004fc0'     // 원: 파랑
+      'Very High': '#d62828',
+      'High': '#f88c2b',
+      'Average': '#bcbcbc',
+      'Low': '#5fa9f6',
+      'Very Low': '#004fc0'
     };
     
-    // 텍스트 색상 (원보다 더 진하게)
     const textColors = {
-      'Very High': '#6b1414',   // 텍스트: 빨강
-      'High': '#7c4616',        // 텍스트: 주황
-      'Average': '#5e5e5e',     // 텍스트: 회색
-      'Low': '#30557b',         // 텍스트: 하늘
-      'Very Low': '#002860'     // 텍스트: 파랑
+      'Very High': '#6b1414',
+      'High': '#7c4616',
+      'Average': '#5e5e5e',
+      'Low': '#30557b',
+      'Very Low': '#002860'
     };
   
     return isText ? textColors[level] : circleColors[level];
@@ -107,7 +230,7 @@ class RailCongestionMap {
         <h4>${data.location || 'Unknown Location'}</h4>
         <p><strong>Company:</strong> ${data.company || 'Unknown'}</p>
         <p><strong>Congestion Level:</strong> 
-          <span style="color: ${this.getColor(level, true)}"> <!-- 텍스트용 진한 색상 -->
+          <span style="color: ${this.getColor(level, true)}">
             ${level}
           </span>
         </p>
