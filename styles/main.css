@@ -279,7 +279,9 @@ html, body {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  margin-top: 60px;
+  top: 10px !important; /* 상단 탭 아래로 고정 */
+  right: 10px !important;
+  gap: 10px !important;
 }
 
 .leaflet-bottom.leaflet-right {
