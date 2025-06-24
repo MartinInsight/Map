@@ -96,23 +96,22 @@ class RailCongestionMap {
   
   // rail_map.js의 addControls 및 addFilterControl 수정
   addControls() {
-      const controlContainer = L.control({ position: 'topright' });
+    const controlContainer = L.control({ position: 'topright' });
   
-      controlContainer.onAdd = () => {
-          const div = L.DomUtil.create('div', 'rail-control-container');
-          div.innerHTML = `
-              <button class="rail-reset-btn">Reset View</button>
-          `;
+    controlContainer.onAdd = () => {
+      const div = L.DomUtil.create('div', 'map-control-container');
+      div.innerHTML = `
+        <button class="rail-reset-btn reset-btn">Reset View</button>
+      `;
   
-          div.querySelector('.rail-reset-btn').addEventListener('click', () => {
-              this.map.setView([37.8, -96], 4);
-              this.renderMarkers();
-          });
+      div.querySelector('.rail-reset-btn').addEventListener('click', () => {
+        this.map.setView([37.8, -96], 4);
+      });
   
-          return div;
-      };
+      return div;
+    };
   
-      controlContainer.addTo(this.map);
+    controlContainer.addTo(this.map);
   }
   
   addFilterControl() {
