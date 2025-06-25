@@ -270,55 +270,6 @@ class RailCongestionMap {
         }
     }
 
-    renderMarkers(data = this.currentData) {
-        this.markers.forEach(marker => this.map.removeLayer(marker));
-        this.markers = [];
-
-        data.forEach(item => {
-            const marker = L.circleMarker([item.lat, item.lng], {
-                radius: this.getRadiusByIndicator(item.indicator),
-                fillColor: this.getColor(item.congestion_level),
-                color: "#000",
-                weight: 1,
-                opacity: 1,
-                fillOpacity: 0.8
-            });
-
-            marker.on({
-                mouseover: (e) => {
-                    this.map.closePopup();
-                    const popup = L.popup({
-                        closeButton: false,
-                        autoClose: true,
-                        closeOnClick: true
-                    })
-                        .setLatLng(e.latlng)
-                        .setContent(this.createPopupContent(item))
-                        .openOn(this.map);
-                },
-                mouseout: () => {
-                    this.map.closePopup();
-                },
-                click: (e) => {
-                    this.map.closePopup();
-                    this.map.setView(e.latlng, 8);
-
-                    L.popup({
-                        closeButton: true,
-                        autoClose: false,
-                        closeOnClick: false
-                    })
-                        .setLatLng(e.latlng)
-                        .setContent(this.createPopupContent(item))
-                        .openOn(this.map);
-                }
-            });
-
-            marker.addTo(this.map);
-            this.markers.push(marker);
-        });
-    }
-
     // New combined method for right-side controls (Filter and Reset)
     addRightControls() {
         if (this.filterControlInstance) { // Using filterControlInstance for the whole group
