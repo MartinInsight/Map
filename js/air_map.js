@@ -1,3 +1,6 @@
+/**
+ * AirCongestionMap manages the air traffic congestion map using Leaflet.
+ */
 class AirCongestionMap {
     /**
      * Constructor for AirCongestionMap.
@@ -8,7 +11,7 @@ class AirCongestionMap {
         this.markers = [];
         this.currentData = null;
         this.lastUpdated = null;
-        this.filterControlInstance = null;
+        this.filterControlInstance = null; // This will now manage the combined right control
         this.lastUpdatedControl = null;
         this.errorControl = null;
 
@@ -31,7 +34,7 @@ class AirCongestionMap {
             }
         });
 
-        this.addControls();
+        // this.addControls(); // Old call, removed. Controls will be added after data load.
         this.loadData();
     }
 
@@ -63,7 +66,8 @@ class AirCongestionMap {
 
             this.renderMarkers();
             this.addLastUpdatedText();
-            this.addFilterControl();
+            // Call the new combined right controls method after data is loaded
+            this.addRightControls(); // Now combines filter and reset
         } catch (error) {
             console.error("Failed to load air data:", error);
             this.displayErrorMessage("Failed to load air data. Please try again later.");
@@ -181,54 +185,25 @@ class AirCongestionMap {
     }
 
     /**
-     * Adds general controls (e.g., reset button) to the map.
+     * Adds the airport filter and reset controls to the map, grouped together.
      */
-    addControls() {
-        const controlContainer = L.control({ position: 'topright' });
-
-        controlContainer.onAdd = () => {
-            const div = L.DomUtil.create('div', 'map-control-container');
-            div.innerHTML = `
-                <button class="air-reset-btn reset-btn">Reset View</button>
-            `;
-
-            div.querySelector('.air-reset-btn').addEventListener('click', () => {
-                this.map.setView([37.8, -96], 4);
-                this.renderMarkers(this.currentData);
-                if (this.filterControlInstance) {
-                    const airportFilter = this.filterControlInstance._container.querySelector('.airport-filter');
-                    if (airportFilter) airportFilter.value = '';
-                }
-            });
-
-            L.DomEvent.disableClickPropagation(div);
-            L.DomEvent.disableScrollPropagation(div);
-
-            return div;
-        };
-
-        controlContainer.addTo(this.map);
-    }
-
-    /**
-     * Adds the airport filter control (select box) to the map.
-     */
-    addFilterControl() {
-        if (this.filterControlInstance) {
+    addRightControls() {
+        if (this.filterControlInstance) { // Using filterControlInstance for the whole group
             this.map.removeControl(this.filterControlInstance);
         }
 
-        const control = L.control({ position: 'bottomright' });
+        const control = L.control({ position: 'topright' });
 
         control.onAdd = () => {
-            const div = L.DomUtil.create('div', 'filter-control');
+            const div = L.DomUtil.create('div', 'map-control-group-right'); // Use the grouping class
 
             const validAirports = this.currentData
                 .filter(item => item.Airport && item.Airport.trim() !== '')
                 .map(item => item.Airport);
             const airports = [...new Set(validAirports)].sort((a, b) => a.localeCompare(b));
 
-            div.innerHTML = `
+            // Select Airport dropdown (added first)
+            const filterDropdownHtml = `
                 <select class="airport-filter">
                     <option value="">Select Airport</option>
                     ${airports.map(airport =>
@@ -236,7 +211,15 @@ class AirCongestionMap {
                     ).join('')}
                 </select>
             `;
+            div.insertAdjacentHTML('beforeend', filterDropdownHtml);
 
+            // Reset View button (added second)
+            const resetButtonHtml = `
+                <button class="air-reset-btn reset-btn">Reset View</button>
+            `;
+            div.insertAdjacentHTML('beforeend', resetButtonHtml);
+
+            // Event Listeners (after elements are in the DOM)
             div.querySelector('.airport-filter').addEventListener('change', (e) => {
                 const airportName = e.target.value;
                 if (!airportName) {
@@ -253,14 +236,22 @@ class AirCongestionMap {
                 }
             });
 
+            div.querySelector('.air-reset-btn').addEventListener('click', () => {
+                this.map.setView([37.8, -96], 4);
+                const airportFilter = div.querySelector('.airport-filter');
+                if (airportFilter) airportFilter.value = '';
+                this.renderMarkers(this.currentData); // Ensure all markers are rendered on reset
+            });
+
+
             L.DomEvent.disableClickPropagation(div);
             L.DomEvent.disableScrollPropagation(div);
 
+            this.filterControlInstance = control; // Store the whole combined control
             return div;
         };
 
         control.addTo(this.map);
-        this.filterControlInstance = control;
     }
 
     /**
