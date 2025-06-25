@@ -61,6 +61,28 @@ jobs:
             echo "No ocean data file exists"
           fi
 
+      ---
+
+      # 다음 스텝을 추가합니다: Fetch Air Data
+
+      - name: Fetch Air Data
+        env:
+          GOOGLE_CREDENTIAL_JSON: ${{ secrets.GOOGLE_CREDENTIAL_JSON }}
+          SPREADSHEET_ID: ${{ secrets.SPREADSHEET_ID }} # 만약 Air 데이터도 구글 시트를 사용한다면
+        run: |
+          python scripts/fetch_air_data.py
+          echo "Air data file:"
+          ls -la data/us-air.json || echo "Air data file not found"
+          echo -e "\nAir data sample:"
+          if [ -f "data/us-air.json" ]; then
+            # air_map.js에서 사용하는 JSON 구조에 따라 적절한 샘플 출력으로 변경
+            jq '.[0]' data/us-air.json
+          else
+            echo "No air data file exists"
+          fi
+
+      ---
+
       - name: Verify JSON files
         run: |
           echo "Trucking data sample:"
@@ -74,6 +96,12 @@ jobs:
             jq -r '.[0]' data/us-rail.json
           else
             echo "No rail data file exists"
+          fi
+          echo -e "\nAir data sample:" # Air 데이터 샘플 검증 추가
+          if [ -f "data/us-air.json" ]; then
+            jq -r '.[0]' data/us-air.json
+          else
+            echo "No air data file exists"
           fi
           echo -e "\n파일 크기:"
           ls -lh data/
