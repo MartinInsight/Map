@@ -88,7 +88,7 @@ class TruckCongestionMap {
             fillColor: this.getColor(colorValue),
             weight: 1,
             opacity: 1,
-            color: 'white',
+            color: 'white', // 기본 테두리 색상은 흰색
             fillOpacity: 0.7
         };
     }
@@ -115,15 +115,15 @@ class TruckCongestionMap {
                 const center = layer.getBounds().getCenter();
                 this.showTooltip(center, data);
                 layer.setStyle({
-                    weight: 1, // 테두리 두께를 기본값과 동일하게 유지하여 바깥으로 확장되지 않도록 함
-                    color: '#003A52', // 진한 파란색으로 변경하여 강조 효과를 줌
+                    weight: 2, // 호버 시 테두리 두께를 2로 변경
+                    color: 'white', // 호버 시에도 테두리 색상은 흰색 유지
                     dashArray: '',
                     fillOpacity: 0.9
                 });
             },
             mouseout: (e) => {
                 this.map.closePopup();
-                this.stateLayer.resetStyle(layer); // 원래 스타일로 복원
+                this.stateLayer.resetStyle(layer); // 원래 스타일로 복원 (weight: 1, color: 'white')
             },
             click: () => this.zoomToState(feature)
         });
