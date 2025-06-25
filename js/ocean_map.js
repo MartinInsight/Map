@@ -8,12 +8,12 @@ class OceanCongestionMap {
     this.lastUpdatedControl = null; // Initialize for consistency
     this.errorControl = null; // Initialize for consistency
 
-        // 지도 타일 레이어를 CartoDB Light All로 변경하여 영어 지명 통일
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-            maxZoom: 18,
-            minZoom: 3
-        }).addTo(this.map);
+    // 지도 타일 레이어를 CartoDB Light All로 변경하여 영어 지명 통일
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+      maxZoom: 18,
+      minZoom: 3
+    }).addTo(this.map);
 
     this.map.setMaxBounds([
       [-85, -180],
@@ -223,7 +223,15 @@ class OceanCongestionMap {
         const countryPorts = this.currentData
           .filter(p => p.country === country)
           .sort((a, b) => a.port.localeCompare(b.port));
-  
+        
+        // Populate the port filter dropdown with ports from the selected country
+        countryPorts.forEach(port => {
+            const option = document.createElement('option');
+            option.value = port.port;
+            option.textContent = port.port;
+            portFilter.appendChild(option);
+        });
+
         const countryCenter = this.getCountryCenter(countryPorts);
         this.map.setView(countryCenter, 5); // Use fixed zoom level 5 for consistency
         this.renderMarkers(this.currentData); // Render ALL markers, only change view
