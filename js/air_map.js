@@ -10,9 +10,9 @@ class AirCongestionMap {
         this.map = L.map(mapElementId).setView([37.8, -96], 4);
         this.markers = [];
         this.currentData = null;
-        this.lastUpdated = null;
+        this.lastUpdated = null; // lastUpdated property
         this.filterControlInstance = null; // This will now manage the combined right control
-        this.lastUpdatedControl = null;
+        this.lastUpdatedControl = null; // Initialize lastUpdatedControl
         this.errorControl = null;
 
         // 지도 타일 레이어를 CartoDB Light All로 변경하여 영어 지명 통일
@@ -34,7 +34,6 @@ class AirCongestionMap {
             }
         });
 
-        // this.addControls(); // Old call, removed. Controls will be added after data load.
         this.loadData();
     }
 
@@ -61,12 +60,12 @@ class AirCongestionMap {
             })).filter(item => item.lat && item.lng && item.Airport);
 
             if (this.currentData.length > 0) {
+                // Set lastUpdated from the 'last_updated' field in the first data entry
                 this.lastUpdated = this.currentData[0].last_updated;
             }
 
             this.renderMarkers();
-            this.addLastUpdatedText();
-            // Call the new combined right controls method after data is loaded
+            this.addLastUpdatedText(); // Call after data is loaded and lastUpdated is set
             this.addRightControls(); // Now combines filter and reset
         } catch (error) {
             console.error("Failed to load air data:", error);
