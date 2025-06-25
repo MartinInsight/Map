@@ -4,16 +4,14 @@ class RailCongestionMap {
         
         // L.markerClusterGroup 초기화 시 iconCreateFunction 옵션 추가
         this.allMarkers = L.markerClusterGroup({
-            maxClusterRadius: 40, // 기존 설정 유지 또는 필요에 따라 조정
-            disableClusteringAtZoom: 9, // 기존 설정 유지 또는 필요에 따라 조정
+            maxClusterRadius: 40, 
+            disableClusteringAtZoom: 9, 
             
-            // --- 여기가 가장 중요한 변경 사항입니다! ---
             iconCreateFunction: (cluster) => {
                 const childMarkers = cluster.getAllChildMarkers();
-                let highestCongestionLevel = -1; // 혼잡도를 숫자로 매핑하여 가장 높은 값 찾기
-                let dominantColor = this.getColor('Average'); // 기본값은 'Average' 색상
+                let highestCongestionLevelValue = -1; // 혼잡도를 숫자로 매핑하여 가장 높은 값 찾기
+                let dominantColor = this.getColor('Average'); 
 
-                // 혼잡도 레벨을 숫자로 매핑하는 함수 (예: Very High가 가장 높은 값)
                 const congestionLevelToValue = (level) => {
                     switch (level) {
                         case 'Very High': return 4;
@@ -24,25 +22,24 @@ class RailCongestionMap {
                     }
                 };
 
-                // 클러스터 내 모든 마커를 순회하며 가장 높은 혼잡도 레벨 찾기
                 childMarkers.forEach(marker => {
-                    const itemData = marker.options.itemData; // 마커 생성 시 저장했던 itemData 활용
+                    // 마커 옵션에서 itemData를 안전하게 접근 (원형 마커 대신 DivIcon 마커를 사용하므로 marker.options.itemData 사용)
+                    const itemData = marker.options.itemData; 
                     if (itemData && itemData.congestion_level) {
                         const currentLevelValue = congestionLevelToValue(itemData.congestion_level);
-                        if (currentLevelValue > highestCongestionLevel) {
-                            highestCongestionLevel = currentLevelValue;
-                            dominantColor = this.getColor(itemData.congestion_level); // 해당 혼잡도에 맞는 색상
+                        if (currentLevelValue > highestCongestionLevelValue) {
+                            highestCongestionLevelValue = currentLevelValue;
+                            dominantColor = this.getColor(itemData.congestion_level); 
                         }
                     }
                 });
 
-                // 클러스터 아이콘의 HTML 및 스타일 생성
                 const childCount = cluster.getChildCount();
-                const size = 40 + Math.min(childCount * 0.5, 20); // 클러스터 크기를 마커 개수에 따라 동적으로 조절
+                const size = 30 + Math.min(childCount * 0.5, 30); // 클러스터 크기를 마커 개수에 따라 동적으로 조절
                 
                 return new L.DivIcon({
-                    html: `<div style="background-color: ${dominantColor}; width: ${size}px; height: ${size}px; line-height: ${size}px; border-radius: 50%; color: white; font-weight: bold; text-align: center;"><span>${childCount}</span></div>`,
-                    className: 'marker-cluster-custom', // 커스텀 클래스 (CSS에서 추가 스타일링 가능)
+                    html: `<div style="background-color: ${dominantColor}; width: ${size}px; height: ${size}px; line-height: ${size}px; border-radius: 50%; color: white; font-weight: bold; text-align: center; display: flex; align-items: center; justify-content: center;"><span>${childCount}</span></div>`,
+                    className: 'marker-cluster-custom', 
                     iconSize: new L.Point(size, size)
                 });
             }
@@ -64,10 +61,9 @@ class RailCongestionMap {
             [85, 180]
         ]);
 
-        // 줌 변경 핸들러는 이제 필요하지 않습니다. Leaflet.markercluster가 줌에 따라 자동으로 클러스터링을 처리합니다.
-        // this.map.on('zoomend', () => {
-        //     this.handleZoomChange();
-        // });
+        this.addRightControls();
+        this.addLastUpdatedText();
+        this.addLegend(); // 범례 추가
 
         this.loadData();
     }
@@ -79,78 +75,60 @@ class RailCongestionMap {
             const rawData = await response.json();
 
             this.currentData = rawData.map(item => ({
-                ...item,
-                lat: item.lat || item.Latitude,
-                lng: item.lng || item.Longitude,
-                Yard: item.location || 'Unknown' // 'Yard' 필드 통일
-            })).filter(item => item.lat && item.lng && item.Yard);
+                lat: parseFloat(item.lat || item.Latitude), 
+                lng: parseFloat(item.lng || item.Longitude),
+                Yard: item.location || item.Yard || item.Location || 'Unknown', 
+                location: item.location || item.Yard || item.Location || 'Unknown Location', 
+                company: item.company || item.Railroad || 'Unknown',
+                congestion_score: parseFloat(item.congestion_score || item['Dwell Time']),
+                indicator: parseFloat(item.indicator || item.Indicator),
+                congestion_level: item.congestion_level || item.Category || 'Average',
+                date: item.date || item.DateMonth 
+            })).filter(item => 
+                !isNaN(item.lat) && !isNaN(item.lng) && item.location && item.congestion_level
+            );
 
             if (this.currentData.length > 0) {
                 this.lastUpdated = this.currentData[0].date;
             }
 
-            this.renderMarkers(); // 초기 마커 렌더링
-            this.addLastUpdatedText();
-            this.addRightControls();
+            this.renderMarkers(); 
         } catch (error) {
             console.error("Failed to load rail data:", error);
             this.displayErrorMessage("Failed to load rail data. Please try again later.");
         }
     }
 
-    // 마커 렌더링 로직 (Leaflet.markercluster 사용)
     renderMarkers(data = this.currentData) {
-        this.allMarkers.clearLayers(); // 기존 모든 마커 및 클러스터 제거
+        if (!data || data.length === 0) {
+            console.warn("No data provided to renderMarkers or data is empty. Clearing map layers.");
+            this.allMarkers.clearLayers();
+            if (this.map.hasLayer(this.allMarkers)) {
+                this.map.removeLayer(this.allMarkers);
+            }
+            return; 
+        }
+
+        this.allMarkers.clearLayers();
 
         data.forEach(item => {
-            const marker = L.circleMarker([item.lat, item.lng], {
-                radius: this.getRadiusByIndicator(item.indicator),
-                fillColor: this.getColor(item.congestion_level),
-                color: "#000",
-                weight: 1,
-                opacity: 1,
-                fillOpacity: 0.8
-            });
-
-            // 마커 이벤트 설정 (호버 시 팝업, 클릭 시 줌인)
-            marker.on({
-                mouseover: (e) => {
-                    // 호버 시 팝업
-                    const popup = L.popup({
-                        closeButton: false,
-                        autoClose: true,
-                        closeOnClick: false, // 호버 시 팝업은 클릭으로 닫히지 않도록
-                        maxHeight: 300,
-                        maxWidth: 300
-                    })
-                    .setLatLng(e.latlng)
-                    .setContent(this.createPopupContent([item])) // 단일 아이템 배열로 전달
-                    .openOn(this.map);
-                },
-                mouseout: () => {
-                    this.map.closePopup();
-                },
-                // 클릭 시 줌 인은 Leaflet.markercluster가 기본적으로 처리하므로,
-                // 여기서는 개별 마커에 대한 별도의 줌 인 로직은 필요 없습니다.
-                // 다만, 팝업을 닫고 싶다면 추가할 수 있습니다.
-                click: () => {
-                    this.map.closePopup(); // 클릭 시 열려있던 호버 팝업 닫기
-                    // 클러스터 클릭 시 자동 줌인되므로, 개별 마커 클릭 시에는 줌인하지 않습니다.
-                }
-            });
-
-            this.allMarkers.addLayer(marker); // 마커를 클러스터 그룹에 추가
+            const marker = this.createSingleMarker(item);
+            this.allMarkers.addLayer(marker);
         });
 
-        this.map.addLayer(this.allMarkers); // 클러스터 그룹을 지도에 추가
-
-        // Leaflet.markercluster의 클러스터 클릭 이벤트를 커스텀하여 줌인만 하도록 설정
+        if (!this.map.hasLayer(this.allMarkers)) {
+            this.map.addLayer(this.allMarkers); 
+        }
+        
+        // --- 기존 이벤트 리스너 제거 후 다시 추가 (중복 방지) ---
+        // 이 부분은 클러스터 클릭 이벤트에만 해당하며, 개별 마커 이벤트는 createSingleMarker 내부에서 처리됩니다.
+        this.allMarkers.off('clusterclick');
         this.allMarkers.on('clusterclick', (a) => {
-            a.layer.zoomToBounds(); // 클러스터 클릭 시 해당 클러스터 범위로 줌인
-            this.map.closePopup(); // 혹시 열려있을 팝업 닫기
+            a.layer.zoomToBounds();
+            this.map.closePopup();
         });
 
-        // Leaflet.markercluster의 클러스터 호버 이벤트를 사용하여 팝업 표시
+        this.allMarkers.off('clustermouseover');
         this.allMarkers.on('clustermouseover', (a) => {
             const clusterItems = a.layer.getAllChildMarkers().map(m => m.options.itemData);
             const popup = L.popup({
@@ -161,40 +139,79 @@ class RailCongestionMap {
                 maxWidth: 300
             })
             .setLatLng(a.latlng)
-            .setContent(this.createPopupContent(clusterItems)) // 클러스터 아이템들로 팝업 생성
+            .setContent(this.createPopupContent(clusterItems))
             .openOn(this.map);
         });
 
+        this.allMarkers.off('clustermouseout');
         this.allMarkers.on('clustermouseout', () => {
             this.map.closePopup();
         });
     }
 
-    // 마커 생성 시 itemData를 options에 추가 (팝업 내용을 위해)
+    // --- 이 함수가 가장 크게 변경되었습니다! L.circleMarker 대신 L.marker + L.divIcon 사용 ---
     createSingleMarker(item) {
-        const marker = L.circleMarker([item.lat, item.lng], {
-            radius: this.getRadiusByIndicator(item.indicator),
-            fillColor: this.getColor(item.congestion_level),
-            color: "#000",
-            weight: 1,
-            opacity: 1,
-            fillOpacity: 0.8,
+        const level = item.congestion_level || 'Average';
+        const color = this.getColor(level);
+        const radius = this.getRadiusByIndicator(item.indicator);
+
+        // L.DivIcon을 사용하여 원형 마커처럼 보이게 함
+        const iconHtml = `
+            <div style="
+                background-color: ${color}; 
+                width: ${radius * 2}px; 
+                height: ${radius * 2}px; 
+                border-radius: 50%; 
+                border: 1.5px solid white; 
+                box-shadow: 0 0 3px rgba(0,0,0,0.5);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            "></div>
+        `;
+
+        const customIcon = L.divIcon({
+            className: 'custom-div-icon', // CSS에서 추가 스타일링 가능
+            html: iconHtml,
+            iconSize: [radius * 2, radius * 2], // 아이콘 크기는 반지름의 두 배
+            iconAnchor: [radius, radius] // 아이콘 중심을 마커 중앙으로 설정
+        });
+
+        // L.marker를 사용하여 Leaflet.markercluster가 올바르게 인식하도록 함
+        const marker = L.marker([item.lat, item.lng], { 
+            icon: customIcon,
             itemData: item // 중요: 팝업 내용을 위해 원본 데이터를 마커 옵션에 저장
         });
-        return marker; // 마커를 직접 반환하여 클러스터 그룹에 추가하도록 합니다.
+
+        // 개별 마커의 호버 및 클릭 이벤트
+        marker.on({
+            mouseover: (e) => {
+                const popup = L.popup({
+                    closeButton: false,
+                    autoClose: true,
+                    closeOnClick: false,
+                    maxHeight: 300,
+                    maxWidth: 300
+                })
+                .setLatLng(e.latlng)
+                .setContent(this.createPopupContent([item])) 
+                .openOn(this.map);
+            },
+            mouseout: () => {
+                this.map.closePopup();
+            },
+            click: () => {
+                this.map.closePopup(); 
+            }
+        });
+        return marker;
     }
 
-    // groupMarkersByLocation, createClusterMarker 메서드는 더 이상 필요 없습니다.
-    // clearAllMarkers 메서드는 allMarkers.clearLayers()로 대체됩니다.
-    // handleZoomChange도 더 이상 필요 없습니다.
-
-    // 팝업 내용 생성 (다중 마커 지원)
     createPopupContent(items) {
-        // Ensure 'items' is always an array, even if a single item is passed
-        const safeItems = Array.isArray(items) ? items : [items]; 
+        const safeItems = Array.isArray(items) ? items : [items];
         const isMultiple = safeItems.length > 1;
         let content = '';
-    
+        
         if (isMultiple) {
             content += `<div class="cluster-popup-header">
                             <h4>${safeItems.length} Locations</h4>
@@ -202,21 +219,18 @@ class RailCongestionMap {
                          </div>
                          <div class="cluster-popup-content">`;
         }
-    
-        // Safely iterate through each item
+        
         safeItems.forEach(item => {
-            // Add a check: if item is undefined, null, or doesn't have required properties, skip it or provide defaults.
-            if (!item || !item.lat || !item.lng || !item.Yard) {
-                console.warn("Skipping invalid item in popup content:", item);
-                return; // Skip this iteration if the item is invalid
+            if (!item || typeof item !== 'object' || typeof item.lat === 'undefined' || typeof item.lng === 'undefined') {
+                console.warn("Skipping invalid or incomplete item in popup content:", item);
+                return;
             }
-    
-            // Now it's safe to access item.congestion_level
+        
             const level = item.congestion_level || 'Unknown';
             const company = item.company || 'Unknown';
             const location = item.location || 'Unknown Location';
-            const congestionScore = item.congestion_score?.toFixed(1) || 'N/A'; // Use optional chaining for safety
-    
+            const congestionScore = (typeof item.congestion_score === 'number' && !isNaN(item.congestion_score)) ? item.congestion_score.toFixed(1) : 'N/A';
+        
             content += `
                 <div class="location-info">
                     <h5>${location}</h5>
@@ -231,12 +245,12 @@ class RailCongestionMap {
                 ${isMultiple && safeItems.indexOf(item) !== safeItems.length - 1 ? '<hr>' : ''}
             `;
         });
-    
+        
         if (isMultiple) {
             content += '</div>';
         }
-    
-        return content || '<p>No valid data to display for this location.</p>'; // Fallback if no valid items
+        
+        return content || '<p>No valid data to display for this location.</p>';
     }
 
     addLastUpdatedText() {
@@ -252,7 +266,7 @@ class RailCongestionMap {
                 day: 'numeric',
                 hour: 'numeric',
                 minute: 'numeric',
-                hour12: false
+                hour12: false 
             });
 
             const infoControl = L.control({ position: 'bottomleft' });
@@ -268,7 +282,6 @@ class RailCongestionMap {
         }
     }
 
-    // 필터링 로직: 야드를 선택하더라도 다른 마커들 여전히 보여줌
     addRightControls() {
         if (this.filterControlInstance) {
             this.map.removeControl(this.filterControlInstance);
@@ -287,7 +300,8 @@ class RailCongestionMap {
 
             const filterDropdownHtml = `
                 <select class="yard-filter">
-                    <option value="">Select Yard</option>
+                    <option value="" disabled selected hidden>Select Yard</option>
+                    <option value="All">All Yards</option>
                     ${yards.map(yard =>
                         `<option value="${yard}">${yard}</option>`
                     ).join('')}
@@ -302,27 +316,24 @@ class RailCongestionMap {
 
             div.querySelector('.yard-filter').addEventListener('change', (e) => {
                 const yardName = e.target.value;
-                if (!yardName) {
+                if (yardName === "All") {
                     this.map.setView([37.8, -96], 4);
-                    // 필터를 해제하면 모든 마커를 다시 표시합니다. (renderMarkers는 이미 this.currentData를 기본으로 사용)
-                    // this.renderMarkers(this.currentData); // 이 줄은 필요 없음 (이미 기본값)
-                    return;
-                }
-
-                const yardData = this.currentData.filter(item => item.Yard === yardName);
-                if (yardData.length > 0) {
-                    const center = this.getYardCenter(yardData);
-                    this.map.setView(center, 8); // 선택된 야드 중심으로 이동 및 줌인
-                    // renderMarkers(this.currentData)를 호출하여 모든 마커를 여전히 표시합니다.
+                } else if (yardName) {
+                    const yardData = this.currentData.filter(item => item.Yard === yardName);
+                    if (yardData.length > 0) {
+                        const center = this.getYardCenter(yardData);
+                        this.map.setView(center, 8);
+                    }
                 }
             });
 
             div.querySelector('.rail-reset-btn').addEventListener('click', () => {
                 this.map.setView([37.8, -96], 4);
                 const yardFilter = div.querySelector('.yard-filter');
-                if (yardFilter) yardFilter.value = '';
-                // renderMarkers(this.currentData)를 호출하여 모든 마커를 다시 표시합니다.
-                // this.renderMarkers(this.currentData); // 이 줄은 필요 없음 (이미 기본값)
+                if (yardFilter) {
+                    yardFilter.value = ''; 
+                    yardFilter.selectedIndex = 0; 
+                }
             });
 
             L.DomEvent.disableClickPropagation(div);
@@ -333,6 +344,30 @@ class RailCongestionMap {
         };
 
         control.addTo(this.map);
+    }
+
+    addLegend() {
+        const legend = L.control({ position: 'bottomright' });
+
+        legend.onAdd = function (map) {
+            const div = L.DomUtil.create('div', 'info legend');
+            const levels = ['Very High', 'High', 'Low', 'Very Low', 'Average']; 
+            const labels = [];
+
+            for (let i = 0; i < levels.length; i++) {
+                const level = levels[i];
+                const color = this.getColor(level); 
+
+                labels.push(
+                    `<i style="background:${color}"></i> ${level}`
+                );
+            }
+
+            div.innerHTML = '<h4>Congestion Level</h4>' + labels.join('<br>');
+            return div;
+        }.bind(this); 
+
+        legend.addTo(this.map);
     }
 
     getYardCenter(yardData) {
@@ -366,7 +401,8 @@ class RailCongestionMap {
             'High': '#f88c2b',
             'Low': '#5fa9f6',
             'Very Low': '#004fc0',
-            'Average': '#bcbcbc'
+            'Average': '#bcbcbc',
+            'Unknown': '#bcbcbc' 
         };
 
         const textColors = {
@@ -374,7 +410,8 @@ class RailCongestionMap {
             'High': '#7c4616',
             'Low': '#30557b',
             'Very Low': '#002860',
-            'Average': '#5e5e5e'
+            'Average': '#5e5e5e',
+            'Unknown': '#5e5e5e'
         };
 
         return isText ? textColors[level] : circleColors[level];
@@ -393,6 +430,12 @@ class RailCongestionMap {
         };
         errorControl.addTo(this.map);
         this.errorControl = errorControl;
+
+        setTimeout(() => {
+            if (this.map.hasControl(this.errorControl)) {
+                this.map.removeControl(this.errorControl);
+            }
+        }, 5000);
     }
 }
 
