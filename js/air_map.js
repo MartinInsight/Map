@@ -120,17 +120,39 @@ class AirCongestionMap {
 
             marker.on({
                 mouseover: (e) => {
-                    this.map.closePopup();
-                    const popup = L.popup()
+                    // Mouseover will show popup
+                    this.map.closePopup(); // Close any existing popups
+                    const popup = L.popup({
+                        // Default popup settings for mouseover (closes on mouseout)
+                        closeButton: false,
+                        autoClose: true,
+                        closeOnClick: true // Allow closing on map click
+                    })
                         .setLatLng(e.latlng)
                         .setContent(this.createPopupContent(item))
                         .openOn(this.map);
                 },
                 mouseout: () => {
+                    // Mouseout will close popup (if autoClose is true)
                     this.map.closePopup();
                 },
-                click: () => {
-                    this.map.closePopup();
+                click: (e) => {
+                    // On click: zoom to marker and show sticky popup (for mobile compatibility)
+                    this.map.closePopup(); // Close any other open popups (including mouseover one)
+                    this.map.setView(e.latlng, 8); // Zoom to clicked marker's location with fixed zoom level 8
+
+                    L.popup({
+                        // Settings for click popup (sticky for mobile)
+                        closeButton: true, // Allow manual closing for click popup
+                        autoClose: false, // Keep open until manually closed or another action
+                        closeOnClick: false // Do not close on map click
+                    })
+                        .setLatLng(e.latlng) // Use the clicked latlng for the popup position
+                        .setContent(this.createPopupContent(item))
+                        .openOn(this.map);
+
+                    // All markers are already rendered by default with renderMarkers(this.currentData)
+                    // so no need to explicitly call it here.
                 }
             });
 
@@ -229,10 +251,7 @@ class AirCongestionMap {
                 if (airportData.length > 0) {
                     const center = this.getAirportCenter(airportData);
                     this.map.setView(center, 8); // Move and zoom to the selected airport
-                    // --- CHANGE START ---
-                    // Render ALL markers (currentData) to ensure all remain visible
-                    this.renderMarkers(this.currentData);
-                    // --- CHANGE END ---
+                    this.renderMarkers(this.currentData); // Render ALL markers (currentData) to ensure all remain visible
                 }
             });
 
