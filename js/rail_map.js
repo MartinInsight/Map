@@ -3,8 +3,8 @@ class RailCongestionMap {
         this.map = L.map(mapElementId).setView([37.8, -96], 4);
         
         this.allMarkers = L.markerClusterGroup({
-            maxClusterRadius: 40, 
-            disableClusteringAtZoom: 9, 
+            maxClusterRadius: 20, // DeepSeek 제안: 더 작은 값으로 테스트 (기존 40)
+            disableClusteringAtZoom: 7, // DeepSeek 제안: 더 낮은 줌 레벨로 테스트 (기존 9)
             spiderfyOnMaxZoom: true, 
             
             iconCreateFunction: (cluster) => {
@@ -48,7 +48,8 @@ class RailCongestionMap {
         this.filterControlInstance = null;
         this.errorControl = null;
         this.lastUpdatedControl = null;
-        this.markerToOpenAfterMove = null; // Property to hold marker for delayed opening
+        // markerToOpenAfterMove 대신 mapMovePromise와 resolve/reject를 사용하는 것이 더 강력한 비동기 제어에 유리합니다.
+        this.markerToOpenAfterMove = null; 
 
         L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', {
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
@@ -70,56 +71,63 @@ class RailCongestionMap {
         });
 
         // Listen for map move/zoom end events to open queued popups from filter selection
+        // DeepSeek 제안: moveend 후에도 마커가 DOM에 그려지는 타이밍 문제 해결
         this.map.on('moveend', () => {
             if (this.markerToOpenAfterMove) {
-                console.log('Map animation ended, attempting to open queued popup.');
+                console.log('Map animation ended, attempting to open queued popup with polling.');
                 const targetMarker = this.markerToOpenAfterMove;
                 this.markerToOpenAfterMove = null; // Clear the queue immediately
-
-                this.map.closePopup(); // Ensure any previous popups are closed
-                
-                let attempts = 0;
-                const maxAttempts = 20; // Increased attempts
-                const retryInterval = 150; // Increased interval to allow more rendering time
-
-                const tryOpenPopup = () => {
-                    // Check if marker is truly on the map and has an associated popup
-                    if (targetMarker && targetMarker._map && targetMarker.getPopup()) { 
-                        // Attempt to open the popup
-                        targetMarker.openPopup();
-                        console.log(`Attempt ${attempts + 1}: openPopup() called for ${targetMarker.options.itemData.Yard}`);
-                        
-                        // Verify if the popup is actually open
-                        if (targetMarker.getPopup().isOpen()) {
-                            console.log(`Popup successfully opened for ${targetMarker.options.itemData.Yard}`);
-                        } else {
-                            console.warn(`Popup for ${targetMarker.options.itemData.Yard} did not confirm open. Retrying.`);
-                            attempts++;
-                            if (attempts < maxAttempts) {
-                                setTimeout(tryOpenPopup, retryInterval);
-                            } else {
-                                console.error(`Failed to open popup for ${targetMarker.options.itemData.Yard} after max retries.`);
-                                // Fallback: try map.openPopup if marker.openPopup persistently fails
-                                if (targetMarker.getPopup()) {
-                                    this.map.openPopup(targetMarker.getPopup());
-                                    console.log("Attempted map.openPopup as a fallback.");
-                                }
-                            }
-                        }
-                    } else if (attempts < maxAttempts) {
-                        console.warn("Queued marker not yet rendered or popup not found, retrying.");
-                        attempts++;
-                        setTimeout(tryOpenPopup, retryInterval);
-                    } else {
-                        console.error("Failed to find/open popup for queued marker after max retries.");
-                    }
-                };
-                
-                // Initial attempt to open popup
-                tryOpenPopup();
+                this.pollForMarkerAndOpenPopup(targetMarker);
+            }
+        });
+        
+        // DeepSeek 제안: layeradd 이벤트를 활용하여 마커가 지도에 추가되는 시점 감지 (필터링 후 유용)
+        this.allMarkers.on('layeradd', (e) => {
+            const addedLayer = e.layer;
+            if (addedLayer.options && addedLayer.options.itemData && this.markerToOpenAfterMove && addedLayer.options.itemData.Yard === this.markerToOpenAfterMove.options.itemData.Yard) {
+                 console.log(`Layer added for queued marker: ${addedLayer.options.itemData.Yard}. Attempting to open popup.`);
+                 this.pollForMarkerAndOpenPopup(addedLayer);
+                 this.markerToOpenAfterMove = null; // Clear queue once handled by layeradd
             }
         });
     }
+
+    // DeepSeek 제안: 마커가 DOM에 완전히 렌더링될 때까지 폴링하여 팝업 열기
+    pollForMarkerAndOpenPopup(marker) {
+        if (!marker || !marker.getPopup()) {
+            console.warn("pollForMarkerAndOpenPopup: Invalid marker or no popup associated.");
+            return;
+        }
+
+        this.map.closePopup(); // Ensure any previous popups are closed
+
+        let attempts = 0;
+        const maxAttempts = 30; // Increased attempts
+        const retryInterval = 100; // Increased interval
+
+        const checkAndOpen = () => {
+            // Check if the marker's icon element is present in the DOM. This is a strong indicator of rendering.
+            if (marker._icon && marker._map) { 
+                console.log(`Poll success for ${marker.options.itemData.Yard} (Attempt ${attempts + 1}). Opening popup.`);
+                marker.openPopup();
+                if (marker.getPopup().isOpen()) {
+                    console.log(`Popup for ${marker.options.itemData.Yard} successfully confirmed open.`);
+                } else {
+                    console.warn(`Popup for ${marker.options.itemData.Yard} did not confirm open after direct call. Final retry via map.`);
+                    this.map.openPopup(marker.getPopup()); // Fallback
+                }
+            } else if (attempts < maxAttempts) {
+                console.log(`Polling for ${marker.options.itemData.Yard} (Attempt ${attempts + 1}): Marker not ready. Retrying...`);
+                attempts++;
+                setTimeout(checkAndOpen, retryInterval);
+            } else {
+                console.error(`Failed to open popup for ${marker.options.itemData.Yard} after max polling attempts.`);
+            }
+        };
+        
+        setTimeout(checkAndOpen, 50); // Initial small delay before polling starts
+    }
+
 
     async loadData() {
         try {
@@ -231,11 +239,10 @@ class RailCongestionMap {
                     </div>
                 `;
 
-                // Use a temporary popup for cluster hover, map.closePopup() will handle it
                 L.popup({
                     closeButton: false,
                     autoClose: true, 
-                    closeOnClick: false, // Don't close on map click for hover, it's temporary
+                    closeOnClick: false, 
                     maxHeight: 300,
                     maxWidth: 300
                 })
@@ -246,7 +253,7 @@ class RailCongestionMap {
 
             this.allMarkers.off('clustermouseout');
             this.allMarkers.on('clustermouseout', () => {
-                this.map.closePopup(); // Close any cluster hover popup
+                this.map.closePopup(); 
             });
         }
     }
@@ -284,37 +291,31 @@ class RailCongestionMap {
 
         const popupOptions = {
             closeButton: true,
-            autoClose: true, // Let Leaflet automatically close on map click
-            closeOnClick: true, // Let Leaflet automatically close on map click
+            autoClose: true, 
+            closeOnClick: true, 
             maxHeight: 300,
             maxWidth: 300
         };
 
-        // Bind popup content once
         marker.bindPopup(this.createPopupContent([item]), popupOptions);
         
-        // Add a listener for when the popup actually opens
         marker.on('popupopen', (e) => {
-            console.log(`Popup for ${item.Yard} just opened.`);
-            // You can optionally adjust z-index here if needed
+            console.log(`Popup for ${item.Yard} just opened. Z-index set.`);
             e.popup.getElement().style.zIndex = 10000; // Bring popup to front
         });
         marker.on('popupclose', (e) => {
             console.log(`Popup for ${item.Yard} just closed.`);
         });
 
-
         // Desktop specific hover logic
         if (!L.Browser.mobile) {
             marker.on('mouseover', () => {
                 console.log("PC: Mouseover on marker.");
-                this.map.closePopup(); // Close any other open popups first
+                this.map.closePopup(); 
                 marker.openPopup();
             });
-            // PC: Close popup when mouse leaves the marker.
             marker.on('mouseout', () => {
                 console.log("PC: Mouseout from marker.");
-                // Add a small delay to prevent immediate closing if clicking quickly
                 setTimeout(() => {
                     if (marker.getPopup() && marker.getPopup().isOpen()) {
                          marker.closePopup();
@@ -324,17 +325,28 @@ class RailCongestionMap {
         }
         
         // Universal click/tap logic for both desktop and mobile
-        // Leaflet's 'click' event is optimized for mobile 'tap' and desktop click.
         marker.on('click', (e) => { 
-            L.DomEvent.stopPropagation(e); // Prevent map's click/tap from interfering
+            L.DomEvent.stopPropagation(e); 
             console.log(`Clicked/Tapped marker: ${item.Yard}. Current popup state: ${marker.getPopup().isOpen()}`);
             
-            // Toggle popup: if open, close; if closed, open.
             if (marker.getPopup().isOpen()) {
                 marker.closePopup();
             } else {
-                this.map.closePopup(); // Close any other open popups first
-                marker.openPopup();
+                this.map.closePopup(); 
+                
+                // Add a small delay for mobile clicks/taps to ensure rendering stability
+                // DeepSeek 제안: 모바일 터치 처리 개선을 위한 지연 추가
+                setTimeout(() => {
+                    if (marker && marker._map) {
+                        marker.openPopup();
+                        if (!marker.getPopup().isOpen()) {
+                            console.warn("Mobile/Click: Popup did not open immediately, trying map.openPopup.");
+                            this.map.openPopup(marker.getPopup()); // Fallback for stubborn popups
+                        }
+                    } else {
+                        console.warn("Mobile/Click: Marker not available for popup after delay.");
+                    }
+                }, 100); 
             }
         });
 
@@ -459,13 +471,11 @@ class RailCongestionMap {
                     console.log(`Filter selected: ${yardName}`);
                     const yardDataForFilter = this.currentData.filter(item => item.Yard === yardName);
                     if (yardDataForFilter.length > 0) {
-                        // Create a LatLngBounds from the selected yard's data
                         const bounds = L.latLngBounds(yardDataForFilter.map(item => [item.lat, item.lng]));
                         
                         console.log(`Fitting map to bounds: ${bounds.toBBoxString()}`);
-                        // Use fitBounds to ensure all markers are visible and handled by MC
-                        // MaxZoom is important here to ensure spiderfyOnMaxZoom works as expected.
-                        this.map.fitBounds(bounds.pad(0.5), { maxZoom: 9 }); 
+                        // Use fitBounds with maxZoom to ensure markers are individual (not clustered) and visible
+                        this.map.fitBounds(bounds.pad(0.5), { maxZoom: this.allMarkers.options.disableClusteringAtZoom + 1 }); // Ensure zoom level is above clustering threshold
                         
                         let foundMarkerForFilter = null;
                         const allIndividualMarkers = this.allMarkers.getLayers(); 
@@ -534,8 +544,6 @@ class RailCongestionMap {
     }
 
     getYardCenter(yardData) {
-        // This function is still used to calculate initial center for setView,
-        // but for filter, fitBounds is now preferred.
         if (!yardData || yardData.length === 0) return [37.8, -96];
 
         const lats = yardData.map(item => item.lat);
