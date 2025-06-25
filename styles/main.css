@@ -1,6 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600&display=swap');
 
-/* 기본 스타일 */
+/* Basic Styles */
 html, body {
     height: 100%;
     margin: 0;
@@ -9,7 +9,7 @@ html, body {
     font-family: 'Noto Sans KR', sans-serif;
 }
 
-/* 탭 메뉴 스타일 */
+/* Tab Menu Styles */
 .transport-tab-container {
     position: fixed;
     top: 0;
@@ -66,7 +66,7 @@ html, body {
     opacity: 0.5;
 }
 
-/* 맵 컨테이너 */
+/* Map Container */
 .transport-map {
     position: fixed;
     top: 5%;
@@ -80,30 +80,30 @@ html, body {
     display: block;
 }
 
-/* Leaflet 지도의 기본 컨트롤 스타일을 재정의 */
-/* 이 부분이 불필요한 흰색 박스를 제거하는 핵심입니다. */
+/* Leaflet default control style override */
+/* This removes unnecessary white boxes from Leaflet controls. */
 .leaflet-control {
-    background: none !important; /* Leaflet 기본 배경 제거 */
-    padding: 0 !important;      /* Leaflet 기본 패딩 제거 */
-    border: none !important;     /* Leaflet 기본 테두리 제거 */
-    box-shadow: none !important; /* Leaflet 기본 그림자 제거 */
+    background: none !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
 }
 
-/* 공통 컨트롤 스타일 (리셋 버튼, 필터 박스 등) */
+/* Common Control Styles (Reset button, Filter box etc.) */
 .map-control-container,
 .filter-control {
-    background: white; /* 흰색 배경을 명확히 지정 */
+    background: white;
     padding: 8px 12px;
     border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.15); /* 그림자 효과 */
+    box-shadow: 0 2px 10px rgba(0,0,0,0.15);
     display: inline-flex;
     align-items: center;
     gap: 10px;
-    width: fit-content; /* 내용물 너비만큼만 공간 차지 */
-    box-sizing: border-box; /* 패딩과 테두리가 너비에 포함되도록 */
+    width: fit-content;
+    box-sizing: border-box;
 }
 
-/* 리셋 버튼 스타일 통일 */
+/* Reset Button Style */
 .reset-btn {
     padding: 0 15px;
     background: white;
@@ -126,8 +126,7 @@ html, body {
     box-shadow: 0 3px 7px rgba(0,0,0,0.15);
 }
 
-/* 필터 컨트롤 스타일 */
-/* .filter-control은 위에서 map-control-container와 함께 정의되었습니다. */
+/* Filter Control Select Style */
 .filter-control select {
     padding: 8px 12px;
     border: 1px solid #ddd;
@@ -137,6 +136,14 @@ html, body {
     font-family: 'Noto Sans KR', sans-serif;
     background-color: #f9f9f9;
     transition: all 0.2s;
+    /* Common arrow for all selects */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='%23003A52'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    padding-right: 30px;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
 }
 
 .filter-control select:focus {
@@ -145,7 +152,7 @@ html, body {
     box-shadow: 0 0 0 2px rgba(0,101,126,0.2);
 }
 
-/* 트럭 전용 스타일 */
+/* Truck specific styles (kept for other tabs if they use them) */
 .truck-toggle-container {
     display: flex;
     align-items: center;
@@ -188,137 +195,7 @@ html, body {
     background: #f0f0f0;
 }
 
-/* 항공 지도 전용 스타일 */
-.air-tooltip {
-    font-family: 'Noto Sans KR', sans-serif;
-    min-width: 240px;
-    padding: 16px;
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-}
-
-.air-tooltip h4 {
-    margin: 0 0 12px 0;
-    font-size: 16px;
-    font-weight: 600;
-    color: #003A52;
-    border-bottom: 1px solid #eee;
-    padding-bottom: 8px;
-}
-
-.air-tooltip p {
-    margin: 8px 0;
-    font-size: 14px;
-    line-height: 1.4;
-    color: #555;
-}
-
-.air-tooltip strong {
-    color: #333;
-    font-weight: 500;
-    min-width: 80px;
-    display: inline-block;
-}
-
-/* 항공 마커 전용 색상 클래스 */
-.air-marker-very-high {
-    background: #d73027 !important; /* 매우 혼잡 */
-}
-
-.air-marker-high {
-    background: #fc8d59 !important; /* 혼잡 */
-}
-
-.air-marker-medium {
-    background: #fee08b !important; /* 보통 */
-}
-
-.air-marker-low {
-    background: #d9ef8b !important; /* 원활 */
-}
-
-.air-marker-very-low {
-    background: #1a9850 !important; /* 매우 원활 */
-}
-
-/* 항공 필터 컨트롤 */
-.air-filter-control select {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='%23003A52'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 10px center;
-    padding-right: 30px;
-    appearance: none;
-    -webkit-appearance: none;
-    -moz-appearance: none;
-}
-
-/* 항공 혼잡도 범례 */
-.air-legend {
-    background: white;
-    padding: 12px;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.15);
-    font-family: 'Noto Sans KR', sans-serif;
-    line-height: 1.5;
-}
-
-.air-legend-title {
-    font-weight: 600;
-    margin-bottom: 8px;
-    color: #003A52;
-    font-size: 14px;
-}
-
-.air-legend-item {
-    display: flex;
-    align-items: center;
-    margin: 5px 0;
-    font-size: 13px;
-}
-
-.air-legend-color {
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
-    margin-right: 8px;
-    border: 1px solid #ddd;
-}
-
-/* 모바일 대응 */
-@media (max-width: 768px) {
-    .air-tooltip {
-        min-width: 180px;
-        padding: 12px;
-    }
-    
-    .air-tooltip h4 {
-        font-size: 15px;
-    }
-    
-    .air-tooltip p {
-        font-size: 13px;
-    }
-    
-    .air-legend {
-        padding: 8px;
-        font-size: 12px;
-    }
-}
-
-/* 애니메이션 효과 */
-@keyframes pulse-air {
-    0% { transform: scale(1); opacity: 1; }
-    50% { transform: scale(1.05); opacity: 0.9; }
-    100% { transform: scale(1); opacity: 1; }
-}
-
-.air-marker-highlight {
-    animation: pulse-air 1.5s infinite;
-    z-index: 1000 !important;
-}
-
-/* 툴팁 공통 스타일 */
+/* Common Tooltip Style (used by all maps now) */
 .map-tooltip {
     font-family: 'Noto Sans KR', sans-serif;
     min-width: 240px;
@@ -348,6 +225,7 @@ html, body {
     font-weight: 500;
 }
 
+/* Truck specific text colors in tooltip (if needed by truck_map.js) */
 .truck-positive {
     color: #27ae60;
     font-weight: 600;
@@ -363,7 +241,7 @@ html, body {
     color: #555;
 }
 
-/* 팝업 스타일 */
+/* Leaflet Popup Styles */
 .leaflet-popup {
     pointer-events: none;
 }
@@ -398,16 +276,15 @@ html, body {
     margin-top: 15px !important;
 }
 
-/* 컨트롤 위치 조정 */
-/* Leaflet 컨트롤 컨테이너가 내용물에 맞춰지도록 조정 */
+/* Control Position Adjustments */
 .leaflet-top.leaflet-right {
     display: flex;
     flex-direction: column;
     gap: 10px;
     top: 10px !important;
     right: 10px !important;
-    width: auto;  /* 너비를 내용물에 맞춤 */
-    height: auto; /* 높이를 내용물에 맞춤 */
+    width: auto;
+    height: auto;
 }
 
 .leaflet-bottom.leaflet-right {
@@ -416,15 +293,15 @@ html, body {
     gap: 10px;
     bottom: 40px !important;
     right: 10px !important;
-    width: auto;  /* 너비를 내용물에 맞춤 */
-    height: auto; /* 높이를 내용물에 맞춤 */
+    width: auto;
+    height: auto;
 }
 
 .leaflet-bottom.leaflet-left {
     margin-bottom: 10px;
 }
 
-/* 마지막 업데이트 정보 */
+/* Last Updated Info */
 .last-updated-info {
     font-family: 'Noto Sans KR', sans-serif;
     font-size: 14px;
@@ -435,7 +312,7 @@ html, body {
     border: 1px solid #eee;
 }
 
-/* 오류 메시지 */
+/* Error Message */
 .error-message {
     font-family: 'Noto Sans KR', sans-serif;
     font-size: 14px;
@@ -447,7 +324,7 @@ html, body {
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
-/* 반응형 디자인 - 모바일 */
+/* Responsive Design - Mobile */
 @media (max-width: 768px) {
     .transport-tab-container {
         height: 7%;
@@ -518,7 +395,7 @@ html, body {
     }
 }
 
-/* 반응형 디자인 - 매우 작은 화면 */
+/* Responsive Design - Very Small Screens */
 @media (max-width: 480px) {
     .transport-tab {
         font-size: 11px;
