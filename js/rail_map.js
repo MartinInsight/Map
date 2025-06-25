@@ -5,20 +5,8 @@ class RailCongestionMap {
         this.currentData = null;
         this.lastUpdated = null;
         this.filterControlInstance = null;
-        this.errorControl = null;
-        this.lastUpdatedControl = null;
-
-        // Initialize MarkerClusterGroup
-        // chunkedLoading: 대량의 마커를 점진적으로 로드하여 성능 향상
-        // maxClusterRadius: 클러스터링을 위한 마커 검색 반경 (픽셀). 낮을수록 더 많은 클러스터가 생성됨.
-        // disableClusteringAtZoom: 이 줌 레벨 이상에서는 클러스터링이 비활성화되고 개별 마커가 표시됨.
-        this.markerClusterGroup = L.markerClusterGroup({
-            chunkedLoading: true,
-            maxClusterRadius: 80, // Adjust as needed for cluster density
-            disableClusteringAtZoom: 9, // At zoom level 9 and higher, clustering stops and individual markers appear
-            iconCreateFunction: this._createClusterIcon.bind(this) // Custom function for cluster icon styling
-        });
-        this.map.addLayer(this.markerClusterGroup); // Add the cluster group to the map
+        this.errorControl = null; // Ensure errorControl is initialized
+        this.lastUpdatedControl = null; // Initialize lastUpdatedControl
 
         // 지도 타일 레이어를 CartoDB Light All로 변경하여 영어 지명 통일
         L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', {
@@ -39,39 +27,7 @@ class RailCongestionMap {
             }
         });
 
-        // Add cluster click listener for aggregated popup
-        this.markerClusterGroup.on('clusterclick', (a) => {
-            const cluster = a.layer; // The clicked cluster layer
-            const childMarkers = cluster.getAllChildMarkers(); // Get all markers within this cluster
-            let aggregatedContent = `<h4>Clustered Locations (${childMarkers.length})</h4><div style="max-height: 200px; overflow-y: auto;">`;
-
-            // Aggregate information from all child markers
-            childMarkers.forEach(marker => {
-                const item = marker.options._rawData; // Access original data stored on the marker
-                if (item) {
-                    aggregatedContent += `
-                        <p style="margin-bottom: 5px;">
-                            <strong>${item.location || 'Unknown'}:</strong>
-                            <span style="color: ${this.getColor(item.congestion_level, true)}">${item.congestion_level || 'N/A'}</span>,
-                            ${item.congestion_score?.toFixed(1) || 'N/A'} hours
-                        </p>
-                    `;
-                }
-            });
-            aggregatedContent += `</div>`;
-
-            // Open a popup at the cluster's location with aggregated content
-            L.popup({
-                closeButton: true,
-                autoClose: false, // Keep open until manually closed
-                closeOnClick: false, // Don't close when clicking on map
-                maxHeight: 250 // Limit max height for scrollability
-            })
-            .setLatLng(cluster.getLatLng()) // Use cluster's center for popup position
-            .setContent(aggregatedContent)
-            .openOn(this.map);
-        });
-
+        // this.addControls(); // 기존 중복 컨트롤 호출 제거
         this.loadData();
     }
 
@@ -91,12 +47,12 @@ class RailCongestionMap {
             })).filter(item => item.lat && item.lng && item.Yard);
 
             if (this.currentData.length > 0) {
-                this.lastUpdated = this.currentData[0].date;
+                this.lastUpdated = this.currentData[0].date; // 'date' 필드를 lastUpdated로 설정
             }
 
             this.renderMarkers();
             this.addLastUpdatedText();
-            this.addRightControls();
+            this.addRightControls(); // 필터 및 리셋 버튼을 포함하는 새로운 컨트롤 추가
         } catch (error) {
             console.error("Failed to load rail data:", error);
             this.displayErrorMessage("Failed to load rail data. Please try again later.");
@@ -110,6 +66,7 @@ class RailCongestionMap {
 
         if (this.lastUpdated) {
             const date = new Date(this.lastUpdated);
+            // AirCongestionMap과 동일한 toLocaleString 포맷 사용
             const formattedDate = date.toLocaleString('en-US', {
                 year: 'numeric',
                 month: 'long',
@@ -133,8 +90,8 @@ class RailCongestionMap {
     }
 
     renderMarkers(data = this.currentData) {
-        this.markerClusterGroup.clearLayers(); // Clear all markers from the cluster group before re-rendering
-        this.markers = []; // Clear internal array for fresh markers
+        this.markers.forEach(marker => this.map.removeLayer(marker));
+        this.markers = [];
 
         data.forEach(item => {
             const marker = L.circleMarker([item.lat, item.lng], {
@@ -143,15 +100,17 @@ class RailCongestionMap {
                 color: "#000",
                 weight: 1,
                 opacity: 1,
-                fillOpacity: 0.8,
-                _rawData: item // Store original data directly on the marker options
+                fillOpacity: 0.8
             });
 
-            // Bind mouseover/mouseout/click events for individual markers (when not clustered)
             marker.on({
                 mouseover: (e) => {
                     this.map.closePopup();
-                    L.popup({ closeButton: false, autoClose: true, closeOnClick: true })
+                    const popup = L.popup({
+                        closeButton: false,
+                        autoClose: true,
+                        closeOnClick: true
+                    })
                         .setLatLng(e.latlng)
                         .setContent(this.createPopupContent(item))
                         .openOn(this.map);
@@ -161,88 +120,34 @@ class RailCongestionMap {
                 },
                 click: (e) => {
                     this.map.closePopup();
-                    // Zoom in to a fixed level if the current zoom is less than 8
-                    this.map.setView(e.latlng, Math.max(this.map.getZoom(), 8));
-                    L.popup({ closeButton: true, autoClose: false, closeOnClick: false })
+                    this.map.setView(e.latlng, 8);
+
+                    L.popup({
+                        closeButton: true,
+                        autoClose: false,
+                        closeOnClick: false
+                    })
                         .setLatLng(e.latlng)
                         .setContent(this.createPopupContent(item))
                         .openOn(this.map);
                 }
             });
 
-            this.markerClusterGroup.addLayer(marker); // Add marker to the cluster group
-            this.markers.push(marker); // Keep reference in the internal array
+            marker.addTo(this.map);
+            this.markers.push(marker);
         });
     }
 
-    // Helper to rank congestion levels from lowest (1) to highest (5)
-    _getCongestionRank(level) {
-        switch (level) {
-            case 'Very Low': return 1;
-            case 'Low': return 2;
-            case 'Average': return 3;
-            case 'High': return 4;
-            case 'Very High': return 5;
-            default: return 0; // For 'Unknown' or other cases
-        }
-    }
-
-    // Custom icon creation function for marker clusters
-    _createClusterIcon(cluster) {
-        const childMarkers = cluster.getAllChildMarkers();
-        let highestRank = 0;
-        let mostCongestedLevel = 'Average'; // Default to Average if no data or unknown levels
-
-        // Find the most congested level among all child markers
-        childMarkers.forEach(marker => {
-            const markerData = marker.options._rawData; // Access original data
-            if (markerData && markerData.congestion_level) {
-                const currentRank = this._getCongestionRank(markerData.congestion_level);
-                if (currentRank > highestRank) {
-                    highestRank = currentRank;
-                    mostCongestedLevel = markerData.congestion_level;
-                }
-            }
-        });
-
-        // Get the color for the most congested level
-        const backgroundColor = this.getColor(mostCongestedLevel);
-        const childCount = cluster.getChildCount(); // Number of markers in this cluster
-        const iconSize = 40; // Fixed medium size for cluster icon
-
-        // Return a custom divIcon for the cluster
-        return L.divIcon({
-            html: `
-                <div style="
-                    background-color: ${backgroundColor};
-                    width: ${iconSize}px;
-                    height: ${iconSize}px;
-                    border-radius: 50%;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    color: white; /* Text color */
-                    font-weight: bold;
-                    font-size: 16px;
-                    box-shadow: 0 2px 8px rgba(0,0,0,0.1); /* Consistent shadow for individual elements */
-                ">
-                    <span>${childCount}</span>
-                </div>
-            `,
-            className: 'marker-cluster-custom', // Custom class for additional styling if needed
-            iconSize: [iconSize, iconSize] // Set icon size
-        });
-    }
-
+    // New combined method for right-side controls (Filter and Reset)
     addRightControls() {
-        if (this.filterControlInstance) {
+        if (this.filterControlInstance) { // Using filterControlInstance for the whole group
             this.map.removeControl(this.filterControlInstance);
         }
 
         const control = L.control({ position: 'topright' });
 
         control.onAdd = () => {
-            const div = L.DomUtil.create('div', 'map-control-group-right');
+            const div = L.DomUtil.create('div', 'map-control-group-right'); // Use the grouping class
 
             const validYards = this.currentData
                 .filter(item => item.Yard && item.Yard.trim() !== '')
@@ -250,6 +155,7 @@ class RailCongestionMap {
 
             const yards = [...new Set(validYards)].sort((a, b) => a.localeCompare(b));
 
+            // Select Yard dropdown (added first)
             const filterDropdownHtml = `
                 <select class="yard-filter">
                     <option value="">Select Yard</option>
@@ -258,13 +164,15 @@ class RailCongestionMap {
                     ).join('')}
                 </select>
             `;
-            div.insertAdjacentHTML('beforeend', filterDropdownHtml);
+            div.insertAdjacentHTML('beforeend', filterDropdownHtml); // Insert dropdown
 
+            // Reset View button (added second)
             const resetButtonHtml = `
                 <button class="rail-reset-btn reset-btn">Reset View</button>
             `;
-            div.insertAdjacentHTML('beforeend', resetButtonHtml);
+            div.insertAdjacentHTML('beforeend', resetButtonHtml); // Insert reset button
 
+            // Event Listeners (after elements are in the DOM)
             div.querySelector('.yard-filter').addEventListener('change', (e) => {
                 const yardName = e.target.value;
                 if (!yardName) {
@@ -276,11 +184,8 @@ class RailCongestionMap {
                 const yardData = this.currentData.filter(item => item.Yard === yardName);
                 if (yardData.length > 0) {
                     const center = this.getYardCenter(yardData);
-                    this.map.setView(center, 8);
-                    // When a filter is applied, we want to re-render ALL current data,
-                    // but the view will be focused on the filtered item.
-                    // Marker clustering will handle showing only relevant markers or clusters.
-                    this.renderMarkers(this.currentData);
+                    this.map.setView(center, 8); // Use fixed zoom level 8 for consistency
+                    this.renderMarkers(this.currentData); // Keep all markers visible
                 }
             });
 
@@ -294,7 +199,7 @@ class RailCongestionMap {
             L.DomEvent.disableClickPropagation(div);
             L.DomEvent.disableScrollPropagation(div);
 
-            this.filterControlInstance = control;
+            this.filterControlInstance = control; // Store the whole combined control
             return div;
         };
 
@@ -319,7 +224,6 @@ class RailCongestionMap {
     }
 
     getRadiusByIndicator(indicator) {
-        if (indicator == null) return 5; // Default radius for null indicator
         if (indicator > 2) return 20;
         if (indicator > 1) return 16;
         if (indicator > -1) return 12;
@@ -333,8 +237,7 @@ class RailCongestionMap {
             'High': '#f88c2b',
             'Low': '#5fa9f6',
             'Very Low': '#004fc0',
-            'Average': '#bcbcbc',
-            'Unknown': '#cccccc' // Added for unknown levels
+            'Average': '#bcbcbc'
         };
 
         const textColors = {
@@ -342,11 +245,10 @@ class RailCongestionMap {
             'High': '#7c4616',
             'Low': '#30557b',
             'Very Low': '#002860',
-            'Average': '#5e5e5e',
-            'Unknown': '#5e5e5e' // Added for unknown levels
+            'Average': '#5e5e5e'
         };
 
-        return isText ? textColors[level] || textColors['Unknown'] : circleColors[level] || circleColors['Unknown'];
+        return isText ? textColors[level] : circleColors[level];
     }
 
     createPopupContent(data) {
