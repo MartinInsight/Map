@@ -164,7 +164,7 @@ class RailCongestionMap {
                     const baseLat = itemsAtCoord[0].lat;
                     const baseLng = itemsAtCoord[0].lng;
                     
-                    const offsetScale = 0.1; 
+                    const offsetScale = 0.0005; 
 
                     itemsAtCoord.forEach((item, index) => {
                         const angle = (index / itemsAtCoord.length) * 2 * Math.PI;
@@ -557,4 +557,61 @@ class RailCongestionMap {
         const maxLng = Math.max(...lngs);
 
         return [
-            (minLat + maxLat)
+            (minLat + maxLat) / 2,
+            (minLng + maxLng) / 2
+        ];
+    }
+
+    getRadiusByIndicator(indicator) {
+        if (indicator > 2) return 20;
+        if (indicator > 1) return 16;
+        if (indicator > -1) return 12;
+        if (indicator > -2) return 8;
+        return 5;
+    }
+
+    getColor(level, isText = false) {
+        const circleColors = {
+            'Very High': '#d62828',
+            'High': '#f88c2b',
+            'Low': '#5fa9f6',
+            'Very Low': '#004fc0',
+            'Average': '#bcbcbc',
+            'Unknown': '#bcbcbc' 
+        };
+
+        const textColors = {
+            'Very High': '#6b1414',
+            'High': '#7c4616',
+            'Low': '#30557b',
+            'Very Low': '#002860',
+            'Average': '#5e5e5e',
+            'Unknown': '#5e5e5e'
+        };
+
+        return isText ? textColors[level] : circleColors[level];
+    }
+
+    displayErrorMessage(message) {
+        if (this.errorControl) {
+            this.map.removeControl(this.errorControl);
+        }
+
+        const errorControl = L.control({ position: 'topleft' });
+        errorControl.onAdd = function() {
+            const div = L.DomUtil.create('div', 'error-message');
+            div.innerHTML = message;
+            return div;
+        };
+        errorControl.addTo(this.map);
+        this.errorControl = errorControl;
+
+        setTimeout(() => {
+            if (this.map.hasControl(this.errorControl)) {
+                this.map.removeControl(this.errorControl);
+            }
+        }, 5000);
+    }
+}
+
+window.RailCongestionMap = RailCongestionMap;
