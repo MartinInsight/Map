@@ -69,12 +69,26 @@ class RailCongestionMap {
         });
 
         // Listen for map move/zoom end events to open queued popups from filter selection
-        this.map.on('moveend zoomend', () => {
+        // 'moveend' is generally sufficient for pans and zooms.
+        this.map.on('moveend', () => {
             if (this.markerToOpenAfterMove) {
                 console.log('Map animation ended, attempting to open queued popup.');
-                this.map.closePopup(); // Close any existing popups first
-                this.markerToOpenAfterMove.openPopup();
-                this.markerToOpenAfterMove = null; // Clear the queue
+                // Ensure the marker is still on the map (e.g., not filtered out or removed)
+                // And that its layer is added to the map (can happen after spiderfy)
+                if (this.allMarkers.hasLayer(this.markerToOpenAfterMove) || 
+                    (this.markerToOpenAfterMove._map && this.markerToOpenAfterMove._map === this.map)) {
+                    
+                    // Close any other popups first for clean display
+                    this.map.closePopup(); 
+                    
+                    // If the marker is within a cluster that needs spiderfying, this handles it.
+                    // If it's already visible, it just opens.
+                    this.markerToOpenAfterMove.openPopup();
+                    console.log(`Popup opened for ${this.markerToOpenAfterMove.options.itemData.Yard}`);
+                } else {
+                    console.warn('Queued marker not found on map after moveend, cannot open popup.');
+                }
+                this.markerToOpenAfterMove = null; // Clear the queue regardless
             }
         });
     }
@@ -115,7 +129,7 @@ class RailCongestionMap {
                     const baseLat = itemsAtCoord[0].lat;
                     const baseLng = itemsAtCoord[0].lng;
                     
-                    const offsetScale = 0.1; 
+                    const offsetScale = 0.0005; 
 
                     itemsAtCoord.forEach((item, index) => {
                         const angle = (index / itemsAtCoord.length) * 2 * Math.PI;
@@ -240,32 +254,36 @@ class RailCongestionMap {
 
         const popupOptions = {
             closeButton: true,
-            autoClose: false, // Managed by marker's click/tap and map's general click
-            closeOnClick: false, // Managed by marker's click/tap
+            autoClose: false, // We'll manage closing manually
+            closeOnClick: false, // We'll manage closing manually on marker click/tap
             maxHeight: 300,
             maxWidth: 300
         };
 
-        // Bind popup content
+        // Bind popup content once
         marker.bindPopup(this.createPopupContent([item]), popupOptions);
 
         // Desktop specific hover logic
         if (!L.Browser.mobile) {
             marker.on('mouseover', () => {
-                if (!marker.getPopup().isOpen()) { // Only open if not already open by a click
-                    marker.openPopup();
-                }
+                // Ensure only one popup is open at a time on hover
+                this.map.closePopup(); 
+                marker.openPopup();
             });
+            // PC: Close popup when mouse leaves the marker, if it was opened by hover
             marker.on('mouseout', () => {
-                if (!marker.getPopup().isOpen()) { // Only close if it was opened by hover
-                    this.map.closePopup();
+                // Check if the current popup is the one we just moused out of
+                if (marker.getPopup() && marker.getPopup().isOpen() && marker.getPopup()._source === marker) {
+                    marker.closePopup();
                 }
             });
         }
         
         // Universal click/tap logic for both desktop and mobile
+        // Leaflet's 'click' event handles both mouse clicks and mobile taps reliably by default.
         marker.on('click', (e) => {
-            L.DomEvent.stopPropagation(e); // Prevent map's click from interfering
+            // Stop event propagation to prevent the map's click listener from immediately closing the popup
+            L.DomEvent.stopPropagation(e); 
 
             if (marker.getPopup().isOpen()) {
                 marker.closePopup();
@@ -399,33 +417,25 @@ class RailCongestionMap {
                         console.log(`Setting view to center: ${center}`);
                         this.map.setView(center, 8); 
                         
-                        // Find the actual Leaflet marker from the cluster group to queue for opening
+                        // Find the actual Leaflet marker to queue for opening
+                        // Iterate through ALL child markers of the cluster group, not just top-level clusters/markers
                         let foundMarkerForFilter = null;
-                        this.allMarkers.eachLayer(layer => {
-                            if (layer instanceof L.Marker) {
-                                if (layer.options.itemData && layer.options.itemData.Yard === yardName) {
-                                    foundMarkerForFilter = layer;
-                                    console.log('Found direct marker for filter selection.');
-                                    // If a cluster is covering it, this will be handled when openPopup is called.
-                                }
-                            } else if (layer instanceof L.MarkerCluster) {
-                                const childMarkers = layer.getAllChildMarkers();
-                                const foundInCluster = childMarkers.find(child => child.options.itemData && child.options.itemData.Yard === yardName);
-                                if (foundInCluster) {
-                                    layer.spiderfy(); // Spiderfy the cluster to make the individual marker accessible
-                                    foundMarkerForFilter = foundInCluster;
-                                    console.log('Found marker within a cluster, spiderfying.');
-                                }
+                        
+                        // Use getLayers() to get all individual markers within the cluster group
+                        const allIndividualMarkers = this.allMarkers.getLayers(); 
+                        for (const marker of allIndividualMarkers) {
+                            if (marker.options.itemData && marker.options.itemData.Yard === yardName) {
+                                foundMarkerForFilter = marker;
+                                console.log(`Found marker for filter: ${yardName}`);
+                                // If this marker is currently hidden inside a cluster,
+                                // openPopup() itself will handle spiderfying it if necessary
+                                break; 
                             }
-                            if (foundMarkerForFilter) {
-                                // Important: Break from `eachLayer` once found to prevent opening multiple popups
-                                return false; 
-                            }
-                        });
+                        }
 
                         this.markerToOpenAfterMove = foundMarkerForFilter;
                         if (!foundMarkerForFilter) {
-                            console.warn(`No marker found for yard '${yardName}' after filter selection.`);
+                            console.warn(`No *individual* marker found for yard '${yardName}' after filter selection.`);
                         }
                     } else {
                         console.warn(`No data found for yard '${yardName}'.`);
