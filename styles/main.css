@@ -392,6 +392,40 @@ html, body {
     pointer-events: none; /* Allow map interaction through it if it's just text */
 }
 
+/* 클러스터 마커 스타일 */
+.cluster-marker-count {
+    color: white;
+    font-weight: bold;
+    font-size: 12px;
+    text-align: center;
+    margin-top: 3px;
+}
+
+.cluster-tooltip {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+}
+
+/* 클러스터 팝업 스타일 */
+.cluster-popup-header {
+    margin-bottom: 10px;
+}
+
+.cluster-popup-content {
+    max-height: 250px;
+    overflow-y: auto;
+    padding-right: 5px;
+}
+
+.location-info {
+    margin: 10px 0;
+}
+
+.location-info h5 {
+    margin-bottom: 5px;
+    color: #333;
+}
 
 /* Last Updated Info */
 .last-updated-info {
