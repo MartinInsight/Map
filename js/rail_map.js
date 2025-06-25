@@ -48,7 +48,7 @@ class RailCongestionMap {
         this.filterControlInstance = null;
         this.errorControl = null;
         this.lastUpdatedControl = null;
-        this.markerToOpenAfterMove = null; // New property to hold marker for delayed opening
+        this.markerToOpenAfterMove = null; // Property to hold marker for delayed opening
 
         L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', {
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
@@ -68,15 +68,13 @@ class RailCongestionMap {
             this.map.closePopup();
         });
 
-        // Listen for map move/zoom end events to open queued popups
+        // Listen for map move/zoom end events to open queued popups from filter selection
         this.map.on('moveend zoomend', () => {
             if (this.markerToOpenAfterMove) {
-                // Ensure any previous popups are closed
-                this.map.closePopup(); 
-                // Open the queued marker's popup
+                console.log('Map animation ended, attempting to open queued popup.');
+                this.map.closePopup(); // Close any existing popups first
                 this.markerToOpenAfterMove.openPopup();
-                // Clear the queue
-                this.markerToOpenAfterMove = null;
+                this.markerToOpenAfterMove = null; // Clear the queue
             }
         });
     }
@@ -242,52 +240,40 @@ class RailCongestionMap {
 
         const popupOptions = {
             closeButton: true,
-            autoClose: false, // Map's click handler will close other popups
-            closeOnClick: false, // Marker's click/tap handler will toggle this one
+            autoClose: false, // Managed by marker's click/tap and map's general click
+            closeOnClick: false, // Managed by marker's click/tap
             maxHeight: 300,
             maxWidth: 300
         };
 
-        // Bind popup content once
+        // Bind popup content
         marker.bindPopup(this.createPopupContent([item]), popupOptions);
 
+        // Desktop specific hover logic
         if (!L.Browser.mobile) {
-            // Desktop hover events
-            marker.on({
-                mouseover: (e) => {
-                    if (!marker.getPopup().isOpen()) {
-                        marker.openPopup();
-                    }
-                },
-                mouseout: () => {
-                    if (!marker.getPopup().isOpen()) {
-                        this.map.closePopup();
-                    }
-                }
-            });
-            // Desktop click
-            marker.on('click', (e) => {
-                L.DomEvent.stopPropagation(e); 
-                if (marker.getPopup().isOpen()) {
-                    marker.closePopup();
-                } else {
-                    this.map.closePopup(); 
+            marker.on('mouseover', () => {
+                if (!marker.getPopup().isOpen()) { // Only open if not already open by a click
                     marker.openPopup();
                 }
             });
-        } else {
-            // Mobile tap event (more reliable than 'click' for touch devices)
-            marker.on('tap', (e) => {
-                L.DomEvent.stopPropagation(e); // Prevent map's tap/click from interfering
-
-                if (marker.getPopup().isOpen()) {
-                    marker.closePopup();
-                } else {
-                    this.map.closePopup(); // Close any other open popups first
-                    marker.openPopup();
+            marker.on('mouseout', () => {
+                if (!marker.getPopup().isOpen()) { // Only close if it was opened by hover
+                    this.map.closePopup();
                 }
             });
         }
+        
+        // Universal click/tap logic for both desktop and mobile
+        marker.on('click', (e) => {
+            L.DomEvent.stopPropagation(e); // Prevent map's click from interfering
+
+            if (marker.getPopup().isOpen()) {
+                marker.closePopup();
+            } else {
+                this.map.closePopup(); // Close any other open popups first
+                marker.openPopup();
+            }
+        });
 
         return marker;
     }
@@ -404,31 +390,45 @@ class RailCongestionMap {
                 if (yardName === "All") {
                     this.map.setView([37.8, -96], 4);
                     this.map.closePopup(); 
+                    this.markerToOpenAfterMove = null; 
                 } else if (yardName) {
+                    console.log(`Filter selected: ${yardName}`);
                     const yardDataForFilter = this.currentData.filter(item => item.Yard === yardName);
                     if (yardDataForFilter.length > 0) {
                         const center = this.getYardCenter(yardDataForFilter);
+                        console.log(`Setting view to center: ${center}`);
                         this.map.setView(center, 8); 
                         
                         // Find the actual Leaflet marker from the cluster group to queue for opening
                         let foundMarkerForFilter = null;
                         this.allMarkers.eachLayer(layer => {
-                            if (layer instanceof L.Marker && layer.options.itemData && layer.options.itemData.Yard === yardName) {
-                                foundMarkerForFilter = layer;
+                            if (layer instanceof L.Marker) {
+                                if (layer.options.itemData && layer.options.itemData.Yard === yardName) {
+                                    foundMarkerForFilter = layer;
+                                    console.log('Found direct marker for filter selection.');
+                                    // If a cluster is covering it, this will be handled when openPopup is called.
+                                }
                             } else if (layer instanceof L.MarkerCluster) {
                                 const childMarkers = layer.getAllChildMarkers();
                                 const foundInCluster = childMarkers.find(child => child.options.itemData && child.options.itemData.Yard === yardName);
                                 if (foundInCluster) {
-                                    // If found in cluster, ensure it will be spiderfied
-                                    layer.spiderfy(); 
+                                    layer.spiderfy(); // Spiderfy the cluster to make the individual marker accessible
                                     foundMarkerForFilter = foundInCluster;
+                                    console.log('Found marker within a cluster, spiderfying.');
                                 }
                             }
-                            if (foundMarkerForFilter) return; // Break early once found
+                            if (foundMarkerForFilter) {
+                                // Important: Break from `eachLayer` once found to prevent opening multiple popups
+                                return false; 
+                            }
                         });
 
-                        // Store the marker to be opened after map animation
                         this.markerToOpenAfterMove = foundMarkerForFilter;
+                        if (!foundMarkerForFilter) {
+                            console.warn(`No marker found for yard '${yardName}' after filter selection.`);
+                        }
+                    } else {
+                        console.warn(`No data found for yard '${yardName}'.`);
                     }
                 }
             });
