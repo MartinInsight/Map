@@ -1,7 +1,19 @@
 class RailCongestionMap {
     constructor(mapElementId) {
         this.map = L.map(mapElementId).setView([37.8, -96], 4);
-        this.allMarkers = L.markerClusterGroup(); // Leaflet.markercluster 그룹
+        this.allMarkers = L.markerClusterGroup({
+            maxClusterRadius: 40, 
+            disableClusteringAtZoom: 9,
+            
+            // showCoverageOnHover: 클러스터에 마우스 오버 시 클러스터 범위 표시 여부 (기본값 true)
+            showCoverageOnHover: false
+
+            // spiderfyOnMaxZoom: 최대 줌 레벨에서 클러스터 클릭 시 스파이더파이(마커 분산) 여부 (기본값 true)
+            // spiderfyOnMaxZoom: false,
+            
+            // iconCreateFunction: (cluster) => { ... } // 클러스터 아이콘 커스터마이징 (필요시)
+            // 위 옵션을 사용하여 클러스터링 동작을 미세 조정할 수 있습니다.
+        });
         this.currentData = null;
         this.lastUpdated = null;
         this.filterControlInstance = null;
