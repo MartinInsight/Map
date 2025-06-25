@@ -45,7 +45,6 @@ class TruckCongestionMap {
             this.metricData = sheetData;
 
             this.renderMap();
-            // 컨트롤 추가 함수 호출 변경
             this.addToggleControls(); // INBOUND/OUTBOUND 토글 버튼 (상단 중앙)
             this.addRightControls();   // 리셋 버튼과 필터 드롭다운 (상단 우측)
             this.initialized = true;
@@ -138,7 +137,6 @@ class TruckCongestionMap {
         const delay = isInbound ? data.inboundDelay : data.outboundDelay;
         const dwellValue = isInbound ? data.dwellInbound : data.dwellOutbound;
 
-        // 툴팁 이중 박스 문제를 해결하기 위해 <div class="map-tooltip"> 래퍼를 제거했습니다.
         const content = `
             <h4>${data.name || 'Unknown'}</h4>
             <div>
@@ -180,15 +178,16 @@ class TruckCongestionMap {
 
     // INBOUND/OUTBOUND 토글 버튼 컨트롤 (상단 중앙 배치)
     addToggleControls() {
-        const control = L.control({ position: 'topleft' }); // 초기 위치는 topleft로 설정
-        control.onAdd = () => {
-            // 'truck-toggle-map-control'은 Leaflet의 .leaflet-top.leaflet-left에 의해 중앙 정렬됨
-            const div = L.DomUtil.create('div', 'map-control-container truck-toggle-map-control');
-            this.controlDiv = div;
-            this.renderToggleButtons();
-            return div;
-        };
-        control.addTo(this.map);
+        // Leaflet 컨트롤 시스템 대신, 직접 지도 컨테이너에 div를 추가하여 중앙 정렬 CSS가 작동하도록 함
+        const centeredToggleDiv = L.DomUtil.create('div', 'map-control-container truck-toggle-map-control');
+        this.map.getContainer().appendChild(centeredToggleDiv); // 지도의 DOM 요소에 직접 추가
+
+        this.controlDiv = centeredToggleDiv; // 이 div를 참조하도록 설정
+        this.renderToggleButtons();
+
+        // 맵 이벤트 전파 방지
+        L.DomEvent.disableClickPropagation(centeredToggleDiv);
+        L.DomEvent.disableScrollPropagation(centeredToggleDiv);
     }
 
     renderToggleButtons() {
@@ -215,7 +214,6 @@ class TruckCongestionMap {
         const control = L.control({ position: 'topright' });
 
         control.onAdd = () => {
-            // 'map-control-group-right' 클래스에 CSS 스타일을 위임
             const div = L.DomUtil.create('div', 'map-control-group-right');
 
             // 주 선택 필터 드롭다운 추가 (먼저 삽입)
