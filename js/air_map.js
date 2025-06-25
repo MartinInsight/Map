@@ -150,8 +150,6 @@ class AirCongestionMap {
         // Extract region code (e.g., US-CA -> CA)
         const regionCode = data.iso_region ? data.iso_region.split('-').pop() : 'N/A';
 
-        // --- CHANGE START ---
-        // Removed the <div class="map-tooltip"> wrapper
         return `
             <h4>${data.Airport || 'Unknown Airport'}</h4>
             <p><strong>${data.municipality || 'Unknown City'}, ${regionCode}</strong></p>
@@ -160,7 +158,6 @@ class AirCongestionMap {
             <p><strong>Departed:</strong> ${data.departed || 'N/A'}</p>
             <p><strong>Completion:</strong> ${data.completion_factor || 'N/A'}%</p>
         `;
-        // --- CHANGE END ---
     }
 
     /**
@@ -224,15 +221,18 @@ class AirCongestionMap {
                 const airportName = e.target.value;
                 if (!airportName) {
                     this.map.setView([37.8, -96], 4);
-                    this.renderMarkers(this.currentData);
+                    this.renderMarkers(this.currentData); // Render all markers
                     return;
                 }
 
                 const airportData = this.currentData.filter(item => item.Airport === airportName);
                 if (airportData.length > 0) {
                     const center = this.getAirportCenter(airportData);
-                    this.map.setView(center, 8); // Set fixed zoom level 8
-                    this.renderMarkers(airportData);
+                    this.map.setView(center, 8); // Move and zoom to the selected airport
+                    // --- CHANGE START ---
+                    // Render ALL markers (currentData) to ensure all remain visible
+                    this.renderMarkers(this.currentData);
+                    // --- CHANGE END ---
                 }
             });
 
