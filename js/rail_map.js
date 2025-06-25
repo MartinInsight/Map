@@ -85,8 +85,7 @@ class RailCongestionMap {
                 !isNaN(item.lat) && !isNaN(item.lng) && item.location && item.congestion_level
             );
 
-            // --- NEW: Apply Jittering for Identical Coordinates ---
-            const coordinateMap = new Map(); // Stores "lat,lng" as key and an array of items as value
+            const coordinateMap = new Map(); 
 
             processedData.forEach(item => {
                 const coordKey = `${item.lat},${item.lng}`;
@@ -99,15 +98,15 @@ class RailCongestionMap {
             const jitteredData = [];
             coordinateMap.forEach(itemsAtCoord => {
                 if (itemsAtCoord.length > 1) {
-                    // Multiple items at the exact same coordinate
                     const baseLat = itemsAtCoord[0].lat;
                     const baseLng = itemsAtCoord[0].lng;
-                    const offsetScale = 0.0001; // Adjust this value based on your map scale/density.
-                                                // 0.0001 is roughly ~11 meters at the equator.
-                                                // You might need a slightly larger or smaller value.
+                    
+                    // --- 이 값을 더 크게 조정합니다! ---
+                    const offsetScale = 0.0005; // 0.0001 -> 0.0005 (약 55미터)로 변경
+                                                // 0.001 (약 111미터)까지 시도해 볼 수 있습니다.
+                    // -----------------------------------
 
                     itemsAtCoord.forEach((item, index) => {
-                        // Apply a small, unique offset based on the index
                         const angle = (index / itemsAtCoord.length) * 2 * Math.PI;
                         const jitterLat = baseLat + (Math.cos(angle) * offsetScale);
                         const jitterLng = baseLng + (Math.sin(angle) * offsetScale);
@@ -117,32 +116,27 @@ class RailCongestionMap {
                         jitteredData.push(item);
                     });
                 } else {
-                    // Single item at this coordinate, no jitter needed
                     jitteredData.push(itemsAtCoord[0]);
                 }
             });
-            // --- END NEW Jittering Logic ---
 
-
-            this.currentData = jitteredData; // Use the jittered data
+            this.currentData = jitteredData; 
 
             if (this.currentData.length > 0) {
                 this.lastUpdated = this.currentData[0].date;
             }
 
             this.renderMarkers(); 
-            
-            // Call controls AFTER data is loaded and currentData is populated
             this.addRightControls();
             this.addLastUpdatedText();
-            this.addLegend(); // If you want the legend back
-            
+            this.addLegend(); 
 
         } catch (error) {
             console.error("Failed to load rail data:", error);
             this.displayErrorMessage("Failed to load rail data. Please try again later.");
         }
     }
+    
     renderMarkers(data = this.currentData) {
         if (!data || data.length === 0) {
             console.warn("No data provided to renderMarkers or data is empty. Clearing map layers.");
