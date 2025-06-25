@@ -71,7 +71,7 @@ class RailCongestionMap {
             if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
             const rawData = await response.json();
 
-            this.currentData = rawData.map(item => ({
+            let processedData = rawData.map(item => ({
                 lat: parseFloat(item.lat || item.Latitude), 
                 lng: parseFloat(item.lng || item.Longitude),
                 Yard: item.location || item.Yard || item.Location || 'Unknown', 
@@ -85,23 +85,64 @@ class RailCongestionMap {
                 !isNaN(item.lat) && !isNaN(item.lng) && item.location && item.congestion_level
             );
 
+            // --- NEW: Apply Jittering for Identical Coordinates ---
+            const coordinateMap = new Map(); // Stores "lat,lng" as key and an array of items as value
+
+            processedData.forEach(item => {
+                const coordKey = `${item.lat},${item.lng}`;
+                if (!coordinateMap.has(coordKey)) {
+                    coordinateMap.set(coordKey, []);
+                }
+                coordinateMap.get(coordKey).push(item);
+            });
+
+            const jitteredData = [];
+            coordinateMap.forEach(itemsAtCoord => {
+                if (itemsAtCoord.length > 1) {
+                    // Multiple items at the exact same coordinate
+                    const baseLat = itemsAtCoord[0].lat;
+                    const baseLng = itemsAtCoord[0].lng;
+                    const offsetScale = 0.0001; // Adjust this value based on your map scale/density.
+                                                // 0.0001 is roughly ~11 meters at the equator.
+                                                // You might need a slightly larger or smaller value.
+
+                    itemsAtCoord.forEach((item, index) => {
+                        // Apply a small, unique offset based on the index
+                        const angle = (index / itemsAtCoord.length) * 2 * Math.PI;
+                        const jitterLat = baseLat + (Math.cos(angle) * offsetScale);
+                        const jitterLng = baseLng + (Math.sin(angle) * offsetScale);
+
+                        item.lat = jitterLat;
+                        item.lng = jitterLng;
+                        jitteredData.push(item);
+                    });
+                } else {
+                    // Single item at this coordinate, no jitter needed
+                    jitteredData.push(itemsAtCoord[0]);
+                }
+            });
+            // --- END NEW Jittering Logic ---
+
+
+            this.currentData = jitteredData; // Use the jittered data
+
             if (this.currentData.length > 0) {
                 this.lastUpdated = this.currentData[0].date;
             }
 
             this.renderMarkers(); 
             
-            // --- Call controls AFTER data is loaded and currentData is populated ---
+            // Call controls AFTER data is loaded and currentData is populated
             this.addRightControls();
             this.addLastUpdatedText();
-            // If you had addLegend, it would also go here: this.addLegend();
+            this.addLegend(); // If you want the legend back
+            
 
         } catch (error) {
             console.error("Failed to load rail data:", error);
             this.displayErrorMessage("Failed to load rail data. Please try again later.");
         }
     }
-
     renderMarkers(data = this.currentData) {
         if (!data || data.length === 0) {
             console.warn("No data provided to renderMarkers or data is empty. Clearing map layers.");
