@@ -3,9 +3,9 @@ class RailCongestionMap {
         this.map = L.map(mapElementId).setView([37.8, -96], 4);
         
         this.allMarkers = L.markerClusterGroup({
-            maxClusterRadius: 40, // Adjust as needed
-            disableClusteringAtZoom: 9, // Adjust as needed
-            spiderfyOnMaxZoom: true, // Keep this for spreading overlapping markers visually
+            maxClusterRadius: 40, 
+            disableClusteringAtZoom: 9, 
+            spiderfyOnMaxZoom: true, 
             
             iconCreateFunction: (cluster) => {
                 const childMarkers = cluster.getAllChildMarkers();
@@ -62,7 +62,7 @@ class RailCongestionMap {
 
         this.loadData();
 
-        // Close popup when clicking on the map itself
+        // Close popup when clicking on the map itself (outside of a marker)
         this.map.on('click', () => {
             this.map.closePopup();
         });
@@ -161,7 +161,8 @@ class RailCongestionMap {
         this.allMarkers.off('clusterclick');
         this.allMarkers.on('clusterclick', (a) => {
             a.layer.zoomToBounds();
-            this.map.closePopup();
+            // Keep popups on clusters only for hover, not click
+            // this.map.closePopup(); 
         });
 
         this.allMarkers.off('clustermouseover');
@@ -225,37 +226,39 @@ class RailCongestionMap {
             itemData: item 
         });
 
+        // Bind popup content once
+        marker.bindPopup(this.createPopupContent([item]), {
+            closeButton: true, // Allow closing with the X button
+            autoClose: false, // Prevent auto-closing when clicking outside the popup (map handles this)
+            closeOnClick: false, // Prevent auto-closing when clicking the marker again (manual toggle handles this)
+            maxHeight: 300,
+            maxWidth: 300
+        });
+
         marker.on({
             mouseover: (e) => {
-                // Only show hover popup if a click popup isn't already open on this marker
-                if (!marker.getPopup() || !marker.getPopup().isOpen()) {
-                    const popup = L.popup({
-                        closeButton: false,
-                        autoClose: true,
-                        closeOnClick: false,
-                        maxHeight: 300,
-                        maxWidth: 300
-                    })
-                    .setLatLng(e.latlng)
-                    .setContent(this.createPopupContent([item]))
-                    .openOn(this.map);
+                // Only show hover popup if a click popup isn't already open for THIS marker
+                if (!marker.getPopup().isOpen()) {
+                    marker.openPopup();
                 }
             },
             mouseout: () => {
-                // Only close hover popup if it's not the one opened by click
-                if (!marker.getPopup() || !marker.getPopup().isOpen()) {
+                // Only close hover popup if it was opened by hover, not by click
+                // and if it's not currently open via click
+                if (!marker.getPopup().isOpen()) {
                     this.map.closePopup();
                 }
             },
             click: (e) => {
-                // Stop event propagation to prevent map click from immediately closing it again
+                // Prevent map's click listener from immediately closing this popup
                 L.DomEvent.stopPropagation(e); 
-
-                if (marker.getPopup() && marker.getPopup().isOpen()) {
+                
+                // Toggle popup visibility for this specific marker
+                if (marker.getPopup().isOpen()) {
                     marker.closePopup();
                 } else {
                     this.map.closePopup(); // Close any other open popups first
-                    marker.bindPopup(this.createPopupContent([item])).openPopup();
+                    marker.openPopup();
                 }
             }
         });
@@ -375,24 +378,40 @@ class RailCongestionMap {
                     this.map.setView([37.8, -96], 4);
                     this.map.closePopup(); // Close any open popup when resetting
                 } else if (yardName) {
-                    const yardData = this.currentData.filter(item => item.Yard === yardName);
-                    if (yardData.length > 0) {
-                        const center = this.getYardCenter(yardData);
-                        this.map.setView(center, 8); // Zoom to yard center
+                    const yardDataForFilter = this.currentData.filter(item => item.Yard === yardName);
+                    if (yardDataForFilter.length > 0) {
+                        const center = this.getYardCenter(yardDataForFilter);
+                        this.map.setView(center, 8); 
                         
-                        // Close any existing popups before opening a new one
-                        this.map.closePopup(); 
+                        this.map.closePopup(); // Close any existing popups
 
-                        // Find the actual Leaflet marker in this.allMarkers for the selected yard
-                        // We check `markerLayer.options.itemData` to access the original data linked to the marker
-                        const foundMarker = this.allMarkers.getLayers().find(markerLayer => 
-                            markerLayer.options.itemData && markerLayer.options.itemData.Yard === yardName
-                        );
+                        // Try to find the actual Leaflet marker from the cluster group
+                        // that matches the selected yard.
+                        let markerToOpen = null;
+                        this.allMarkers.eachLayer(layer => {
+                            // Check if it's an individual marker or a cluster that contains our yard
+                            if (layer instanceof L.Marker && layer.options.itemData && layer.options.itemData.Yard === yardName) {
+                                markerToOpen = layer;
+                                return; // Found an individual marker, can stop
+                            } else if (layer instanceof L.MarkerCluster) {
+                                // If it's a cluster, check if any child markers belong to the selected yard
+                                const childMarkers = layer.getAllChildMarkers();
+                                const foundInCluster = childMarkers.find(child => child.options.itemData && child.options.itemData.Yard === yardName);
+                                if (foundInCluster) {
+                                    // If we find it in a cluster, spiderfy the cluster and then try to open the marker
+                                    // This will make the individual marker visible if it was hidden by clustering
+                                    layer.spiderfy(); 
+                                    markerToOpen = foundInCluster; // Set it to the marker found within the cluster
+                                    return; 
+                                }
+                            }
+                        });
 
-                        if (foundMarker) {
-                            // Open the popup for this specific marker.
-                            // Leaflet.markercluster will handle spiderfying if needed.
-                            foundMarker.openPopup();
+                        if (markerToOpen) {
+                             // This is important: ensure the popup is bound and then open it.
+                            markerToOpen.openPopup();
+                        } else {
+                            console.warn(`Marker for yard '${yardName}' not found or not visible after filter.`);
                         }
                     }
                 }
@@ -400,7 +419,7 @@ class RailCongestionMap {
 
             div.querySelector('.rail-reset-btn').addEventListener('click', () => {
                 this.map.setView([37.8, -96], 4);
-                this.map.closePopup(); // Close any open popup
+                this.map.closePopup(); 
                 const yardFilter = div.querySelector('.yard-filter');
                 if (yardFilter) {
                     yardFilter.value = ''; 
@@ -418,7 +437,7 @@ class RailCongestionMap {
         control.addTo(this.map);
     }
 
-    addLegend() { // This method is still present, assuming it's commented out in constructor
+    addLegend() { 
         const legend = L.control({ position: 'bottomright' });
 
         legend.onAdd = function (map) {
