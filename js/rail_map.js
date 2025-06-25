@@ -2,14 +2,13 @@ class RailCongestionMap {
     constructor(mapElementId) {
         this.map = L.map(mapElementId).setView([37.8, -96], 4);
         
-        // L.markerClusterGroup 초기화 시 iconCreateFunction 옵션 추가
         this.allMarkers = L.markerClusterGroup({
             maxClusterRadius: 40, 
             disableClusteringAtZoom: 9, 
             
             iconCreateFunction: (cluster) => {
                 const childMarkers = cluster.getAllChildMarkers();
-                let highestCongestionLevelValue = -1; // 혼잡도를 숫자로 매핑하여 가장 높은 값 찾기
+                let highestCongestionLevelValue = -1;
                 let dominantColor = this.getColor('Average'); 
 
                 const congestionLevelToValue = (level) => {
@@ -18,12 +17,11 @@ class RailCongestionMap {
                         case 'High': return 3;
                         case 'Low': return 2;
                         case 'Very Low': return 1;
-                        default: return 0; // 'Average' 또는 'Unknown'
+                        default: return 0;
                     }
                 };
 
                 childMarkers.forEach(marker => {
-                    // 마커 옵션에서 itemData를 안전하게 접근 (원형 마커 대신 DivIcon 마커를 사용하므로 marker.options.itemData 사용)
                     const itemData = marker.options.itemData; 
                     if (itemData && itemData.congestion_level) {
                         const currentLevelValue = congestionLevelToValue(itemData.congestion_level);
@@ -35,7 +33,7 @@ class RailCongestionMap {
                 });
 
                 const childCount = cluster.getChildCount();
-                const size = 30 + Math.min(childCount * 0.5, 30); // 클러스터 크기를 마커 개수에 따라 동적으로 조절
+                const size = 30 + Math.min(childCount * 0.5, 30);
                 
                 return new L.DivIcon({
                     html: `<div style="background-color: ${dominantColor}; width: ${size}px; height: ${size}px; line-height: ${size}px; border-radius: 50%; color: white; font-weight: bold; text-align: center; display: flex; align-items: center; justify-content: center;"><span>${childCount}</span></div>`,
@@ -44,7 +42,7 @@ class RailCongestionMap {
                 });
             }
         });
-        this.currentData = null;
+        this.currentData = null; // Keep this as null initially
         this.lastUpdated = null;
         this.filterControlInstance = null;
         this.errorControl = null;
@@ -60,10 +58,6 @@ class RailCongestionMap {
             [-85, -180],
             [85, 180]
         ]);
-
-        this.addRightControls();
-        this.addLastUpdatedText();
-        this.addLegend(); // 범례 추가
 
         this.loadData();
     }
@@ -93,6 +87,12 @@ class RailCongestionMap {
             }
 
             this.renderMarkers(); 
+            
+            // --- Call controls AFTER data is loaded and currentData is populated ---
+            this.addRightControls();
+            this.addLastUpdatedText();
+            // If you had addLegend, it would also go here: this.addLegend();
+
         } catch (error) {
             console.error("Failed to load rail data:", error);
             this.displayErrorMessage("Failed to load rail data. Please try again later.");
