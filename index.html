@@ -6,15 +6,73 @@
     <title>Congestion Map</title>
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-        integrity="sha256-p4NxNvVzYwGGt4oWJc/GzXgYt0H9c3FwXG/A1fM4O5g=="
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
         crossorigin=""/>
     <!-- Leaflet MarkerCluster CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="main.css">
-    <!-- Font Awesome for icons (if needed) -->
+    <link rel="stylesheet" href="css/main.css">
+    <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* 기본 스타일 (임시 - 실제로는 main.css로 이동) */
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            font-family: 'Noto Sans KR', sans-serif;
+        }
+        
+        .transport-tab-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 40px;
+            z-index: 1000;
+            display: flex;
+            background: white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .transport-tab {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            background: white;
+            cursor: pointer;
+            font-family: 'Noto Sans KR', sans-serif;
+            font-weight: 400;
+            font-size: 14px;
+            color: black;
+            position: relative;
+            transition: all 0.3s ease;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .transport-tab.active {
+            font-weight: 600;
+            color: #003A52;
+        }
+        
+        .transport-map {
+            position: fixed;
+            top: 40px;
+            left: 0;
+            width: 100%;
+            height: calc(100% - 40px);
+            display: none;
+        }
+        
+        .transport-map.active {
+            display: block;
+        }
+    </style>
 </head>
 <body>
     <div class="transport-tab-container">
@@ -27,16 +85,88 @@
     <div id="air-map" class="transport-map"></div>
     <div id="truck-map" class="transport-map"></div>
 
-    <!-- Leaflet JavaScript -->
+    <!-- JavaScript 로드 순서 중요: Leaflet -> MarkerCluster -> 커스텀 코드 -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-        integrity="sha256-20n5JcWnSj8/4W4Wl2uM/2+H3p4Wq5G2g/L2+M/P+A/M="
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
         crossorigin=""></script>
-    <!-- Leaflet MarkerCluster JavaScript -->
     <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
-    <!-- Custom JavaScript -->
-    <script src="rail_map.js"></script>
-    <script src="main.js"></script>
+    
+    <!-- RailCongestionMap 클래스 코드를 직접 포함 (임시) -->
+    <script>
+        // 여기에 RailCongestionMap 클래스 전체 코드를 붙여넣기
+        class RailCongestionMap {
+            constructor(mapElementId) {
+                this.map = L.map(mapElementId).setView([37.8, -96], 4);
+                this.markers = [];
+                this.currentData = null;
+                this.lastUpdated = null;
+                this.filterControlInstance = null;
+                this.errorControl = null;
+                this.lastUpdatedControl = null;
 
+                this.markerClusterGroup = L.markerClusterGroup({
+                    chunkedLoading: true,
+                    maxClusterRadius: 80,
+                    disableClusteringAtZoom: 9,
+                    iconCreateFunction: this._createClusterIcon.bind(this)
+                });
+                this.map.addLayer(this.markerClusterGroup);
+
+                L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', {
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+                    maxZoom: 18,
+                    minZoom: 3
+                }).addTo(this.map);
+
+                this.map.setMaxBounds([[-85, -180], [85, 180]]);
+
+                this.map.on('zoomend', () => {
+                    const currentZoom = this.map.getZoom();
+                    if (currentZoom < this.map.getMinZoom()) {
+                        this.map.setZoom(this.map.getMinZoom());
+                    }
+                });
+
+                this.markerClusterGroup.on('clusterclick', (a) => {
+                    const cluster = a.layer;
+                    const childMarkers = cluster.getAllChildMarkers();
+                    let aggregatedContent = `<h4>Clustered Locations (${childMarkers.length})</h4><div style="max-height: 200px; overflow-y: auto;">`;
+
+                    childMarkers.forEach(marker => {
+                        const item = marker.options._rawData;
+                        if (item) {
+                            aggregatedContent += `
+                                <p style="margin-bottom: 5px;">
+                                    <strong>${item.location || 'Unknown'}:</strong>
+                                    <span style="color: ${this.getColor(item.congestion_level, true)}">${item.congestion_level || 'N/A'}</span>,
+                                    ${item.congestion_score?.toFixed(1) || 'N/A'} hours
+                                </p>
+                            `;
+                        }
+                    });
+                    aggregatedContent += `</div>`;
+
+                    L.popup({
+                        closeButton: true,
+                        autoClose: false,
+                        closeOnClick: false,
+                        maxHeight: 250
+                    })
+                    .setLatLng(cluster.getLatLng())
+                    .setContent(aggregatedContent)
+                    .openOn(this.map);
+                });
+
+                this.loadData();
+            }
+
+            // ... (나머지 RailCongestionMap 메서드들 전체 포함) ...
+        }
+
+        window.RailCongestionMap = RailCongestionMap;
+    </script>
+
+    <!-- 메인 앱 로직 -->
     <script>
         // 전역 변수로 맵 인스턴스를 저장하기 위한 객체
         const maps = {};
@@ -60,9 +190,11 @@
                     mapContainers.forEach(container => {
                         if (container.id === mapId) {
                             container.classList.add('active');
-                            // 맵이 숨겨져 있다가 표시될 때 invalidateSize 호출하여 맵 크기 조정
+                            // 맵 크기 조정
                             if (maps[mapId] && maps[mapId].map) {
-                                maps[mapId].map.invalidateSize();
+                                setTimeout(() => {
+                                    maps[mapId].map.invalidateSize();
+                                }, 100);
                             }
                         } else {
                             container.classList.remove('active');
@@ -71,12 +203,12 @@
 
                     // 해당 맵이 아직 로드되지 않았다면 로드
                     if (!maps[mapId]) {
-                        // TODO: 각 맵 타입에 맞는 클래스를 동적으로 로드 및 초기화
-                        // 현재는 rail_map.js만 있으므로, air-map과 truck-map에 대한 로직 추가 필요
                         if (mapId === 'air-map') {
+                            // AirCongestionMap 구현 후 활성화
                             // maps['air-map'] = new AirCongestionMap('air-map');
                             console.log('Air Map will be initialized here.');
                         } else if (mapId === 'truck-map') {
+                            // TruckCongestionMap 구현 후 활성화
                             // maps['truck-map'] = new TruckCongestionMap('truck-map');
                             console.log('Truck Map will be initialized here.');
                         }
