@@ -307,7 +307,6 @@ html, body {
     transform: none !important; /* 중앙 정렬 변형 제거 */
     width: auto;
     height: auto;
-    /* Flexbox 설정은 여기에 직접 적용되지 않고, 내부 컨트롤 요소에 의해 결정될 것 */
 }
 
 /* Specific styling to center the truck toggle control div within the map viewport */
