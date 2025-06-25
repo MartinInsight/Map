@@ -2,9 +2,12 @@ class RailCongestionMap {
     constructor(mapElementId) {
         this.map = L.map(mapElementId).setView([37.8, -96], 4);
         
+        // Find this section:
         this.allMarkers = L.markerClusterGroup({
             maxClusterRadius: 40, 
             disableClusteringAtZoom: 9, 
+            // Add this line:
+            spiderfyOnMaxZoom: true, // This is the key!
             
             iconCreateFunction: (cluster) => {
                 const childMarkers = cluster.getAllChildMarkers();
