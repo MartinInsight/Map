@@ -183,7 +183,7 @@ class TruckCongestionMap {
         const control = L.control({ position: 'topleft' }); // 초기 위치는 topleft로 설정
         control.onAdd = () => {
             // 'truck-toggle-map-control'은 Leaflet의 .leaflet-top.leaflet-left에 의해 중앙 정렬됨
-            const div = L.DomUtil.create('div', 'map-control-container truck-toggle-map-control'); 
+            const div = L.DomUtil.create('div', 'map-control-container truck-toggle-map-control');
             this.controlDiv = div;
             this.renderToggleButtons();
             return div;
@@ -216,15 +216,9 @@ class TruckCongestionMap {
 
         control.onAdd = () => {
             // 'map-control-group-right' 클래스에 CSS 스타일을 위임
-            const div = L.DomUtil.create('div', 'map-control-group-right'); 
+            const div = L.DomUtil.create('div', 'map-control-group-right');
 
-            // 리셋 버튼 추가
-            const resetButtonHtml = `
-                <button class="truck-reset-btn reset-btn">Reset View</button>
-            `;
-            div.insertAdjacentHTML('beforeend', resetButtonHtml);
-
-            // 주 선택 필터 드롭다운 추가
+            // 주 선택 필터 드롭다운 추가 (먼저 삽입)
             const states = this.geoJsonData.features
                 .map(f => ({
                     id: f.id,
@@ -240,9 +234,15 @@ class TruckCongestionMap {
                     ).join('')}
                 </select>
             `;
-            div.insertAdjacentHTML('beforeend', filterDropdownHtml);
+            div.insertAdjacentHTML('beforeend', filterDropdownHtml); // 드롭다운 먼저 추가
 
-            // 이벤트 리스너 추가
+            // 리셋 버튼 추가 (나중에 삽입)
+            const resetButtonHtml = `
+                <button class="truck-reset-btn reset-btn">Reset View</button>
+            `;
+            div.insertAdjacentHTML('beforeend', resetButtonHtml); // 리셋 버튼 추가
+
+            // 이벤트 리스너 추가 (요소들이 DOM에 추가된 후 참조)
             div.querySelector('.truck-reset-btn').addEventListener('click', () => {
                 this.map.setView([37.8, -96], 4);
                 const stateFilter = div.querySelector('.state-filter'); // 현재 div 내에서 찾음
