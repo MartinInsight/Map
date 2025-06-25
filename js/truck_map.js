@@ -182,8 +182,9 @@ class TruckCongestionMap {
     addToggleControls() {
         const control = L.control({ position: 'topleft' }); // 초기 위치는 topleft로 설정
         control.onAdd = () => {
-            const div = L.DomUtil.create('div', 'map-control-container truck-toggle-map-control'); // 새로운 클래스 추가
-            this.controlDiv = div; // 이전에 controlDiv가 INBOUND/OUTBOUND와 Reset을 모두 가졌으므로, 이제 토글 전용
+            // 'truck-toggle-map-control'은 Leaflet의 .leaflet-top.leaflet-left에 의해 중앙 정렬됨
+            const div = L.DomUtil.create('div', 'map-control-container truck-toggle-map-control'); 
+            this.controlDiv = div;
             this.renderToggleButtons();
             return div;
         };
@@ -211,19 +212,11 @@ class TruckCongestionMap {
 
     // 리셋 버튼과 필터 드롭다운 컨트롤 (상단 우측에 나란히 배치)
     addRightControls() {
-        // 기존 addControls와 addFilterControl의 기능을 통합
         const control = L.control({ position: 'topright' });
 
         control.onAdd = () => {
-            const div = L.DomUtil.create('div', 'map-control-group-right'); // 새로운 그룹핑 클래스
-            div.style.display = 'flex';
-            div.style.flexDirection = 'row';
-            div.style.gap = '10px';
-            div.style.background = 'white';
-            div.style.padding = '8px 12px';
-            div.style.borderRadius = '8px';
-            div.style.boxShadow = '0 2px 10px rgba(0,0,0,0.15)';
-            div.style.alignItems = 'center'; // 수직 중앙 정렬
+            // 'map-control-group-right' 클래스에 CSS 스타일을 위임
+            const div = L.DomUtil.create('div', 'map-control-group-right'); 
 
             // 리셋 버튼 추가
             const resetButtonHtml = `
