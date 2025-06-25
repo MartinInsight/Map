@@ -8,11 +8,12 @@ class OceanCongestionMap {
     this.lastUpdatedControl = null; // Initialize for consistency
     this.errorControl = null; // Initialize for consistency
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap',
-      maxZoom: 18,
-      minZoom: 2
-    }).addTo(this.map);
+        // 지도 타일 레이어를 CartoDB Light All로 변경하여 영어 지명 통일
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+            maxZoom: 18,
+            minZoom: 2
+        }).addTo(this.map);
 
     this.map.setMaxBounds([
       [-85, -180],
