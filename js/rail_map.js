@@ -190,39 +190,53 @@ class RailCongestionMap {
 
     // 팝업 내용 생성 (다중 마커 지원)
     createPopupContent(items) {
-        const isMultiple = items.length > 1;
+        // Ensure 'items' is always an array, even if a single item is passed
+        const safeItems = Array.isArray(items) ? items : [items]; 
+        const isMultiple = safeItems.length > 1;
         let content = '';
-
+    
         if (isMultiple) {
             content += `<div class="cluster-popup-header">
-                            <h4>${items.length} Locations</h4>
-                            <p>클러스터된 위치를 보여줍니다.</p>
+                            <h4>${safeItems.length} Locations</h4>
+                            <p>Showing clustered locations:</p>
                          </div>
                          <div class="cluster-popup-content">`;
         }
-
-        items.forEach(item => {
+    
+        // Safely iterate through each item
+        safeItems.forEach(item => {
+            // Add a check: if item is undefined, null, or doesn't have required properties, skip it or provide defaults.
+            if (!item || !item.lat || !item.lng || !item.Yard) {
+                console.warn("Skipping invalid item in popup content:", item);
+                return; // Skip this iteration if the item is invalid
+            }
+    
+            // Now it's safe to access item.congestion_level
             const level = item.congestion_level || 'Unknown';
+            const company = item.company || 'Unknown';
+            const location = item.location || 'Unknown Location';
+            const congestionScore = item.congestion_score?.toFixed(1) || 'N/A'; // Use optional chaining for safety
+    
             content += `
                 <div class="location-info">
-                    <h5>${item.location || 'Unknown Location'}</h5>
-                    <p><strong>Company:</strong> ${item.company || 'Unknown'}</p>
+                    <h5>${location}</h5>
+                    <p><strong>Company:</strong> ${company}</p>
                     <p><strong>Congestion Level:</strong>
                         <span style="color: ${this.getColor(level, true)}">
                             ${level}
                         </span>
                     </p>
-                    <p><strong>Dwell Time:</strong> ${item.congestion_score?.toFixed(1) || 'N/A'} hours</p>
+                    <p><strong>Dwell Time:</strong> ${congestionScore} hours</p>
                 </div>
-                ${isMultiple && items.indexOf(item) !== items.length - 1 ? '<hr>' : ''}
+                ${isMultiple && safeItems.indexOf(item) !== safeItems.length - 1 ? '<hr>' : ''}
             `;
         });
-
+    
         if (isMultiple) {
             content += '</div>';
         }
-
-        return content;
+    
+        return content || '<p>No valid data to display for this location.</p>'; // Fallback if no valid items
     }
 
     addLastUpdatedText() {
