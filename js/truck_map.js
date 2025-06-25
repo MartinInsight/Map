@@ -192,7 +192,7 @@ class TruckCongestionMap {
     }
 
     renderToggleButtons() {
-        // 기존의 불필요한 이중 래퍼 (truck-toggle-container, truck-toggle-wrapper)를 제거하고
+        // 불필요한 이중 래퍼 (truck-toggle-container, truck-toggle-wrapper)를 제거하고
         // 버튼들을 직접 this.controlDiv (map-control-container) 안에 삽입
         this.controlDiv.innerHTML = `
             <button class="truck-toggle-btn ${this.currentMode === 'inbound' ? 'truck-active' : ''}" data-mode="inbound">INBOUND</button>
