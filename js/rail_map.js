@@ -63,6 +63,7 @@ class RailCongestionMap {
         this.loadData();
 
         // Close popup when clicking on the map itself (outside of a marker/popup)
+        // This handles general clicks on the map to dismiss popups.
         this.map.on('click', () => {
             this.map.closePopup();
         });
@@ -104,7 +105,7 @@ class RailCongestionMap {
                     const baseLat = itemsAtCoord[0].lat;
                     const baseLng = itemsAtCoord[0].lng;
                     
-                    const offsetScale = 0.1; 
+                    const offsetScale = 0.0005; 
 
                     itemsAtCoord.forEach((item, index) => {
                         const angle = (index / itemsAtCoord.length) * 2 * Math.PI;
@@ -163,34 +164,37 @@ class RailCongestionMap {
             a.layer.zoomToBounds();
         });
 
-        this.allMarkers.off('clustermouseover');
-        this.allMarkers.on('clustermouseover', (a) => {
-            const clusterItems = a.layer.getAllChildMarkers().map(m => m.options.itemData);
-            const childCount = clusterItems.length; 
+        // Cluster mouseover/mouseout for desktop hover info
+        if (!L.Browser.mobile) {
+            this.allMarkers.off('clustermouseover');
+            this.allMarkers.on('clustermouseover', (a) => {
+                const clusterItems = a.layer.getAllChildMarkers().map(m => m.options.itemData);
+                const childCount = clusterItems.length; 
 
-            const popupContent = `
-                <div class="cluster-hover-info">
-                    <h4>${childCount} Locations Clustered</h4>
-                    <p>Click or zoom in to see individual details.</p>
-                </div>
-            `;
+                const popupContent = `
+                    <div class="cluster-hover-info">
+                        <h4>${childCount} Locations Clustered</h4>
+                        <p>Click or zoom in to see individual details.</p>
+                    </div>
+                `;
 
-            const popup = L.popup({
-                closeButton: false,
-                autoClose: true,
-                closeOnClick: false,
-                maxHeight: 300,
-                maxWidth: 300
-            })
-            .setLatLng(a.latlng)
-            .setContent(popupContent)
-            .openOn(this.map);
-        });
+                const popup = L.popup({
+                    closeButton: false,
+                    autoClose: true,
+                    closeOnClick: false,
+                    maxHeight: 300,
+                    maxWidth: 300
+                })
+                .setLatLng(a.latlng)
+                .setContent(popupContent)
+                .openOn(this.map);
+            });
 
-        this.allMarkers.off('clustermouseout');
-        this.allMarkers.on('clustermouseout', () => {
-            this.map.closePopup();
-        });
+            this.allMarkers.off('clustermouseout');
+            this.allMarkers.on('clustermouseout', () => {
+                this.map.closePopup();
+            });
+        }
     }
 
     createSingleMarker(item) {
@@ -235,35 +239,36 @@ class RailCongestionMap {
         // Bind popup content once
         marker.bindPopup(this.createPopupContent([item]), popupOptions);
 
-        marker.on({
-            mouseover: (e) => {
-                // On desktop, show popup on hover if it's not already open by a click
-                if (!marker.getPopup().isOpen() && !L.Browser.mobile) {
-                    marker.openPopup();
+        if (!L.Browser.mobile) {
+            // Desktop hover events
+            marker.on({
+                mouseover: (e) => {
+                    // Only show hover popup if it's not already open by a click
+                    if (!marker.getPopup().isOpen()) {
+                        marker.openPopup();
+                    }
+                },
+                mouseout: () => {
+                    // Only close hover popup if it was opened by hover
+                    if (!marker.getPopup().isOpen()) {
+                        this.map.closePopup();
+                    }
                 }
-            },
-            mouseout: () => {
-                // On desktop, close popup on mouseout if it's not open by a click
-                if (!marker.getPopup().isOpen() && !L.Browser.mobile) {
-                    this.map.closePopup();
-                }
-            },
-            // Prevent "ghost clicks" on mobile
-            touchstart: (e) => {
-                L.DomEvent.stopPropagation(e);
-            },
-            click: (e) => {
-                // Stop event propagation to prevent map's click from interfering
-                L.DomEvent.stopPropagation(e); 
-                
-                if (marker.getPopup().isOpen()) {
-                    marker.closePopup();
-                } else {
-                    this.map.closePopup(); // Close any other open popups first
-                    marker.openPopup();
-                }
+            });
+        }
+        
+        // Handle click for both desktop and mobile
+        marker.on('click', (e) => {
+            L.DomEvent.stopPropagation(e); // Prevent map's click from interfering
+
+            if (marker.getPopup().isOpen()) {
+                marker.closePopup();
+            } else {
+                this.map.closePopup(); // Close any other open popups first
+                marker.openPopup();
             }
         });
+
         return marker;
     }
 
@@ -391,30 +396,39 @@ class RailCongestionMap {
                         setTimeout(() => {
                             let markerToOpen = null;
                             
-                            // Iterate through the current layers in allMarkers to find the target marker
+                            // Iterate through the visible layers in allMarkers (including spiderfied ones)
                             this.allMarkers.eachLayer(layer => {
                                 // If it's an individual marker and matches the yard
                                 if (layer instanceof L.Marker && layer.options.itemData && layer.options.itemData.Yard === yardName) {
                                     markerToOpen = layer;
-                                } else if (layer instanceof L.MarkerCluster) {
-                                    // If it's a cluster that contains the yard, spiderfy it
+                                    // If this marker is currently hidden inside a cluster,
+                                    // we need to find its parent cluster and spiderfy it.
+                                    // This is implicitly handled by `layer.openPopup()` which
+                                    // asks the markerClusterGroup to handle it.
+                                    return; // Found a matching individual marker
+                                }
+                                // If we're looking for a marker within a cluster that hasn't spiderfied yet
+                                if (layer instanceof L.MarkerCluster) {
+                                     // Only spiderfy if the cluster contains the target yard and the zoom level is appropriate
                                     const childMarkers = layer.getAllChildMarkers();
                                     const foundInCluster = childMarkers.find(child => child.options.itemData && child.options.itemData.Yard === yardName);
                                     if (foundInCluster) {
+                                        // Spiderfy the cluster to make the individual marker accessible
                                         layer.spiderfy(); 
                                         markerToOpen = foundInCluster;
-                                    }
-                                }
-                                // If we've found it, we can break early
-                                if (markerToOpen) {
-                                    // Make sure it's actually visible on the map after spiderfying/zoom
-                                    if (this.map.getBounds().contains(markerToOpen.getLatLng())) {
-                                        markerToOpen.openPopup();
-                                        return; // Stop iterating
+                                        return; // Found it in a cluster, stop searching
                                     }
                                 }
                             });
-                        }, 200); // 200ms delay might be enough for map and clusters to update
+
+                            if (markerToOpen) {
+                                // Ensure the popup is bound and then open it.
+                                // The markerClusterGroup handles making sure the marker is visible before opening.
+                                markerToOpen.openPopup();
+                            } else {
+                                console.warn(`Marker for yard '${yardName}' not found or not visible after filter. Cannot open popup.`);
+                            }
+                        }, 300); // Increased delay slightly
                     }
                 }
             });
