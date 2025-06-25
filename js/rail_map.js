@@ -4,7 +4,7 @@ class RailCongestionMap {
         
         this.allMarkers = L.markerClusterGroup({
             maxClusterRadius: 40, 
-            disableClusteringAtZoom: 9, 
+            disableClusteringAtZoom: 9, // 필터 시 줌 레벨을 9로 설정하여 항상 개별 마커가 보이도록 유도
             spiderfyOnMaxZoom: true, 
             
             iconCreateFunction: (cluster) => {
@@ -65,7 +65,7 @@ class RailCongestionMap {
 
         // Close popup when clicking on the map itself (outside of a marker/popup)
         this.map.on('click', () => {
-            console.log("Map clicked, closing popup.");
+            console.log("Map clicked, closing any open popups.");
             this.map.closePopup();
         });
 
@@ -76,28 +76,41 @@ class RailCongestionMap {
                 const targetMarker = this.markerToOpenAfterMove;
                 this.markerToOpenAfterMove = null; // Clear the queue immediately
 
-                // Ensure any previous popups are closed
+                // Close any existing popups before attempting to open a new one
                 this.map.closePopup(); 
                 
-                // If the marker is within a cluster, spiderfy it first
-                // Leaflet.MarkerCluster handles this internally with openPopup()
-                // but sometimes an explicit spiderfy helps ensure visibility before popup attempts.
-                const cluster = this.allMarkers.getVisibleParent(targetMarker);
-                if (cluster && cluster.isCluster()) {
-                    console.log("Marker is in a cluster, spiderfying...");
-                    cluster.spiderfy();
-                }
+                // Ensure the marker is visible and rendered before opening popup
+                // MarkerClusterGroup handles spiderfication when openPopup is called if needed.
+                // However, a small delay and re-check can help in tricky timing situations.
+                let attempts = 0;
+                const maxAttempts = 10;
+                const retryInterval = 50; // ms
 
-                // Give a very small delay to allow spiderfy/rendering to complete
-                // before opening the popup, especially critical for complex clusters.
-                setTimeout(() => {
+                const tryOpenPopup = () => {
                     if (targetMarker && targetMarker._map) { // Check if marker is truly on the map
                         targetMarker.openPopup();
                         console.log(`Popup opened for ${targetMarker.options.itemData.Yard}`);
+                        // Verify if it actually opened
+                        if (!targetMarker.getPopup().isOpen()) {
+                            console.warn("Popup did not open immediately after openPopup() call, retrying.");
+                            attempts++;
+                            if (attempts < maxAttempts) {
+                                setTimeout(tryOpenPopup, retryInterval);
+                            } else {
+                                console.error("Failed to open popup after multiple retries.");
+                            }
+                        }
+                    } else if (attempts < maxAttempts) {
+                        console.warn("Queued marker not yet rendered on map, retrying.");
+                        attempts++;
+                        setTimeout(tryOpenPopup, retryInterval);
                     } else {
-                        console.warn('Queued marker not found on map after moveend/spiderfy, cannot open popup.');
+                        console.error("Failed to find/open popup for queued marker after max retries.");
                     }
-                }, 50); // Small delay
+                };
+                
+                // Initial attempt to open popup
+                tryOpenPopup();
             }
         });
     }
@@ -280,13 +293,10 @@ class RailCongestionMap {
                 this.map.closePopup(); // Close any other open popups first
                 marker.openPopup();
             });
-            // PC: Close popup when mouse leaves the marker, if it was opened by hover
+            // PC: Close popup when mouse leaves the marker.
             marker.on('mouseout', () => {
                 console.log("PC: Mouseout from marker.");
-                // Check if the current popup is the one we just moused out of
-                if (marker.getPopup() && marker.getPopup().isOpen() && marker.getPopup()._source === marker) {
-                    marker.closePopup();
-                }
+                marker.closePopup(); // Directly close this marker's popup
             });
             // Desktop click to toggle popup
             marker.on('click', (e) => {
@@ -300,15 +310,31 @@ class RailCongestionMap {
                 }
             });
         } else {
-            // Mobile specific tap logic
-            marker.on('click', (e) => { // Leaflet's 'click' event is optimized for mobile 'tap'
+            // Mobile specific tap/click logic
+            // Leaflet's 'click' event is generally reliable for mobile taps,
+            // but we add robustness with explicit timeout.
+            marker.on('click', (e) => { 
                 L.DomEvent.stopPropagation(e); // Prevent map's tap from interfering
                 console.log("Mobile: Tapped marker, toggling popup.");
+                
                 if (marker.getPopup().isOpen()) {
                     marker.closePopup();
                 } else {
                     this.map.closePopup(); // Close any other open popups first
-                    marker.openPopup();
+                    
+                    // Attempt to open popup with a slight delay for mobile rendering
+                    setTimeout(() => {
+                        if (marker && marker._map) { // Ensure marker is still on map
+                            marker.openPopup();
+                            if (!marker.getPopup().isOpen()) {
+                                console.warn("Mobile popup did not open immediately after tap, re-attempting via map.");
+                                // Fallback: try opening via map if marker's openPopup didn't work
+                                this.map.openPopup(marker.getPopup());
+                            }
+                        } else {
+                            console.warn("Mobile: Marker not available to open popup after tap.");
+                        }
+                    }, 100); // Small delay
                 }
             });
         }
@@ -435,14 +461,11 @@ class RailCongestionMap {
                     const yardDataForFilter = this.currentData.filter(item => item.Yard === yardName);
                     if (yardDataForFilter.length > 0) {
                         const center = this.getYardCenter(yardDataForFilter);
-                        console.log(`Setting view to center: ${center}`);
-                        this.map.setView(center, 8); 
+                        // Force zoom level to 9 to ensure markers are spiderfied/individual
+                        console.log(`Setting view to center: ${center}, zoom: 9`);
+                        this.map.setView(center, 9); 
                         
-                        // Find the actual Leaflet marker to queue for opening
-                        // Iterate through ALL individual markers within the cluster group
                         let foundMarkerForFilter = null;
-                        
-                        // Using getLayers() to get all individual markers directly added to the group
                         const allIndividualMarkers = this.allMarkers.getLayers(); 
                         for (const marker of allIndividualMarkers) {
                             if (marker.options.itemData && marker.options.itemData.Yard === yardName) {
