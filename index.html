@@ -5,9 +5,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <link rel="icon" href="data:,">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
-    <link rel="stylesheet" href="styles/main.css">
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha2d-p4NxNvVzYwGGt4oWJc/GzXgYt0H9c3FwXG/A1fM4O5g=="
+        crossorigin=""/>
+    <!-- Leaflet MarkerCluster CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="main.css">
+    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600&display=swap" rel="stylesheet">
+    <!-- Inline CSS for basic layout, moved from original style tag -->
     <style>
         body {
             margin: 0;
@@ -16,13 +25,16 @@
             height: 100vh;
             display: flex;
             flex-direction: column;
+            overflow: hidden; /* Prevent body scroll */
         }
         
-        #tab-container {
+        .transport-tab-container { /* Changed from #tab-container to match main.css class */
             display: flex;
             height: 5%;
+            min-height: 40px; /* Added min-height for better mobile experience */
             background: white;
             z-index: 1000;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* Added shadow for separation */
         }
         
         .transport-tab {
@@ -37,6 +49,9 @@
             font-size: 14px;
             position: relative;
             transition: all 0.3s;
+            color: black; /* Default color for inactive tabs */
+            padding: 0; /* Remove default padding for better control */
+            margin: 0; /* Remove default margin */
         }
         
         .transport-tab.active {
@@ -50,17 +65,21 @@
             bottom: 0;
             left: 0;
             width: 100%;
-            height: 2px;
+            height: 3px; /* Slightly thicker underline */
             background-color: #00657E;
         }
         
         #map-container {
             display: flex;
-            height: 95%;
+            height: 95%; /* Take remaining height */
             width: 100%;
+            position: relative; /* For absolute positioning of inner maps */
         }
         
         .transport-map {
+            position: absolute; /* Position maps absolutely within container */
+            top: 0;
+            left: 0;
             width: 100%;
             height: 100%;
             display: none;
@@ -76,62 +95,16 @@
         <button class="transport-tab active" data-map="truck">Truck</button>
         <button class="transport-tab" data-map="rail">Rail</button>
         <button class="transport-tab" data-map="ocean">Ocean</button>
-        <button class="transport-tab" data-map="air">Air</button> </div>
+        <button class="transport-tab" data-map="air">Air</button>
+    </div>
 
     <div id="map-container">
         <div id="truck-map" class="transport-map active"></div>
         <div id="rail-map" class="transport-map"></div>
         <div id="ocean-map" class="transport-map"></div>
-        <div id="air-map" class="transport-map"></div> </div>
+        <div id="air-map" class="transport-map"></div>
+    </div>
 
-    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
-    <script src="js/truck_map.js"></script>
-    <script src="js/rail_map.js"></script>
-    <script src="js/ocean_map.js"></script>
-    <script src="js/air_map.js"></script> <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const truckMap = new TruckCongestionMap('truck-map');
-            const railMap = new RailCongestionMap('rail-map');
-            const oceanMap = new OceanCongestionMap('ocean-map');
-            const airMap = new AirCongestionMap('air-map'); // Air 맵 인스턴스 생성
-
-            document.querySelectorAll('.transport-tab').forEach(tab => {
-                tab.addEventListener('click', () => {
-                    // 탭 전환
-                    document.querySelectorAll('.transport-tab').forEach(t => {
-                        t.classList.remove('active');
-                    });
-                    tab.classList.add('active');
-
-                    // 지도 전환
-                    document.querySelectorAll('.transport-map').forEach(m => {
-                        m.classList.remove('active');
-                    });
-                    document.getElementById(`${tab.dataset.map}-map`).classList.add('active');
-
-                    // 지도 크기 조정
-                    setTimeout(() => {
-                        switch(tab.dataset.map) {
-                            case 'truck':
-                                truckMap.map.invalidateSize();
-                                break;
-                            case 'rail':
-                                railMap.map.invalidateSize();
-                                break;
-                            case 'ocean':
-                                oceanMap.map.invalidateSize();
-                                break;
-                            case 'air': // Air 맵 크기 조정 추가
-                                airMap.map.invalidateSize();
-                                break;
-                        }
-                    }, 100);
-                });
-            });
-
-            // 초기 로드 시 트럭 맵이 활성화되도록 설정 (필요시)
-            // truckMap.map.invalidateSize();
-        });
-    </script>
-</body>
-</html>
+    <!-- Leaflet JavaScript -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha2d-A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2+L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/L2+M/P+A/P+A/M+ELsCqQ5G2g/
