@@ -1,18 +1,51 @@
 class RailCongestionMap {
     constructor(mapElementId) {
         this.map = L.map(mapElementId).setView([37.8, -96], 4);
+        
+        // L.markerClusterGroup 초기화 시 iconCreateFunction 옵션 추가
         this.allMarkers = L.markerClusterGroup({
-            maxClusterRadius: 40, 
-            disableClusteringAtZoom: 9,
+            maxClusterRadius: 40, // 기존 설정 유지 또는 필요에 따라 조정
+            disableClusteringAtZoom: 9, // 기존 설정 유지 또는 필요에 따라 조정
             
-            // showCoverageOnHover: 클러스터에 마우스 오버 시 클러스터 범위 표시 여부 (기본값 true)
-            showCoverageOnHover: false
+            // --- 여기가 가장 중요한 변경 사항입니다! ---
+            iconCreateFunction: (cluster) => {
+                const childMarkers = cluster.getAllChildMarkers();
+                let highestCongestionLevel = -1; // 혼잡도를 숫자로 매핑하여 가장 높은 값 찾기
+                let dominantColor = this.getColor('Average'); // 기본값은 'Average' 색상
 
-            // spiderfyOnMaxZoom: 최대 줌 레벨에서 클러스터 클릭 시 스파이더파이(마커 분산) 여부 (기본값 true)
-            // spiderfyOnMaxZoom: false,
-            
-            // iconCreateFunction: (cluster) => { ... } // 클러스터 아이콘 커스터마이징 (필요시)
-            // 위 옵션을 사용하여 클러스터링 동작을 미세 조정할 수 있습니다.
+                // 혼잡도 레벨을 숫자로 매핑하는 함수 (예: Very High가 가장 높은 값)
+                const congestionLevelToValue = (level) => {
+                    switch (level) {
+                        case 'Very High': return 4;
+                        case 'High': return 3;
+                        case 'Low': return 2;
+                        case 'Very Low': return 1;
+                        default: return 0; // 'Average' 또는 'Unknown'
+                    }
+                };
+
+                // 클러스터 내 모든 마커를 순회하며 가장 높은 혼잡도 레벨 찾기
+                childMarkers.forEach(marker => {
+                    const itemData = marker.options.itemData; // 마커 생성 시 저장했던 itemData 활용
+                    if (itemData && itemData.congestion_level) {
+                        const currentLevelValue = congestionLevelToValue(itemData.congestion_level);
+                        if (currentLevelValue > highestCongestionLevel) {
+                            highestCongestionLevel = currentLevelValue;
+                            dominantColor = this.getColor(itemData.congestion_level); // 해당 혼잡도에 맞는 색상
+                        }
+                    }
+                });
+
+                // 클러스터 아이콘의 HTML 및 스타일 생성
+                const childCount = cluster.getChildCount();
+                const size = 40 + Math.min(childCount * 0.5, 20); // 클러스터 크기를 마커 개수에 따라 동적으로 조절
+                
+                return new L.DivIcon({
+                    html: `<div style="background-color: ${dominantColor}; width: ${size}px; height: ${size}px; line-height: ${size}px; border-radius: 50%; color: white; font-weight: bold; text-align: center;"><span>${childCount}</span></div>`,
+                    className: 'marker-cluster-custom', // 커스텀 클래스 (CSS에서 추가 스타일링 가능)
+                    iconSize: new L.Point(size, size)
+                });
+            }
         });
         this.currentData = null;
         this.lastUpdated = null;
