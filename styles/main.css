@@ -343,7 +343,7 @@ html, body {
 
 /* Specific border-radius for top (+) button */
 .leaflet-control-zoom-in {
-    border-radius: 6px 66px 0 0 !important; /* 상단 모서리 라운드, 하단 모서리 직각 */
+    border-radius: 6px 6px 0 0 !important; /* 상단 모서리 라운드, 하단 모서리 직각 */
     border-bottom: none !important; /* 하단 테두리 제거하여 - 버튼과 연결 */
 }
 
@@ -411,6 +411,43 @@ html, body {
     white-space: nowrap; /* Prevent text wrapping */
     line-height: 1.2; /* Ensure line height is compact for single line text */
 }
+
+/* Leaflet Marker Cluster specific styles */
+/* Default MarkerCluster styles are from the plugin, but we can override or add to them */
+/* If you need to deeply customize, consider generating the MarkerCluster.Default.css directly */
+.marker-cluster-custom {
+    background-clip: padding-box; /* Prevent border-radius issues */
+}
+.marker-cluster-custom div {
+    /* Styles are mostly inline in JS for dynamic coloring, but this is a fallback/additional */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    color: white;
+}
+
+.leaflet-popup .leaflet-popup-content .clustered-popup-content-scroll {
+    max-height: 200px; /* Max height for scrollable content inside popup */
+    overflow-y: auto; /* Enable vertical scroll if content overflows */
+    padding-right: 5px; /* Add some padding for scrollbar */
+}
+/* Style for scrollbar to match overall theme (optional, browser-specific) */
+.leaflet-popup .leaflet-popup-content .clustered-popup-content-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+.leaflet-popup .leaflet-popup-content .clustered-popup-content-scroll::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+.leaflet-popup .leaflet-popup-content .clustered-popup-content-scroll::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+.leaflet-popup .leaflet-popup-content .clustered-popup-content-scroll::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
 
 /* Error Message */
 .error-message {
