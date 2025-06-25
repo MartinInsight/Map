@@ -300,40 +300,6 @@ class AirCongestionMap {
     }
 
     /**
-     * This method would add an air congestion legend to the map.
-     * It is commented out as per user request to remove the legend.
-     */
-    // addAirLegend() {
-    //     if (this.legendControl) {
-    //         this.map.removeControl(this.legendControl);
-    //     }
-
-    //     const legend = L.control({ position: 'bottomright' });
-
-    //     legend.onAdd = () => {
-    //         const div = L.DomUtil.create('div', 'air-legend');
-    //         const grades = [0, 10, 15, 20, 25];
-    //         const labels = ['Very Smooth', 'Smooth', 'Moderate', 'Congested', 'Very Congested'];
-    //         const colors = ['#1a9850', '#d9ef8b', '#fee08b', '#fc8d59', '#d73027'];
-
-    //         div.innerHTML += '<div class="air-legend-title">Congestion (Avg Taxi-Out Time)</div>';
-
-    //         for (let i = 0; i < grades.length; i++) {
-    //             div.innerHTML +=
-    //                 '<div class="air-legend-item">' +
-    //                 '<span class="air-legend-color" style="background:' + colors[i] + '"></span> ' +
-    //                 labels[i] + (grades[i + 1] ? ' (' + grades[i] + '-' + (grades[i+1]-1) + 'min)' : ' (' + grades[i] + '+ min)') +
-    //                 '</div>';
-    //         }
-    //         return div;
-    //     };
-
-    //     legend.addTo(this.map);
-    //     this.legendControl = legend;
-    // }
-
-
-    /**
      * Displays an error message control on the map.
      * @param {string} message - The error message to display.
      */
