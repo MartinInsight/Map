@@ -95,7 +95,7 @@ html, body {
     background: white;
     padding: 8px 12px;
     border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.15); /* Main container shadow */
     display: inline-flex;
     align-items: center;
     gap: 10px;
@@ -113,7 +113,7 @@ html, body {
     font-family: 'Noto Sans KR', sans-serif;
     font-weight: 500; /* INBOUND/OUTBOUND 토글과 일치 */
     font-size: 13px; /* INBOUND/OUTBOUND 토글과 일치 */
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1); /* Consistent individual element shadow */
     height: 34px;
     white-space: nowrap;
     transition: all 0.2s;
@@ -203,8 +203,11 @@ html, body {
     background: #f0f0f0;
 }
 /* Ensure the border between inactive buttons is present */
+.truck-toggle-btn:not(.truck-active):first-child { /* Ensure border is always there for inactive first child */
+    border-right: 1px solid #e0e0e0; 
+}
 .truck-toggle-btn:not(.truck-active):first-child:hover {
-    border-right: 1px solid #dcdcdc; /* Slightly darker hover border */
+    border-right-color: #dcdcdc; /* Slightly darker hover border */
 }
 
 
@@ -305,13 +308,11 @@ html, body {
 /* This element is the div created by L.DomUtil.create('div', 'map-control-container truck-toggle-map-control') in JS */
 .truck-toggle-map-control {
     position: absolute; /* 절대 위치를 사용하여 맵 내에서 직접 중앙 정렬 */
-    top: 10px; /* 맵 상단에서 10px 떨어진 위치 */
+    top: 18px; /* 맵 상단에서 18px 떨어진 위치로 조정 */
     left: 50%; /* 맵 너비의 50% 지점 */
     transform: translateX(-50%); /* X축으로 요소 너비의 절반만큼 이동하여 정확히 중앙 정렬 */
     z-index: 1000; /* 다른 컨트롤 위에 표시되도록 z-index 설정 */
     /* .map-control-container의 스타일 (배경, 그림자, 패딩 등)은 그대로 유지 */
-    /* flex-direction and gap were causing issues due to nested wrappers,
-       now that inner wrappers are gone, ensure flex behavior here */
     display: flex; /* Ensure buttons are aligned horizontally */
     gap: 0; /* Remove gap between buttons, let borders handle separation */
     padding: 0; /* Remove padding from this container as buttons have their own padding */
@@ -332,8 +333,7 @@ html, body {
     width: 34px !important; /* 버튼 크기 유지 */
     height: 34px !important; /* 버튼 크기 유지 */
     background-color: white !important; /* 배경색 흰색으로 명시 */
-    /* border-radius: 6px !important; 제거 - 이제 개별 버튼에서 설정 */
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important; /* 그림자 추가 */
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important; /* Consistent individual element shadow */
     border: 1px solid #e0e0e0 !important; /* 테두리 추가 */
     transition: all 0.2s; /* 호버 효과를 위한 전환 */
     /* Leaflet 기본 배경 이미지 제거 (폰트 아이콘 사용시) */
@@ -393,7 +393,7 @@ html, body {
     background-color: white;
     padding: 8px 12px;
     border-radius: 6px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1); /* Consistent individual element shadow */
     border: 1px solid #eee;
 }
 
@@ -406,7 +406,7 @@ html, body {
     border: 1px solid #ff7675;
     background-color: #ffeaa7;
     border-radius: 6px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1); /* Consistent individual element shadow */
 }
 
 /* Responsive Design - Mobile */
