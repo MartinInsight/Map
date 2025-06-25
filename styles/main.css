@@ -157,14 +157,13 @@ html, body {
 }
 
 /* Truck specific styles */
-.truck-toggle-container {
+.truck-toggle-container { /* This class is now unused in JS HTML generation for trucks */
     display: flex;
     align-items: center;
     gap: 12px;
 }
 
-/* Fix double box issue: Only apply flex/overflow to this wrapper, remove background/border/shadow */
-.truck-toggle-wrapper {
+.truck-toggle-wrapper { /* This class is now unused in JS HTML generation for trucks */
     display: flex;
     border-radius: 6px;
     overflow: hidden;
@@ -186,6 +185,21 @@ html, body {
     align-items: center;
     justify-content: center;
     color: #333;
+    /* Add border here since truck-toggle-wrapper's border is removed */
+    border: 1px solid #e0e0e0;
+    /* Only apply border-radius to the first/last button for the rounded ends */
+    /* Handled by .truck-toggle-btn:first-child and :last-child below */
+}
+
+.truck-toggle-btn:first-child {
+    border-top-left-radius: 6px;
+    border-bottom-left-radius: 6px;
+    border-right: none; /* Remove right border to join with next button */
+}
+
+.truck-toggle-btn:last-child {
+    border-top-right-radius: 6px;
+    border-bottom-right-radius: 6px;
 }
 
 .truck-toggle-btn.truck-active {
@@ -299,7 +313,7 @@ html, body {
     left: 50%; /* 맵 너비의 50% 지점 */
     transform: translateX(-50%); /* X축으로 요소 너비의 절반만큼 이동하여 정확히 중앙 정렬 */
     z-index: 1000; /* 다른 컨트롤 위에 표시되도록 z-index 설정 */
-    /* .map-control-container의 스타일 (배경, 그림자, 패딩 등)은 이미 적용됨 */
+    /* .map-control-container의 스타일 (배경, 그림자, 패딩 등)은 그대로 유지 */
 }
 
 /* Leaflet Zoom Control Styling */
@@ -309,7 +323,7 @@ html, body {
     font-weight: 500 !important; /* INBOUND/OUTBOUND 토글과 일치 */
     font-size: 13px !important; /* INBOUND/OUTBOUND 토글과 일치 */
     color: #333 !important; /* INBOUND/OUTBOUND 토글과 일치 */
-    line-height: 26px !important; /* 아이콘이 아닌 텍스트를 사용할 경우를 대비 */
+    line-height: 34px !important; /* 버튼 높이 (34px)에 맞춰 텍스트 수직 중앙 정렬 */
 }
 
 /* Adjust zoom control button specific styling */
@@ -317,7 +331,7 @@ html, body {
     width: 34px !important; /* 버튼 크기 유지 */
     height: 34px !important; /* 버튼 크기 유지 */
     background-color: white !important; /* 배경색 흰색으로 명시 */
-    border-radius: 6px !important; /* 둥근 모서리 */
+    /* border-radius: 6px !important; 제거 - 이제 개별 버튼에서 설정 */
     box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important; /* 그림자 추가 */
     border: 1px solid #e0e0e0 !important; /* 테두리 추가 */
     transition: all 0.2s; /* 호버 효과를 위한 전환 */
@@ -327,15 +341,33 @@ html, body {
     text-align: center !important; /* 텍스트 중앙 정렬 */
 }
 
+/* Specific border-radius for top (+) button */
+.leaflet-control-zoom-in {
+    border-radius: 6px 6px 0 0 !important; /* 상단 모서리 라운드, 하단 모서리 직각 */
+    border-bottom: none !important; /* 하단 테두리 제거하여 - 버튼과 연결 */
+}
+
+/* Specific border-radius for bottom (-) button */
+.leaflet-control-zoom-out {
+    border-radius: 0 0 6px 6px !important; /* 하단 모서리 라운드, 상단 모서리 직각 */
+    border-top: none !important; /* 상단 테두리 제거하여 + 버튼과 연결 */
+}
+
+
 .leaflet-control-zoom a:hover {
     background-color: #f5f5f5 !important;
     transform: translateY(-1px);
     box-shadow: 0 3px 7px rgba(0,0,0,0.15) !important;
 }
 
-/* Remove separator between zoom buttons to make them stick together */
+/* Remove margin between zoom buttons to make them stick together */
 .leaflet-control-zoom-in + .leaflet-control-zoom-out {
     margin-top: 0 !important; /* 버튼 사이 간격 제거 */
+}
+
+.leaflet-control-zoom {
+    display: flex; /* Flexbox를 사용하여 버튼들을 수직으로 정렬 */
+    flex-direction: column;
 }
 
 
