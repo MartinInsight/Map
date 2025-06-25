@@ -126,13 +126,13 @@ html, body {
     border-radius: 6px;
     cursor: pointer;
     font-family: 'Noto Sans KR', sans-serif;
-    font-weight: 500;
-    font-size: 13px;
+    font-weight: 500; /* INBOUND/OUTBOUND 토글과 일치 */
+    font-size: 13px; /* INBOUND/OUTBOUND 토글과 일치 */
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     height: 34px;
     white-space: nowrap;
     transition: all 0.2s;
-    color: #333;
+    color: #333; /* INBOUND/OUTBOUND 토글과 일치 */
 }
 
 .reset-btn:hover {
@@ -148,11 +148,13 @@ html, body {
     padding: 8px 12px;
     border: 1px solid #ddd;
     border-radius: 6px;
-    font-size: 14px;
+    font-size: 13px; /* INBOUND/OUTBOUND 토글과 일치 */
     min-width: 160px;
     font-family: 'Noto Sans KR', sans-serif;
+    font-weight: 500; /* INBOUND/OUTBOUND 토글과 일치 */
     background-color: #f9f9f9;
     transition: all 0.2s;
+    color: #333; /* INBOUND/OUTBOUND 토글과 일치 */
     /* Common arrow for all selects */
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='%23003A52'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
@@ -298,17 +300,62 @@ html, body {
     height: auto;
 }
 
-/* Top left for Toggle buttons (will be centered by the custom class below) */
+/* Top left (for zoom buttons - default position) */
 .leaflet-top.leaflet-left {
     top: 10px !important;
-    left: 50% !important; /* 중앙 정렬을 위해 50%로 설정 */
-    transform: translateX(-50%); /* 정확한 중앙 정렬을 위한 이동 */
+    left: 10px !important; /* 원래 좌측 위치로 복원 */
+    transform: none !important; /* 중앙 정렬 변형 제거 */
     width: auto;
     height: auto;
+    /* Flexbox 설정은 여기에 직접 적용되지 않고, 내부 컨트롤 요소에 의해 결정될 것 */
 }
 
-/* No specific styling needed for .truck-toggle-map-control here, 
-   as it's already styled by .map-control-container and positioned by .leaflet-top.leaflet-left */
+/* Specific styling to center the truck toggle control div within the map viewport */
+/* This element is the div created by L.control({ position: 'topleft' }) in JS and given this class */
+.truck-toggle-map-control {
+    position: absolute; /* 절대 위치를 사용하여 맵 내에서 직접 중앙 정렬 */
+    top: 10px; /* 맵 상단에서 10px 떨어진 위치 */
+    left: 50%; /* 맵 너비의 50% 지점 */
+    transform: translateX(-50%); /* X축으로 요소 너비의 절반만큼 이동하여 정확히 중앙 정렬 */
+    z-index: 1000; /* 다른 컨트롤 위에 표시되도록 z-index 설정 */
+    /* .map-control-container의 스타일 (배경, 그림자, 패딩 등)은 그대로 유지 */
+}
+
+/* Leaflet Zoom Control Styling */
+.leaflet-control-zoom-in,
+.leaflet-control-zoom-out {
+    font-family: 'Noto Sans KR', sans-serif;
+    font-weight: 500 !important; /* INBOUND/OUTBOUND 토글과 일치 */
+    font-size: 13px !important; /* INBOUND/OUTBOUND 토글과 일치 */
+    color: #333 !important; /* INBOUND/OUTBOUND 토글과 일치 */
+    line-height: 26px !important; /* 아이콘이 아닌 텍스트를 사용할 경우를 대비 */
+}
+
+/* Adjust zoom control button specific styling */
+.leaflet-control-zoom a {
+    width: 34px !important; /* 버튼 크기 유지 */
+    height: 34px !important; /* 버튼 크기 유지 */
+    background-color: white !important; /* 배경색 흰색으로 명시 */
+    border-radius: 6px !important; /* 둥근 모서리 */
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important; /* 그림자 추가 */
+    border: 1px solid #e0e0e0 !important; /* 테두리 추가 */
+    transition: all 0.2s; /* 호버 효과를 위한 전환 */
+    /* Leaflet 기본 배경 이미지 제거 (폰트 아이콘 사용시) */
+    background-image: none !important;
+    text-indent: 0 !important; /* 텍스트가 왼쪽으로 밀리지 않도록 */
+    text-align: center !important; /* 텍스트 중앙 정렬 */
+}
+
+.leaflet-control-zoom a:hover {
+    background-color: #f5f5f5 !important;
+    transform: translateY(-1px);
+    box-shadow: 0 3px 7px rgba(0,0,0,0.15) !important;
+}
+
+/* Separator between zoom buttons */
+.leaflet-control-zoom-in + .leaflet-control-zoom-out {
+    margin-top: 5px !important; /* 버튼 사이 간격 */
+}
 
 
 .leaflet-bottom.leaflet-right {
@@ -365,7 +412,11 @@ html, body {
         height: 93%;
     }
 
-    /* .map-control-container should still be fine for toggle */
+    /* .map-control-container (truck-toggle-map-control) */
+    .map-control-container {
+        padding: 6px 8px;
+        gap: 6px;
+    }
     /* Adjusted for new combined right control */
     .map-control-group-right {
         padding: 6px 8px;
