@@ -188,6 +188,136 @@ html, body {
     background: #f0f0f0;
 }
 
+/* 항공 지도 전용 스타일 */
+.air-tooltip {
+    font-family: 'Noto Sans KR', sans-serif;
+    min-width: 240px;
+    padding: 16px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+.air-tooltip h4 {
+    margin: 0 0 12px 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #003A52;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 8px;
+}
+
+.air-tooltip p {
+    margin: 8px 0;
+    font-size: 14px;
+    line-height: 1.4;
+    color: #555;
+}
+
+.air-tooltip strong {
+    color: #333;
+    font-weight: 500;
+    min-width: 80px;
+    display: inline-block;
+}
+
+/* 항공 마커 전용 색상 클래스 */
+.air-marker-very-high {
+    background: #d73027 !important; /* 매우 혼잡 */
+}
+
+.air-marker-high {
+    background: #fc8d59 !important; /* 혼잡 */
+}
+
+.air-marker-medium {
+    background: #fee08b !important; /* 보통 */
+}
+
+.air-marker-low {
+    background: #d9ef8b !important; /* 원활 */
+}
+
+.air-marker-very-low {
+    background: #1a9850 !important; /* 매우 원활 */
+}
+
+/* 항공 필터 컨트롤 */
+.air-filter-control select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='%23003A52'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    padding-right: 30px;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+}
+
+/* 항공 혼잡도 범례 */
+.air-legend {
+    background: white;
+    padding: 12px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+    font-family: 'Noto Sans KR', sans-serif;
+    line-height: 1.5;
+}
+
+.air-legend-title {
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #003A52;
+    font-size: 14px;
+}
+
+.air-legend-item {
+    display: flex;
+    align-items: center;
+    margin: 5px 0;
+    font-size: 13px;
+}
+
+.air-legend-color {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    margin-right: 8px;
+    border: 1px solid #ddd;
+}
+
+/* 모바일 대응 */
+@media (max-width: 768px) {
+    .air-tooltip {
+        min-width: 180px;
+        padding: 12px;
+    }
+    
+    .air-tooltip h4 {
+        font-size: 15px;
+    }
+    
+    .air-tooltip p {
+        font-size: 13px;
+    }
+    
+    .air-legend {
+        padding: 8px;
+        font-size: 12px;
+    }
+}
+
+/* 애니메이션 효과 */
+@keyframes pulse-air {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.05); opacity: 0.9; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+.air-marker-highlight {
+    animation: pulse-air 1.5s infinite;
+    z-index: 1000 !important;
+}
+
 /* 툴팁 공통 스타일 */
 .map-tooltip {
     font-family: 'Noto Sans KR', sans-serif;
