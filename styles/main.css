@@ -156,23 +156,12 @@ html, body {
     box-shadow: 0 0 0 2px rgba(0,101,126,0.2);
 }
 
-/* Truck specific styles */
-.truck-toggle-container { /* This class is now unused in JS HTML generation for trucks */
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.truck-toggle-wrapper { /* This class is now unused in JS HTML generation for trucks */
-    display: flex;
-    border-radius: 6px;
-    overflow: hidden;
-    /* Removed: background, box-shadow, border - these are now on .map-control-container */
-}
-
+/* Truck specific styles for the toggle buttons */
+/* The map-control-container now acts as the main wrapper, providing the border and shadow */
+/* The individual buttons define their appearance within that container */
 .truck-toggle-btn {
     padding: 0 16px;
-    border: none;
+    border: none; /* Remove individual button border to prevent double box */
     background: transparent;
     cursor: pointer;
     font-family: 'Noto Sans KR', sans-serif;
@@ -185,32 +174,39 @@ html, body {
     align-items: center;
     justify-content: center;
     color: #333;
-    /* Add border here since truck-toggle-wrapper's border is removed */
-    border: 1px solid #e0e0e0;
-    /* Only apply border-radius to the first/last button for the rounded ends */
-    /* Handled by .truck-toggle-btn:first-child and :last-child below */
+    box-sizing: border-box; /* Include padding and border in the element's total width and height */
 }
 
+/* Apply border-radius to the first and last button for rounded ends */
 .truck-toggle-btn:first-child {
     border-top-left-radius: 6px;
     border-bottom-left-radius: 6px;
-    border-right: none; /* Remove right border to join with next button */
+    border-right: 1px solid #e0e0e0; /* Add a subtle right border for separation */
 }
 
 .truck-toggle-btn:last-child {
     border-top-right-radius: 6px;
     border-bottom-right-radius: 6px;
+    /* No left border needed if first-child has right border */
 }
 
 .truck-toggle-btn.truck-active {
     background: #00657E;
     color: white;
     font-weight: 600;
+    /* Active button should not have a border when active as it's part of the main box */
+    border-color: transparent !important; /* Ensure no border shows when active */
 }
 
+/* Ensure border is visible on hover for inactive buttons, and remove it for active ones */
 .truck-toggle-btn:not(.truck-active):hover {
     background: #f0f0f0;
 }
+/* Ensure the border between inactive buttons is present */
+.truck-toggle-btn:not(.truck-active):first-child:hover {
+    border-right: 1px solid #dcdcdc; /* Slightly darker hover border */
+}
+
 
 /* Common Tooltip Inner Styles (applied to Leaflet's internal popup elements) */
 .leaflet-popup-content h4 {
@@ -314,6 +310,11 @@ html, body {
     transform: translateX(-50%); /* X축으로 요소 너비의 절반만큼 이동하여 정확히 중앙 정렬 */
     z-index: 1000; /* 다른 컨트롤 위에 표시되도록 z-index 설정 */
     /* .map-control-container의 스타일 (배경, 그림자, 패딩 등)은 그대로 유지 */
+    /* flex-direction and gap were causing issues due to nested wrappers,
+       now that inner wrappers are gone, ensure flex behavior here */
+    display: flex; /* Ensure buttons are aligned horizontally */
+    gap: 0; /* Remove gap between buttons, let borders handle separation */
+    padding: 0; /* Remove padding from this container as buttons have their own padding */
 }
 
 /* Leaflet Zoom Control Styling */
@@ -427,8 +428,8 @@ html, body {
 
     /* .map-control-container (truck-toggle-map-control) */
     .map-control-container {
-        padding: 6px 8px;
-        gap: 6px;
+        padding: 0; /* Remove padding for mobile to keep compact */
+        gap: 0; /* No gap for mobile toggle buttons */
     }
     /* Adjusted for new combined right control */
     .map-control-group-right {
