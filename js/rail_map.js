@@ -26,7 +26,7 @@ class RailCongestionMap {
             }
         });
 
-        this.addControls();
+        // this.addControls(); // Old call, removed
         this.loadData();
     }
 
@@ -51,7 +51,8 @@ class RailCongestionMap {
 
             this.renderMarkers();
             this.addLastUpdatedText();
-            this.addFilterControl();
+            // Call the new combined controls method after data is loaded
+            this.addRightControls(); // Now combines filter and reset
         } catch (error) {
             console.error("Failed to load rail data:", error);
             this.displayErrorMessage("Failed to load rail data. Please try again later.");
@@ -112,7 +113,7 @@ class RailCongestionMap {
                 click: (e) => {
                     this.map.closePopup();
                     this.map.setView(e.latlng, 8);
-                    
+
                     L.popup({
                         closeButton: true,
                         autoClose: false,
@@ -129,42 +130,16 @@ class RailCongestionMap {
         });
     }
 
-    addControls() {
-        const controlContainer = L.control({ position: 'topright' });
-
-        controlContainer.onAdd = () => {
-            const div = L.DomUtil.create('div', 'map-control-container');
-            div.innerHTML = `
-                <button class="rail-reset-btn reset-btn">Reset View</button>
-            `;
-
-            div.querySelector('.rail-reset-btn').addEventListener('click', () => {
-                this.map.setView([37.8, -96], 4);
-                this.renderMarkers(this.currentData);
-                if (this.filterControlInstance) {
-                    const yardFilter = this.filterControlInstance._container.querySelector('.yard-filter');
-                    if (yardFilter) yardFilter.value = '';
-                }
-            });
-
-            L.DomEvent.disableClickPropagation(div);
-            L.DomEvent.disableScrollPropagation(div);
-
-            return div;
-        };
-
-        controlContainer.addTo(this.map);
-    }
-
-    addFilterControl() {
-        if (this.filterControlInstance) {
+    // New combined method for right-side controls (Filter and Reset)
+    addRightControls() {
+        if (this.filterControlInstance) { // Using filterControlInstance for the whole group
             this.map.removeControl(this.filterControlInstance);
         }
 
-        const control = L.control({ position: 'bottomright' });
+        const control = L.control({ position: 'topright' });
 
         control.onAdd = () => {
-            const div = L.DomUtil.create('div', 'filter-control');
+            const div = L.DomUtil.create('div', 'map-control-group-right'); // Use the grouping class
 
             const validYards = this.currentData
                 .filter(item => item.Yard && item.Yard.trim() !== '')
@@ -172,7 +147,8 @@ class RailCongestionMap {
 
             const yards = [...new Set(validYards)].sort((a, b) => a.localeCompare(b));
 
-            div.innerHTML = `
+            // Select Yard dropdown (added first)
+            const filterDropdownHtml = `
                 <select class="yard-filter">
                     <option value="">Select Yard</option>
                     ${yards.map(yard =>
@@ -180,7 +156,15 @@ class RailCongestionMap {
                     ).join('')}
                 </select>
             `;
+            div.insertAdjacentHTML('beforeend', filterDropdownHtml); // Insert dropdown
 
+            // Reset View button (added second)
+            const resetButtonHtml = `
+                <button class="rail-reset-btn reset-btn">Reset View</button>
+            `;
+            div.insertAdjacentHTML('beforeend', resetButtonHtml); // Insert reset button
+
+            // Event Listeners (after elements are in the DOM)
             div.querySelector('.yard-filter').addEventListener('change', (e) => {
                 const yardName = e.target.value;
                 if (!yardName) {
@@ -197,15 +181,23 @@ class RailCongestionMap {
                 }
             });
 
+            div.querySelector('.rail-reset-btn').addEventListener('click', () => {
+                this.map.setView([37.8, -96], 4);
+                const yardFilter = div.querySelector('.yard-filter');
+                if (yardFilter) yardFilter.value = '';
+                this.renderMarkers(this.currentData); // Ensure all markers are rendered on reset
+            });
+
             L.DomEvent.disableClickPropagation(div);
             L.DomEvent.disableScrollPropagation(div);
 
+            this.filterControlInstance = control; // Store the whole combined control
             return div;
         };
 
         control.addTo(this.map);
-        this.filterControlInstance = control;
     }
+
 
     getYardCenter(yardData) {
         if (!yardData || yardData.length === 0) return [37.8, -96];
