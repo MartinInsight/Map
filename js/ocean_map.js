@@ -4,6 +4,7 @@ class OceanCongestionMap {
     this.markers = [];
     this.currentData = [];
     this.lastUpdated = null;
+    this.filterControlInstance = null; // Ensure this is initialized
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© OpenStreetMap',
@@ -20,8 +21,9 @@ class OceanCongestionMap {
       const currentZoom = this.map.getZoom();
       const bounds = this.map.getBounds();
       const mapHeight = bounds.getNorth() - bounds.getSouth();
-      if (mapHeight > 140) { // 150에서 140으로 변경
-        this.map.setZoom(Math.max(2, currentZoom - 1)); // 0.5에서 1로 변경, 최소 줌 레벨 2로 제한
+      // This zoom logic is for preventing excessive zoom out, not direct filter behavior
+      if (mapHeight > 140) {
+        this.map.setZoom(Math.max(2, currentZoom - 1));
       }
     });
     
@@ -55,11 +57,13 @@ class OceanCongestionMap {
       this.renderMarkers();
       this.addLastUpdatedText();
   
-      // ✅ 이 부분 추가해야 country 목록이 나옴!
       this.addFilterControl();
   
     } catch (error) {
       console.error("Failed to load ocean data:", error);
+      // It's good practice to display an error message on the map for the user
+      // if this class also has a displayErrorMessage method.
+      // e.g., this.displayErrorMessage("Failed to load ocean data.");
     }
   }
 
@@ -95,6 +99,11 @@ class OceanCongestionMap {
   }
 
   addLastUpdatedText() {
+    // If there's an existing control, remove it to prevent duplicates
+    if (this.lastUpdatedControl) {
+        this.map.removeControl(this.lastUpdatedControl);
+    }
+
     if (this.lastUpdated) {
       const date = new Date(this.lastUpdated);
       const formattedDate = `${date.getMonth() + 1}-${date.getDate()}-${date.getFullYear()}`;
@@ -104,20 +113,22 @@ class OceanCongestionMap {
       infoControl.onAdd = () => {
         const div = L.DomUtil.create('div', 'last-updated-info');
         div.innerHTML = `<strong>Last Updated:</strong> ${formattedDate}`;
-        div.style.backgroundColor = 'white';
-        div.style.padding = '5px 10px';
-        div.style.borderRadius = '5px';
-        div.style.boxShadow = '0 0 5px rgba(0,0,0,0.2)';
+        // CSS properties were moved to main.css, no need for inline styles here
+        // div.style.backgroundColor = 'white';
+        // div.style.padding = '5px 10px';
+        // div.style.borderRadius = '5px';
+        // div.style.boxShadow = '0 0 5px rgba(0,0,0,0.2)';
         return div;
       };
 
       infoControl.addTo(this.map);
+      this.lastUpdatedControl = infoControl; // Store instance to manage it
     }
   }
 
   addControls() {
     const controlContainer = L.control({ position: 'topright' });
-  
+    
     controlContainer.onAdd = () => {
       const div = L.DomUtil.create('div', 'map-control-container');
       div.innerHTML = `
@@ -126,17 +137,37 @@ class OceanCongestionMap {
   
       div.querySelector('.ocean-reset-btn').addEventListener('click', () => {
         this.map.setView([37.8, -96], 4);
+        this.renderMarkers(this.currentData); // Ensure all markers are rendered on reset
+        // Reset filter dropdowns if they exist
+        if (this.filterControlInstance) {
+            const countryFilter = this.filterControlInstance._container.querySelector('.country-filter');
+            if (countryFilter) countryFilter.value = '';
+            const portFilter = this.filterControlInstance._container.querySelector('.port-filter');
+            if (portFilter) {
+                portFilter.innerHTML = '<option value="">Select Port</option>';
+                portFilter.disabled = true;
+            }
+        }
       });
+
+      // Prevent map events on the control
+      L.DomEvent.disableClickPropagation(div);
+      L.DomEvent.disableScrollPropagation(div);
   
       return div;
     };
-  
+    
     controlContainer.addTo(this.map);
   }
   
   addFilterControl() {
+    // Remove existing filter control if it exists
+    if (this.filterControlInstance) {
+        this.map.removeControl(this.filterControlInstance);
+    }
+
     const control = L.control({ position: 'bottomright' });
-  
+    
     control.onAdd = () => {
       const div = L.DomUtil.create('div', 'filter-control');
       const countries = [...new Set(this.currentData
@@ -164,7 +195,7 @@ class OceanCongestionMap {
   
         if (!country) {
           this.map.setView([37.8, -96], 4);
-          this.renderMarkers();
+          this.renderMarkers(this.currentData); // Render ALL markers
           return;
         }
   
@@ -172,33 +203,43 @@ class OceanCongestionMap {
           .filter(p => p.country === country)
           .sort((a, b) => a.port.localeCompare(b.port));
   
-        countryPorts.forEach(port => {
-          const option = document.createElement('option');
-          option.value = port.port;
-          option.textContent = port.port;
-          portFilter.appendChild(option);
-        });
-  
         const countryCenter = this.getCountryCenter(countryPorts);
         this.map.setView(countryCenter, 5);
-        this.renderMarkers(countryPorts);
+        this.renderMarkers(this.currentData); // Render ALL markers, only change view
       });
   
       portFilter.addEventListener('change', (e) => {
         const portName = e.target.value;
-        if (!portName) return;
+        if (!portName) {
+            // If "Select Port" is chosen after a country, just keep country view
+            const country = countryFilter.value;
+            if (country) {
+                const countryPorts = this.currentData.filter(p => p.country === country);
+                const countryCenter = this.getCountryCenter(countryPorts);
+                this.map.setView(countryCenter, 5);
+            } else {
+                this.map.setView([37.8, -96], 4); // If no country selected, reset to global view
+            }
+            this.renderMarkers(this.currentData); // Render ALL markers
+            return;
+        }
   
         const port = this.currentData.find(p => p.port === portName);
         if (port) {
           this.map.setView([port.lat, port.lng], 8);
-          this.renderMarkers([port]);
+          this.renderMarkers(this.currentData); // Render ALL markers, only change view
         }
       });
+
+      // Prevent map events on the control
+      L.DomEvent.disableClickPropagation(div);
+      L.DomEvent.disableScrollPropagation(div);
   
       return div;
     };
-  
+    
     control.addTo(this.map);
+    this.filterControlInstance = control; // Store instance to manage it
   }
   
   getCountryCenter(ports) {
@@ -236,7 +277,7 @@ class OceanCongestionMap {
 
   createPopupContent(port) {
     return `
-      <div class="ocean-tooltip">
+      <div class="map-tooltip"> <!-- Changed from ocean-tooltip to map-tooltip -->
         <h4>${port.port}, ${port.country}</h4>
         <p><strong>Current Delay:</strong> ${port.current_delay}</p>
         <p><strong>Delay Level:</strong> 
@@ -252,7 +293,7 @@ class OceanCongestionMap {
   }
 }
 
-// 반드시 추가해야 하는 부분
+// Expose the class to the global scope
 if (typeof window !== 'undefined') {
   window.OceanCongestionMap = OceanCongestionMap;
 }
