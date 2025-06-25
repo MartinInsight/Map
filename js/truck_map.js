@@ -179,6 +179,7 @@ class TruckCongestionMap {
     // INBOUND/OUTBOUND 토글 버튼 컨트롤 (상단 중앙 배치)
     addToggleControls() {
         // Leaflet 컨트롤 시스템 대신, 직접 지도 컨테이너에 div를 추가하여 중앙 정렬 CSS가 작동하도록 함
+        // 이 div가 유일한 박스/배경/그림자 래퍼가 됨
         const centeredToggleDiv = L.DomUtil.create('div', 'map-control-container truck-toggle-map-control');
         this.map.getContainer().appendChild(centeredToggleDiv); // 지도의 DOM 요소에 직접 추가
 
@@ -191,13 +192,11 @@ class TruckCongestionMap {
     }
 
     renderToggleButtons() {
+        // 기존의 불필요한 이중 래퍼 (truck-toggle-container, truck-toggle-wrapper)를 제거하고
+        // 버튼들을 직접 this.controlDiv (map-control-container) 안에 삽입
         this.controlDiv.innerHTML = `
-            <div class="truck-toggle-container">
-                <div class="truck-toggle-wrapper">
-                    <button class="truck-toggle-btn ${this.currentMode === 'inbound' ? 'truck-active' : ''}" data-mode="inbound">INBOUND</button>
-                    <button class="truck-toggle-btn ${this.currentMode === 'outbound' ? 'truck-active' : ''}" data-mode="outbound">OUTBOUND</button>
-                </div>
-            </div>
+            <button class="truck-toggle-btn ${this.currentMode === 'inbound' ? 'truck-active' : ''}" data-mode="inbound">INBOUND</button>
+            <button class="truck-toggle-btn ${this.currentMode === 'outbound' ? 'truck-active' : ''}" data-mode="outbound">OUTBOUND</button>
         `;
 
         this.controlDiv.querySelectorAll('.truck-toggle-btn').forEach(btn => {
