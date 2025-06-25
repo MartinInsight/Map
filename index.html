@@ -5,95 +5,46 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <link rel="icon" href="data:,">
+
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css" />
+
     <link rel="stylesheet" href="styles/main.css">
+    
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600&display=swap" rel="stylesheet">
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: 'Noto Sans KR', sans-serif;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-        
-        #tab-container {
-            display: flex;
-            height: 5%;
-            background: white;
-            z-index: 1000;
-        }
-        
-        .transport-tab {
-            flex: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: none;
-            background: white;
-            cursor: pointer;
-            font-weight: 400;
-            font-size: 14px;
-            position: relative;
-            transition: all 0.3s;
-        }
-        
-        .transport-tab.active {
-            font-weight: 600;
-            color: #003A52;
-        }
-        
-        .transport-tab.active::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            height: 2px;
-            background-color: #00657E;
-        }
-        
-        #map-container {
-            display: flex;
-            height: 95%;
-            width: 100%;
-        }
-        
-        .transport-map {
-            width: 100%;
-            height: 100%;
-            display: none;
-        }
-        
-        .transport-map.active {
-            display: block;
-        }
-    </style>
 </head>
 <body>
     <div class="transport-tab-container">
         <button class="transport-tab active" data-map="truck">Truck</button>
         <button class="transport-tab" data-map="rail">Rail</button>
         <button class="transport-tab" data-map="ocean">Ocean</button>
-        <button class="transport-tab" data-map="air">Air</button> </div>
+        <button class="transport-tab" data-map="air">Air</button>
+    </div>
 
     <div id="map-container">
         <div id="truck-map" class="transport-map active"></div>
         <div id="rail-map" class="transport-map"></div>
         <div id="ocean-map" class="transport-map"></div>
-        <div id="air-map" class="transport-map"></div> </div>
+        <div id="air-map" class="transport-map"></div>
+    </div>
 
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    
+    <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
+
     <script src="js/truck_map.js"></script>
     <script src="js/rail_map.js"></script>
     <script src="js/ocean_map.js"></script>
-    <script src="js/air_map.js"></script> <script>
+    <script src="js/air_map.js"></script>
+
+    <script>
         document.addEventListener('DOMContentLoaded', () => {
             const truckMap = new TruckCongestionMap('truck-map');
             const railMap = new RailCongestionMap('rail-map');
             const oceanMap = new OceanCongestionMap('ocean-map');
-            const airMap = new AirCongestionMap('air-map'); // Air 맵 인스턴스 생성
+            const airMap = new AirCongestionMap('air-map');
 
             document.querySelectorAll('.transport-tab').forEach(tab => {
                 tab.addEventListener('click', () => {
@@ -110,6 +61,7 @@
                     document.getElementById(`${tab.dataset.map}-map`).classList.add('active');
 
                     // 지도 크기 조정
+                    // setTimeout을 사용하여 맵이 화면에 완전히 표시된 후 invalidateSize 호출
                     setTimeout(() => {
                         switch(tab.dataset.map) {
                             case 'truck':
@@ -121,16 +73,17 @@
                             case 'ocean':
                                 oceanMap.map.invalidateSize();
                                 break;
-                            case 'air': // Air 맵 크기 조정 추가
+                            case 'air':
                                 airMap.map.invalidateSize();
                                 break;
                         }
-                    }, 100);
+                    }, 100); // 100ms 지연
                 });
             });
 
-            // 초기 로드 시 트럭 맵이 활성화되도록 설정 (필요시)
-            // truckMap.map.invalidateSize();
+            // 초기 로드 시 첫 번째 맵(Truck)이 제대로 활성화되도록 invalidateSize 호출
+            // 이미 .active 클래스가 적용되어 있으므로 초기 렌더링 시 필요
+            truckMap.map.invalidateSize();
         });
     </script>
 </body>
