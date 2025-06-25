@@ -129,7 +129,6 @@ class RailCongestionMap {
             this.renderMarkers(); 
             this.addRightControls();
             this.addLastUpdatedText();
-            this.addLegend(); 
 
         } catch (error) {
             console.error("Failed to load rail data:", error);
