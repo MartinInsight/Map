@@ -49,7 +49,6 @@ class AirCongestionMap {
             }
             const rawData = await response.json();
 
-            // --- CHANGE START ---
             // Add municipality and iso_region to the mapped data
             this.currentData = rawData.map(item => ({
                 ...item,
@@ -59,7 +58,6 @@ class AirCongestionMap {
                 municipality: item.municipality || 'Unknown City', // Ensure municipality is mapped
                 iso_region: item.iso_region || 'Unknown Region' // Ensure iso_region is mapped
             })).filter(item => item.lat && item.lng && item.Airport);
-            // --- CHANGE END ---
 
             if (this.currentData.length > 0) {
                 this.lastUpdated = this.currentData[0].last_updated;
@@ -142,24 +140,25 @@ class AirCongestionMap {
     }
 
     /**
-     * Generates HTML content for marker popup using 'map-tooltip' class.
+     * Generates HTML content for marker popup.
+     * The styling is handled by Leaflet's default popup classes
+     * and the CSS targeting .leaflet-popup-content.
      * @param {Object} data - Data object for popup.
      * @returns {string} - HTML string.
      */
     createPopupContent(data) {
-        // --- CHANGE START ---
         // Extract region code (e.g., US-CA -> CA)
         const regionCode = data.iso_region ? data.iso_region.split('-').pop() : 'N/A';
 
+        // --- CHANGE START ---
+        // Removed the <div class="map-tooltip"> wrapper
         return `
-            <div class="map-tooltip">
-                <h4>${data.Airport || 'Unknown Airport'}</h4>
-                <p><strong>${data.municipality || 'Unknown City'}, ${regionCode}</strong></p>
-                <p><strong>Avg TXO:</strong> ${data.average_txo?.toFixed(2) || 'N/A'} min</p>
-                <p><strong>Scheduled:</strong> ${data.scheduled || 'N/A'}</p>
-                <p><strong>Departed:</strong> ${data.departed || 'N/A'}</p>
-                <p><strong>Completion:</strong> ${data.completion_factor || 'N/A'}%</p>
-            </div>
+            <h4>${data.Airport || 'Unknown Airport'}</h4>
+            <p><strong>${data.municipality || 'Unknown City'}, ${regionCode}</strong></p>
+            <p><strong>Avg TXO:</strong> ${data.average_txo?.toFixed(2) || 'N/A'} min</p>
+            <p><strong>Scheduled:</strong> ${data.scheduled || 'N/A'}</p>
+            <p><strong>Departed:</strong> ${data.departed || 'N/A'}</p>
+            <p><strong>Completion:</strong> ${data.completion_factor || 'N/A'}%</p>
         `;
         // --- CHANGE END ---
     }
