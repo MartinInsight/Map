@@ -296,8 +296,8 @@ class OceanCongestionMap {
   }
 
   createPopupContent(port) {
+    // Removed the <div class="map-tooltip"> wrapper
     return `
-      <div class="map-tooltip"> <!-- Changed from ocean-tooltip to map-tooltip -->
         <h4>${port.port}, ${port.country}</h4>
         <p><strong>Current Delay:</strong> ${port.current_delay}</p>
         <p><strong>Delay Level:</strong> 
@@ -308,7 +308,6 @@ class OceanCongestionMap {
         <p><strong>Port Code:</strong> ${port.port_code}</p>
         <p><strong>Weekly Median:</strong> ${port.weekly_median_delay} days</p>
         <p><strong>Monthly Max:</strong> ${port.monthly_max_delay} days</p>
-      </div>
     `;
   }
 
