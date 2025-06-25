@@ -2,13 +2,13 @@ class RailCongestionMap {
     constructor(mapElementId) {
         this.map = L.map(mapElementId).setView([37.8, -96], 4);
         this.markers = [];
+        this.clusterMarkers = []; // 클러스터 마커 저장용
         this.currentData = null;
         this.lastUpdated = null;
         this.filterControlInstance = null;
-        this.errorControl = null; // Ensure errorControl is initialized
-        this.lastUpdatedControl = null; // Initialize lastUpdatedControl
+        this.errorControl = null;
+        this.lastUpdatedControl = null;
 
-        // 지도 타일 레이어를 CartoDB Light All로 변경하여 영어 지명 통일
         L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', {
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
             maxZoom: 18,
@@ -21,22 +21,16 @@ class RailCongestionMap {
         ]);
 
         this.map.on('zoomend', () => {
-            const currentZoom = this.map.getZoom();
-            if (currentZoom < this.map.getMinZoom()) {
-                this.map.setZoom(this.map.getMinZoom());
-            }
+            this.handleZoomChange();
         });
 
-        // this.addControls(); // 기존 중복 컨트롤 호출 제거
         this.loadData();
     }
 
     async loadData() {
         try {
             const response = await fetch('data/us-rail.json');
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
             const rawData = await response.json();
 
             this.currentData = rawData.map(item => ({
@@ -47,16 +41,203 @@ class RailCongestionMap {
             })).filter(item => item.lat && item.lng && item.Yard);
 
             if (this.currentData.length > 0) {
-                this.lastUpdated = this.currentData[0].date; // 'date' 필드를 lastUpdated로 설정
+                this.lastUpdated = this.currentData[0].date;
             }
 
             this.renderMarkers();
             this.addLastUpdatedText();
-            this.addRightControls(); // 필터 및 리셋 버튼을 포함하는 새로운 컨트롤 추가
+            this.addRightControls();
         } catch (error) {
             console.error("Failed to load rail data:", error);
             this.displayErrorMessage("Failed to load rail data. Please try again later.");
         }
+    }
+
+    // 마커 렌더링 로직 변경
+    renderMarkers(data = this.currentData) {
+        // 기존 마커 제거
+        this.clearAllMarkers();
+        
+        // 마커 그룹화 로직
+        const markerGroups = this.groupMarkersByLocation(data);
+        
+        // 그룹화된 마커 렌더링
+        markerGroups.forEach(group => {
+            if (group.markers.length > 1) {
+                this.createClusterMarker(group);
+            } else {
+                this.createSingleMarker(group.markers[0]);
+            }
+        });
+    }
+
+    // 마커 위치 기준으로 그룹화
+    groupMarkersByLocation(data) {
+        const groups = [];
+        const locationMap = new Map();
+        const precision = 3; // 위치 그룹화 정밀도 (소수점 자릿수)
+
+        data.forEach(item => {
+            const latKey = item.lat.toFixed(precision);
+            const lngKey = item.lng.toFixed(precision);
+            const locationKey = `${latKey},${lngKey}`;
+
+            if (!locationMap.has(locationKey)) {
+                locationMap.set(locationKey, []);
+            }
+            locationMap.get(locationKey).push(item);
+        });
+
+        locationMap.forEach((markers, key) => {
+            const [lat, lng] = key.split(',');
+            groups.push({
+                lat: parseFloat(lat),
+                lng: parseFloat(lng),
+                markers: markers
+            });
+        });
+
+        return groups;
+    }
+
+    // 단일 마커 생성
+    createSingleMarker(item) {
+        const marker = L.circleMarker([item.lat, item.lng], {
+            radius: this.getRadiusByIndicator(item.indicator),
+            fillColor: this.getColor(item.congestion_level),
+            color: "#000",
+            weight: 1,
+            opacity: 1,
+            fillOpacity: 0.8
+        });
+
+        this.setupMarkerEvents(marker, [item]);
+        marker.addTo(this.map);
+        this.markers.push(marker);
+    }
+
+    // 클러스터 마커 생성
+    createClusterMarker(group) {
+        // 가장 높은 혼잡도 레벨 찾기
+        const highestCongestion = group.markers.reduce((max, item) => {
+            const levels = ['Very Low', 'Low', 'Average', 'High', 'Very High'];
+            return levels.indexOf(item.congestion_level) > levels.indexOf(max) ? item.congestion_level : max;
+        }, 'Very Low');
+
+        const clusterMarker = L.circleMarker([group.lat, group.lng], {
+            radius: 16, // 중간 사이즈 고정
+            fillColor: this.getColor(highestCongestion),
+            color: "#000",
+            weight: 1,
+            opacity: 1,
+            fillOpacity: 0.8
+        });
+
+        // 마커 위에 숫자 표시
+        const countDiv = L.DomUtil.create('div', 'cluster-marker-count');
+        countDiv.textContent = group.markers.length;
+        clusterMarker.bindTooltip(countDiv, {
+            permanent: true,
+            direction: 'center',
+            className: 'cluster-tooltip'
+        });
+
+        this.setupMarkerEvents(clusterMarker, group.markers);
+        clusterMarker.addTo(this.map);
+        this.clusterMarkers.push(clusterMarker);
+    }
+
+    // 마커 이벤트 설정
+    setupMarkerEvents(marker, items) {
+        marker.on({
+            mouseover: (e) => {
+                this.map.closePopup();
+                const popup = L.popup({
+                    closeButton: false,
+                    autoClose: true,
+                    closeOnClick: true,
+                    maxHeight: 300,
+                    maxWidth: 300
+                })
+                .setLatLng(e.latlng)
+                .setContent(this.createPopupContent(items))
+                .openOn(this.map);
+            },
+            mouseout: () => {
+                this.map.closePopup();
+            },
+            click: (e) => {
+                this.map.closePopup();
+                this.map.setView(e.latlng, 8);
+
+                L.popup({
+                    closeButton: true,
+                    autoClose: false,
+                    closeOnClick: false,
+                    maxHeight: 300,
+                    maxWidth: 300
+                })
+                .setLatLng(e.latlng)
+                .setContent(this.createPopupContent(items))
+                .openOn(this.map);
+            }
+        });
+    }
+
+    // 팝업 내용 생성 (다중 마커 지원)
+    createPopupContent(items) {
+        const isMultiple = items.length > 1;
+        let content = '';
+
+        if (isMultiple) {
+            content += `<div class="cluster-popup-header">
+                            <h4>${items.length} Locations</h4>
+                            <p>Showing clustered locations</p>
+                         </div>
+                         <div class="cluster-popup-content">`;
+        }
+
+        items.forEach(item => {
+            const level = item.congestion_level || 'Unknown';
+            content += `
+                <div class="location-info">
+                    <h5>${item.location || 'Unknown Location'}</h5>
+                    <p><strong>Company:</strong> ${item.company || 'Unknown'}</p>
+                    <p><strong>Congestion Level:</strong>
+                        <span style="color: ${this.getColor(level, true)}">
+                            ${level}
+                        </span>
+                    </p>
+                    <p><strong>Dwell Time:</strong> ${item.congestion_score?.toFixed(1) || 'N/A'} hours</p>
+                </div>
+                ${!isMultiple ? '' : '<hr>'}
+            `;
+        });
+
+        if (isMultiple) {
+            content += '</div>';
+        }
+
+        return content;
+    }
+
+    // 줌 변경 핸들러
+    handleZoomChange() {
+        const currentZoom = this.map.getZoom();
+        if (currentZoom < this.map.getMinZoom()) {
+            this.map.setZoom(this.map.getMinZoom());
+        } else {
+            // 줌 레벨이 변경되면 마커 다시 렌더링
+            this.renderMarkers(this.currentData);
+        }
+    }
+
+    // 모든 마커 제거
+    clearAllMarkers() {
+        this.markers.forEach(marker => this.map.removeLayer(marker));
+        this.clusterMarkers.forEach(marker => this.map.removeLayer(marker));
+        this.markers = [];
+        this.clusterMarkers = [];
     }
 
     addLastUpdatedText() {
