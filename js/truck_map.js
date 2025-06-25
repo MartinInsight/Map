@@ -1,13 +1,11 @@
-class TruckCongestionMap {
+class RailCongestionMap {
     constructor(mapElementId) {
         this.map = L.map(mapElementId).setView([37.8, -96], 4);
-        this.stateLayer = null;
-        this.currentMode = 'inbound';
-        this.metricData = null;
-        this.geoJsonData = null;
-        this.initialized = false;
-        this.controlDiv = null;
-        this.errorControl = null;
+        this.markers = [];
+        this.currentData = null;
+        this.lastUpdated = null;
+        this.filterControlInstance = null;
+        this.errorControl = null; // Ensure errorControl is initialized
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© OpenStreetMap',
@@ -27,202 +25,134 @@ class TruckCongestionMap {
             }
         });
 
-        this.init();
+        this.addControls();
+        this.loadData();
     }
 
-    async init() {
+    async loadData() {
         try {
-            const [geoJson, sheetData] = await Promise.all([
-                fetch('data/us-states.json').then(res => {
-                    if (!res.ok) throw new Error("GeoJSON fetch error");
-                    return res.json();
-                }),
-                this.fetchSheetData()
-            ]);
+            const response = await fetch('data/us-rail.json');
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const rawData = await response.json();
 
-            this.geoJsonData = geoJson;
-            this.metricData = sheetData;
+            this.currentData = rawData.map(item => ({
+                ...item,
+                lat: item.lat || item.Latitude,
+                lng: item.lng || item.Longitude,
+                Yard: item.location || 'Unknown'
+            })).filter(item => item.lat && item.lng && item.Yard);
 
-            this.renderMap();
-            this.addControls();
+            if (this.currentData.length > 0) {
+                this.lastUpdated = this.currentData[0].date;
+            }
+
+            this.renderMarkers();
+            this.addLastUpdatedText();
             this.addFilterControl();
-            this.initialized = true;
-        } catch (err) {
-            console.error("Initialization failed:", err);
-            this.showError("Failed to load truck data. Please try again later.");
+        } catch (error) {
+            console.error("Failed to load rail data:", error);
+            this.displayErrorMessage("Failed to load rail data. Please try again later.");
         }
     }
 
-    async fetchSheetData() {
-        try {
-            const res = await fetch('data/us-truck.json');
-            if (!res.ok) throw new Error("Truck data fetch error");
-            return await res.json();
-        } catch (err) {
-            console.warn("Truck data fetch failed, using fallback data.");
-            return {
-                'AL': { name: 'Alabama', inboundDelay: 0, inboundColor: 0, outboundDelay: 0, outboundColor: 0, dwellInbound: 0, dwellOutbound: 0 },
-                'TN': { name: 'Tennessee', inboundDelay: 0, inboundColor: 0, outboundDelay: 0, outboundColor: 0, dwellInbound: 0, dwellOutbound: 0 }
+    addLastUpdatedText() {
+        if (this.lastUpdatedControl) {
+            this.map.removeControl(this.lastUpdatedControl);
+        }
+
+        if (this.lastUpdated) {
+            const date = new Date(this.lastUpdated);
+            const formattedDate = `${date.getMonth() + 1}-${date.getDate()}-${date.getFullYear()}`;
+
+            const infoControl = L.control({ position: 'bottomleft' });
+
+            infoControl.onAdd = () => {
+                const div = L.DomUtil.create('div', 'last-updated-info');
+                div.innerHTML = `<strong>Last Updated:</strong> ${formattedDate}`;
+                return div;
             };
+
+            infoControl.addTo(this.map);
+            this.lastUpdatedControl = infoControl;
         }
     }
 
-    renderMap() {
-        if (this.stateLayer) this.map.removeLayer(this.stateLayer);
+    renderMarkers(data = this.currentData) {
+        this.markers.forEach(marker => this.map.removeLayer(marker));
+        this.markers = [];
 
-        this.stateLayer = L.geoJSON(this.geoJsonData, {
-            style: this.getStyle.bind(this),
-            onEachFeature: this.bindEvents.bind(this)
-        }).addTo(this.map);
-    }
+        data.forEach(item => {
+            const marker = L.circleMarker([item.lat, item.lng], {
+                radius: this.getRadiusByIndicator(item.indicator),
+                fillColor: this.getColor(item.congestion_level),
+                color: "#000",
+                weight: 1,
+                opacity: 1,
+                fillOpacity: 0.8
+            });
 
-    getStyle(feature) {
-        const stateCode = feature.id;
-        const data = this.metricData[stateCode] || {};
-        const colorValue = this.currentMode === 'inbound'
-            ? data.inboundColor
-            : data.outboundColor;
+            marker.on({
+                mouseover: (e) => {
+                    this.map.closePopup();
+                    const popup = L.popup({
+                        closeButton: false,
+                        autoClose: true,
+                        closeOnClick: true
+                    })
+                        .setLatLng(e.latlng)
+                        .setContent(this.createPopupContent(item))
+                        .openOn(this.map);
+                },
+                mouseout: () => {
+                    this.map.closePopup();
+                },
+                click: (e) => {
+                    this.map.closePopup();
+                    this.map.setView(e.latlng, 8);
+                    
+                    L.popup({
+                        closeButton: true,
+                        autoClose: false,
+                        closeOnClick: false
+                    })
+                        .setLatLng(e.latlng)
+                        .setContent(this.createPopupContent(item))
+                        .openOn(this.map);
+                }
+            });
 
-        return {
-            fillColor: this.getColor(colorValue),
-            weight: 1,
-            opacity: 1,
-            color: 'white',
-            fillOpacity: 0.7
-        };
-    }
-
-    getColor(value) {
-        const colors = {
-            '-3': '#d73027',
-            '-2': '#f46d43',
-            '-1': '#fdae61',
-            '0': '#ffffbf',
-            '1': '#a6d96a',
-            '2': '#66bd63',
-            '3': '#1a9850'
-        };
-        return colors[value] || '#cccccc';
-    }
-
-    bindEvents(feature, layer) {
-        const stateCode = feature.id;
-        const data = this.metricData[stateCode] || {};
-
-        layer.on({
-            mouseover: (e) => {
-                const center = layer.getBounds().getCenter();
-                this.showTooltip(center, data);
-                layer.setStyle({
-                    weight: 3,
-                    color: '#666',
-                    dashArray: '',
-                    fillOpacity: 0.9
-                });
-            },
-            mouseout: (e) => {
-                this.map.closePopup();
-                this.stateLayer.resetStyle(layer);
-            },
-            click: () => this.zoomToState(feature)
+            marker.addTo(this.map);
+            this.markers.push(marker);
         });
     }
 
-    showTooltip(latlng, data) {
-        if (!this.initialized) return;
-
-        const format = (v) => isNaN(Number(v)) ? '0.00' : Math.abs(Number(v)).toFixed(2);
-        const isInbound = this.currentMode === 'inbound';
-        const delay = isInbound ? data.inboundDelay : data.outboundDelay;
-        const dwellValue = isInbound ? data.dwellInbound : data.dwellOutbound;
-
-        // --- CHANGE START (Tooltip Class Name) ---
-        const content = `
-            <div class="map-tooltip">
-                <h4>${data.name || 'Unknown'}</h4>
-                <div>
-                    <strong>Truck Movement</strong>
-                    <p class="${delay >= 0 ? 'truck-positive' : 'truck-negative'}">
-                        ${delay >= 0 ? '↑' : '↓'} ${format(delay)}%
-                        <span class="truck-normal-text">${delay >= 0 ? 'above' : 'below'} 2-week avg</span>
-                    </p>
-                </div>
-                <div>
-                    <strong>Dwell Time</strong>
-                    <p class="${dwellValue >= 0 ? 'truck-positive' : 'truck-negative'}">
-                        ${dwellValue >= 0 ? '↑' : '↓'} ${format(dwellValue)}%
-                        <span class="truck-normal-text">${dwellValue >= 0 ? 'above' : 'below'} 2-week avg</span>
-                    </p>
-                </div>
-            </div>
-        `;
-        // --- CHANGE END (Tooltip Class Name) ---
-
-        L.popup({
-            className: 'truck-tooltip-container',
-            maxWidth: 300,
-            autoClose: false,
-            closeButton: false,
-            closeOnClick: false,
-            offset: L.point(0, -10)
-        })
-        .setLatLng(latlng)
-        .setContent(content)
-        .openOn(this.map);
-    }
-
-    // --- CHANGE START (Consistent Zoom) ---
-    zoomToState(feature) {
-        const bounds = L.geoJSON(feature).getBounds();
-        const center = bounds.getCenter();
-        const fixedZoomLevel = 7; // Adjust this value for desired zoom consistency
-
-        this.map.setView(center, fixedZoomLevel);
-        // No need to call renderMap() here, as stateLayer already manages all states
-        // and we only want to change the view.
-    }
-    // --- CHANGE END (Consistent Zoom) ---
-
     addControls() {
-        const control = L.control({ position: 'topright' });
+        const controlContainer = L.control({ position: 'topright' });
 
-        control.onAdd = () => {
+        controlContainer.onAdd = () => {
             const div = L.DomUtil.create('div', 'map-control-container');
-            this.controlDiv = div;
-            this.renderControls();
+            div.innerHTML = `
+                <button class="rail-reset-btn reset-btn">Reset View</button>
+            `;
+
+            div.querySelector('.rail-reset-btn').addEventListener('click', () => {
+                this.map.setView([37.8, -96], 4);
+                this.renderMarkers(this.currentData);
+                if (this.filterControlInstance) {
+                    const yardFilter = this.filterControlInstance._container.querySelector('.yard-filter');
+                    if (yardFilter) yardFilter.value = '';
+                }
+            });
+
+            L.DomEvent.disableClickPropagation(div);
+            L.DomEvent.disableScrollPropagation(div);
+
             return div;
         };
 
-        control.addTo(this.map);
-    }
-
-    renderControls() {
-        this.controlDiv.innerHTML = `
-            <div class="truck-toggle-container">
-                <div class="truck-toggle-wrapper">
-                    <button class="truck-toggle-btn ${this.currentMode === 'inbound' ? 'truck-active' : ''}" data-mode="inbound">INBOUND</button>
-                    <button class="truck-toggle-btn ${this.currentMode === 'outbound' ? 'truck-active' : ''}" data-mode="outbound">OUTBOUND</button>
-                </div>
-                <button class="truck-reset-btn reset-btn">Reset View</button>
-            </div>
-        `;
-
-        this.controlDiv.querySelectorAll('.truck-toggle-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                this.currentMode = btn.dataset.mode;
-                this.renderControls();
-                this.stateLayer.setStyle(this.getStyle.bind(this));
-            });
-        });
-
-        this.controlDiv.querySelector('.truck-reset-btn').addEventListener('click', () => {
-            this.map.setView([37.8, -96], 4);
-            // Reset filter dropdown if it exists
-            if (this.filterControlInstance) {
-                const stateFilter = this.filterControlInstance._container.querySelector('.state-filter');
-                if (stateFilter) stateFilter.value = '';
-            }
-        });
+        controlContainer.addTo(this.map);
     }
 
     addFilterControl() {
@@ -235,41 +165,39 @@ class TruckCongestionMap {
         control.onAdd = () => {
             const div = L.DomUtil.create('div', 'filter-control');
 
-            const states = this.geoJsonData.features
-                .map(f => ({
-                    id: f.id,
-                    name: f.properties.name
-                }))
-                .sort((a, b) => a.name.localeCompare(b.name));
+            const validYards = this.currentData
+                .filter(item => item.Yard && item.Yard.trim() !== '')
+                .map(item => item.Yard);
+
+            const yards = [...new Set(validYards)].sort((a, b) => a.localeCompare(b));
 
             div.innerHTML = `
-                <select class="state-filter">
-                    <option value="">Select State</option>
-                    ${states.map(state =>
-                        `<option value="${state.id}">${state.name}</option>`
+                <select class="yard-filter">
+                    <option value="">Select Yard</option>
+                    ${yards.map(yard =>
+                        `<option value="${yard}">${yard}</option>`
                     ).join('')}
                 </select>
             `;
 
-            div.querySelector('.state-filter').addEventListener('change', (e) => {
-                const stateId = e.target.value;
-                if (!stateId) {
+            div.querySelector('.yard-filter').addEventListener('change', (e) => {
+                const yardName = e.target.value;
+                if (!yardName) {
                     this.map.setView([37.8, -96], 4);
-                    // No need to re-render all state layers here, they are always present.
+                    this.renderMarkers(this.currentData);
                     return;
                 }
 
-                const state = this.geoJsonData.features.find(f => f.id === stateId);
-                if (state) {
-                    // --- CHANGE START (Consistent Zoom for filter dropdown) ---
-                    const bounds = L.geoJSON(state).getBounds();
-                    const center = bounds.getCenter();
-                    const fixedZoomLevel = 7; // Match the zoomToState fixed level
-
-                    this.map.setView(center, fixedZoomLevel);
-                    // --- CHANGE END (Consistent Zoom for filter dropdown) ---
+                const yardData = this.currentData.filter(item => item.Yard === yardName);
+                if (yardData.length > 0) {
+                    const center = this.getYardCenter(yardData);
+                    this.map.setView(center, 8); // Use fixed zoom level 8 for consistency
+                    this.renderMarkers(this.currentData); // Keep all markers visible
                 }
             });
+
+            L.DomEvent.disableClickPropagation(div);
+            L.DomEvent.disableScrollPropagation(div);
 
             return div;
         };
@@ -278,7 +206,68 @@ class TruckCongestionMap {
         this.filterControlInstance = control;
     }
 
-    showError(message) {
+    getYardCenter(yardData) {
+        if (!yardData || yardData.length === 0) return [37.8, -96];
+
+        const lats = yardData.map(item => item.lat);
+        const lngs = yardData.map(item => item.lng);
+
+        const minLat = Math.min(...lats);
+        const maxLat = Math.max(...lats);
+        const minLng = Math.min(...lngs);
+        const maxLng = Math.max(...lngs);
+
+        return [
+            (minLat + maxLat) / 2,
+            (minLng + maxLng) / 2
+        ];
+    }
+
+    getRadiusByIndicator(indicator) {
+        if (indicator > 2) return 20;
+        if (indicator > 1) return 16;
+        if (indicator > -1) return 12;
+        if (indicator > -2) return 8;
+        return 5;
+    }
+
+    getColor(level, isText = false) {
+        const circleColors = {
+            'Very High': '#d62828',
+            'High': '#f88c2b',
+            'Low': '#5fa9f6',
+            'Very Low': '#004fc0',
+            'Average': '#bcbcbc'
+        };
+
+        const textColors = {
+            'Very High': '#6b1414',
+            'High': '#7c4616',
+            'Low': '#30557b',
+            'Very Low': '#002860',
+            'Average': '#5e5e5e'
+        };
+
+        return isText ? textColors[level] : circleColors[level];
+    }
+
+    createPopupContent(data) {
+        const level = data.congestion_level || 'Unknown';
+
+        // Removed the <div class="map-tooltip"> wrapper
+        return `
+            <h4>${data.location || 'Unknown Location'}</h4>
+            <p><strong>Company:</strong> ${data.company || 'Unknown'}</p>
+            <p><strong>Congestion Level:</strong>
+                <span style="color: ${this.getColor(level, true)}">
+                    ${level}
+                </span>
+            </p>
+            <p><strong>Dwell Time:</strong> ${data.congestion_score?.toFixed(1) || 'N/A'} hours</p>
+        `;
+    }
+
+    displayErrorMessage(message) {
         if (this.errorControl) {
             this.map.removeControl(this.errorControl);
         }
@@ -294,4 +283,4 @@ class TruckCongestionMap {
     }
 }
 
-window.TruckCongestionMap = TruckCongestionMap;
+window.RailCongestionMap = RailCongestionMap;
