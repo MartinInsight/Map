@@ -49,12 +49,17 @@ class AirCongestionMap {
             }
             const rawData = await response.json();
 
+            // --- CHANGE START ---
+            // Add municipality and iso_region to the mapped data
             this.currentData = rawData.map(item => ({
                 ...item,
                 lat: item.lat || item.latitude_deg,
                 lng: item.lng || item.longitude_deg,
-                Airport: item.airport_code || 'Unknown'
+                Airport: item.airport_code || 'Unknown',
+                municipality: item.municipality || 'Unknown City', // Ensure municipality is mapped
+                iso_region: item.iso_region || 'Unknown Region' // Ensure iso_region is mapped
             })).filter(item => item.lat && item.lng && item.Airport);
+            // --- CHANGE END ---
 
             if (this.currentData.length > 0) {
                 this.lastUpdated = this.currentData[0].last_updated;
@@ -142,15 +147,21 @@ class AirCongestionMap {
      * @returns {string} - HTML string.
      */
     createPopupContent(data) {
+        // --- CHANGE START ---
+        // Extract region code (e.g., US-CA -> CA)
+        const regionCode = data.iso_region ? data.iso_region.split('-').pop() : 'N/A';
+
         return `
             <div class="map-tooltip">
                 <h4>${data.Airport || 'Unknown Airport'}</h4>
+                <p><strong>${data.municipality || 'Unknown City'}, ${regionCode}</strong></p>
                 <p><strong>Avg TXO:</strong> ${data.average_txo?.toFixed(2) || 'N/A'} min</p>
                 <p><strong>Scheduled:</strong> ${data.scheduled || 'N/A'}</p>
                 <p><strong>Departed:</strong> ${data.departed || 'N/A'}</p>
                 <p><strong>Completion:</strong> ${data.completion_factor || 'N/A'}%</p>
             </div>
         `;
+        // --- CHANGE END ---
     }
 
     /**
@@ -288,6 +299,40 @@ class AirCongestionMap {
             this.lastUpdatedControl = infoControl;
         }
     }
+
+    /**
+     * This method would add an air congestion legend to the map.
+     * It is commented out as per user request to remove the legend.
+     */
+    // addAirLegend() {
+    //     if (this.legendControl) {
+    //         this.map.removeControl(this.legendControl);
+    //     }
+
+    //     const legend = L.control({ position: 'bottomright' });
+
+    //     legend.onAdd = () => {
+    //         const div = L.DomUtil.create('div', 'air-legend');
+    //         const grades = [0, 10, 15, 20, 25];
+    //         const labels = ['Very Smooth', 'Smooth', 'Moderate', 'Congested', 'Very Congested'];
+    //         const colors = ['#1a9850', '#d9ef8b', '#fee08b', '#fc8d59', '#d73027'];
+
+    //         div.innerHTML += '<div class="air-legend-title">Congestion (Avg Taxi-Out Time)</div>';
+
+    //         for (let i = 0; i < grades.length; i++) {
+    //             div.innerHTML +=
+    //                 '<div class="air-legend-item">' +
+    //                 '<span class="air-legend-color" style="background:' + colors[i] + '"></span> ' +
+    //                 labels[i] + (grades[i + 1] ? ' (' + grades[i] + '-' + (grades[i+1]-1) + 'min)' : ' (' + grades[i] + '+ min)') +
+    //                 '</div>';
+    //         }
+    //         return div;
+    //     };
+
+    //     legend.addTo(this.map);
+    //     this.legendControl = legend;
+    // }
+
 
     /**
      * Displays an error message control on the map.
