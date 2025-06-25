@@ -2,12 +2,10 @@ class RailCongestionMap {
     constructor(mapElementId) {
         this.map = L.map(mapElementId).setView([37.8, -96], 4);
         
-        // Find this section:
         this.allMarkers = L.markerClusterGroup({
-            maxClusterRadius: 40, 
-            disableClusteringAtZoom: 9, 
-            // Add this line:
-            spiderfyOnMaxZoom: true, // This is the key!
+            maxClusterRadius: 40, // Adjust as needed
+            disableClusteringAtZoom: 9, // Adjust as needed
+            spiderfyOnMaxZoom: true, // Keep this for spreading overlapping markers visually
             
             iconCreateFunction: (cluster) => {
                 const childMarkers = cluster.getAllChildMarkers();
@@ -45,7 +43,7 @@ class RailCongestionMap {
                 });
             }
         });
-        this.currentData = null; // Keep this as null initially
+        this.currentData = null;
         this.lastUpdated = null;
         this.filterControlInstance = null;
         this.errorControl = null;
@@ -100,11 +98,8 @@ class RailCongestionMap {
                 if (itemsAtCoord.length > 1) {
                     const baseLat = itemsAtCoord[0].lat;
                     const baseLng = itemsAtCoord[0].lng;
-                    
-                    // --- 이 값을 더 크게 조정합니다! ---
-                    const offsetScale = 0.1; // 0.0001 -> 0.0005 (약 55미터)로 변경
-                                                // 0.001 (약 111미터)까지 시도해 볼 수 있습니다.
-                    // -----------------------------------
+                    const offsetScale = 0.1; 
+                    // -------------------------------------------------------------------
 
                     itemsAtCoord.forEach((item, index) => {
                         const angle = (index / itemsAtCoord.length) * 2 * Math.PI;
@@ -129,6 +124,7 @@ class RailCongestionMap {
             this.renderMarkers(); 
             this.addRightControls();
             this.addLastUpdatedText();
+            // this.addLegend(); // Ensure this is commented out or removed if not needed
 
         } catch (error) {
             console.error("Failed to load rail data:", error);
@@ -157,7 +153,7 @@ class RailCongestionMap {
             this.map.addLayer(this.allMarkers);
         }
         
-        // --- 기존 이벤트 리스너 제거 후 다시 추가 (중복 방지) ---
+        // --- Existing event listeners removed/re-added for proper lifecycle ---
         this.allMarkers.off('clusterclick');
         this.allMarkers.on('clusterclick', (a) => {
             a.layer.zoomToBounds();
@@ -167,26 +163,24 @@ class RailCongestionMap {
         this.allMarkers.off('clustermouseover');
         this.allMarkers.on('clustermouseover', (a) => {
             const clusterItems = a.layer.getAllChildMarkers().map(m => m.options.itemData);
-            const childCount = clusterItems.length; // 클러스터 내 마커 개수
+            const childCount = clusterItems.length; 
 
-            // --- 여기를 수정합니다! ---
             const popupContent = `
                 <div class="cluster-hover-info">
                     <h4>${childCount} Locations Clustered</h4>
                     <p>Click or zoom in to see individual details.</p>
                 </div>
             `;
-            // ------------------------
 
             const popup = L.popup({
                 closeButton: false,
                 autoClose: true,
                 closeOnClick: false,
-                maxHeight: 300, // 이 값은 이제 중요하지 않을 수 있지만, 안전을 위해 유지합니다.
+                maxHeight: 300,
                 maxWidth: 300
             })
             .setLatLng(a.latlng)
-            .setContent(popupContent) // 수정된 popupContent 사용
+            .setContent(popupContent)
             .openOn(this.map);
         });
 
@@ -196,13 +190,11 @@ class RailCongestionMap {
         });
     }
 
-    // --- 이 함수가 가장 크게 변경되었습니다! L.circleMarker 대신 L.marker + L.divIcon 사용 ---
     createSingleMarker(item) {
         const level = item.congestion_level || 'Average';
         const color = this.getColor(level);
         const radius = this.getRadiusByIndicator(item.indicator);
 
-        // L.DivIcon을 사용하여 원형 마커처럼 보이게 함
         const iconHtml = `
             <div style="
                 background-color: ${color}; 
@@ -218,19 +210,17 @@ class RailCongestionMap {
         `;
 
         const customIcon = L.divIcon({
-            className: 'custom-div-icon', // CSS에서 추가 스타일링 가능
+            className: 'custom-div-icon',
             html: iconHtml,
-            iconSize: [radius * 2, radius * 2], // 아이콘 크기는 반지름의 두 배
-            iconAnchor: [radius, radius] // 아이콘 중심을 마커 중앙으로 설정
+            iconSize: [radius * 2, radius * 2],
+            iconAnchor: [radius, radius]
         });
 
-        // L.marker를 사용하여 Leaflet.markercluster가 올바르게 인식하도록 함
         const marker = L.marker([item.lat, item.lng], { 
             icon: customIcon,
-            itemData: item // 중요: 팝업 내용을 위해 원본 데이터를 마커 옵션에 저장
+            itemData: item 
         });
 
-        // 개별 마커의 호버 및 클릭 이벤트
         marker.on({
             mouseover: (e) => {
                 const popup = L.popup({
@@ -241,14 +231,16 @@ class RailCongestionMap {
                     maxWidth: 300
                 })
                 .setLatLng(e.latlng)
-                .setContent(this.createPopupContent([item])) 
+                .setContent(this.createPopupContent([item]))
                 .openOn(this.map);
             },
             mouseout: () => {
                 this.map.closePopup();
             },
-            click: () => {
-                this.map.closePopup(); 
+            // --- NEW: Open tooltip on click for individual markers ---
+            click: (e) => {
+                this.map.closePopup(); // Close any existing hover popup
+                marker.bindPopup(this.createPopupContent([item])).openPopup(); // Open clicked marker's popup
             }
         });
         return marker;
@@ -369,7 +361,22 @@ class RailCongestionMap {
                     const yardData = this.currentData.filter(item => item.Yard === yardName);
                     if (yardData.length > 0) {
                         const center = this.getYardCenter(yardData);
-                        this.map.setView(center, 8);
+                        this.map.setView(center, 8); // Zoom to yard center
+
+                        // --- NEW: Open tooltip for the first found marker for the selected yard ---
+                        // Find the actual Leaflet marker in this.allMarkers for the selected yard
+                        const foundMarker = this.allMarkers.getLayers().find(markerLayer => 
+                            markerLayer.options.itemData && markerLayer.options.itemData.Yard === yardName
+                        );
+
+                        if (foundMarker) {
+                            // Ensure any existing popups are closed before opening a new one
+                            this.map.closePopup(); 
+                            // Open the popup for this specific marker.
+                            // If it's part of a cluster, Leaflet.markercluster will handle it.
+                            foundMarker.openPopup();
+                        }
+                        // --- END NEW ---
                     }
                 }
             });
@@ -393,7 +400,7 @@ class RailCongestionMap {
         control.addTo(this.map);
     }
 
-    addLegend() {
+    addLegend() { // This method is still present, assuming it's commented out in constructor
         const legend = L.control({ position: 'bottomright' });
 
         legend.onAdd = function (map) {
