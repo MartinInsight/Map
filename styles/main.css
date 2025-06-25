@@ -89,34 +89,19 @@ html, body {
     box-shadow: none !important;
 }
 
-/* Common Control Styles (Reset button, Filter box etc.) */
-/* .map-control-container is now used for the centered toggle group */
-.map-control-container {
+/* Common Control Styles for containers (e.g., Reset button, Filter box, and the outer toggle container) */
+.map-control-container,
+.map-control-group-right { /* Unified styling for control boxes */
     background: white;
     padding: 8px 12px;
     border-radius: 8px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.15);
-    display: inline-flex; /* Use inline-flex to make it respect width: fit-content */
+    display: inline-flex;
     align-items: center;
     gap: 10px;
     width: fit-content;
     box-sizing: border-box;
 }
-
-/* Styles for the new combined right control group */
-.map-control-group-right {
-    display: flex; /* Use flexbox for horizontal layout */
-    flex-direction: row; /* Arrange items in a row */
-    gap: 10px; /* Space between items */
-    background: white;
-    padding: 8px 12px;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.15);
-    align-items: center; /* Vertically center items */
-    width: fit-content; /* Adjust width to content */
-    box-sizing: border-box;
-}
-
 
 /* Reset Button Style */
 .reset-btn {
@@ -142,9 +127,8 @@ html, body {
 }
 
 /* Filter Control Select Style */
-/* Both .filter-control select (if any map still uses it) and .map-control-group-right select */
 .filter-control select,
-.map-control-group-right select { 
+.map-control-group-right select {
     padding: 8px 12px;
     border: 1px solid #ddd;
     border-radius: 6px;
@@ -172,20 +156,19 @@ html, body {
     box-shadow: 0 0 0 2px rgba(0,101,126,0.2);
 }
 
-/* Truck specific styles (kept for other tabs if they use them) */
+/* Truck specific styles */
 .truck-toggle-container {
     display: flex;
     align-items: center;
     gap: 12px;
 }
 
+/* Fix double box issue: Only apply flex/overflow to this wrapper, remove background/border/shadow */
 .truck-toggle-wrapper {
     display: flex;
     border-radius: 6px;
     overflow: hidden;
-    background: white;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    border: 1px solid #e0e0e0;
+    /* Removed: background, box-shadow, border - these are now on .map-control-container */
 }
 
 .truck-toggle-btn {
@@ -215,8 +198,7 @@ html, body {
     background: #f0f0f0;
 }
 
-/* Removed .map-tooltip as a wrapper style, its inner styles should be applied to leaflet-popup-content */
-/* Common Tooltip Inner Styles (now applied to Leaflet's internal popup elements) */
+/* Common Tooltip Inner Styles (applied to Leaflet's internal popup elements) */
 .leaflet-popup-content h4 {
     margin: 0 0 12px 0;
     font-size: 16px;
@@ -310,14 +292,14 @@ html, body {
 }
 
 /* Specific styling to center the truck toggle control div within the map viewport */
-/* This element is the div created by L.control({ position: 'topleft' }) in JS and given this class */
+/* This element is the div created by L.DomUtil.create('div', 'map-control-container truck-toggle-map-control') in JS */
 .truck-toggle-map-control {
     position: absolute; /* 절대 위치를 사용하여 맵 내에서 직접 중앙 정렬 */
     top: 10px; /* 맵 상단에서 10px 떨어진 위치 */
     left: 50%; /* 맵 너비의 50% 지점 */
     transform: translateX(-50%); /* X축으로 요소 너비의 절반만큼 이동하여 정확히 중앙 정렬 */
     z-index: 1000; /* 다른 컨트롤 위에 표시되도록 z-index 설정 */
-    /* .map-control-container의 스타일 (배경, 그림자, 패딩 등)은 그대로 유지 */
+    /* .map-control-container의 스타일 (배경, 그림자, 패딩 등)은 이미 적용됨 */
 }
 
 /* Leaflet Zoom Control Styling */
@@ -351,9 +333,9 @@ html, body {
     box-shadow: 0 3px 7px rgba(0,0,0,0.15) !important;
 }
 
-/* Separator between zoom buttons */
+/* Remove separator between zoom buttons to make them stick together */
 .leaflet-control-zoom-in + .leaflet-control-zoom-out {
-    margin-top: 5px !important; /* 버튼 사이 간격 */
+    margin-top: 0 !important; /* 버튼 사이 간격 제거 */
 }
 
 
