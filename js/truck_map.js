@@ -1,4 +1,4 @@
-class RailCongestionMap {
+class TruckCongestionMap {
     constructor(mapElementId) {
         this.map = L.map(mapElementId).setView([37.8, -96], 4);
         this.markers = [];
@@ -31,29 +31,31 @@ class RailCongestionMap {
 
     async loadData() {
         try {
-            const response = await fetch('data/us-rail.json');
+            const response = await fetch('data/us-truck.json');
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             const rawData = await response.json();
 
-            this.currentData = rawData.map(item => ({
+            // Filter out items without valid lat/lng or name
+            this.currentData = rawData.filter(item => item.Latitude && item.Longitude && item.Location).map(item => ({
                 ...item,
-                lat: item.lat || item.Latitude,
-                lng: item.lng || item.Longitude,
-                Yard: item.location || 'Unknown'
-            })).filter(item => item.lat && item.lng && item.Yard);
+                lat: item.Latitude,
+                lng: item.Longitude,
+                name: item.Location // Ensure 'name' property exists for consistency
+            }));
 
             if (this.currentData.length > 0) {
-                this.lastUpdated = this.currentData[0].date;
+                this.lastUpdated = this.currentData[0].Date;
             }
 
             this.renderMarkers();
             this.addLastUpdatedText();
             this.addFilterControl();
+
         } catch (error) {
-            console.error("Failed to load rail data:", error);
-            this.displayErrorMessage("Failed to load rail data. Please try again later.");
+            console.error("Failed to load truck data:", error);
+            this.displayErrorMessage("Failed to load truck data. Please try again later.");
         }
     }
 
@@ -85,8 +87,8 @@ class RailCongestionMap {
 
         data.forEach(item => {
             const marker = L.circleMarker([item.lat, item.lng], {
-                radius: this.getRadiusByIndicator(item.indicator),
-                fillColor: this.getColor(item.congestion_level),
+                radius: this.getMarkerRadius(item.Volume),
+                fillColor: this.getColor(item.Congestion),
                 color: "#000",
                 weight: 1,
                 opacity: 1,
@@ -95,30 +97,31 @@ class RailCongestionMap {
 
             marker.on({
                 mouseover: (e) => {
-                    this.map.closePopup();
+                    this.map.closePopup(); // Close any existing popups before showing a new one
                     const popup = L.popup({
-                        closeButton: false,
-                        autoClose: true,
-                        closeOnClick: true
+                        closeButton: false, // Don't show the close button on hover
+                        autoClose: true, // Auto-close when mouse leaves
+                        closeOnClick: false // Don't close if clicked
                     })
                         .setLatLng(e.latlng)
-                        .setContent(this.createPopupContent(item))
+                        .setContent(this.showTooltip(item))
                         .openOn(this.map);
                 },
                 mouseout: () => {
-                    this.map.closePopup();
+                    this.map.closePopup(); // Close popup when mouse leaves
                 },
                 click: (e) => {
-                    this.map.closePopup();
-                    this.map.setView(e.latlng, 8);
-                    
+                    this.map.closePopup(); // Close existing popup
+                    this.map.setView(e.latlng, 8); // Zoom in on click
+
+                    // Show sticky popup on click
                     L.popup({
                         closeButton: true,
-                        autoClose: false,
-                        closeOnClick: false
+                        autoClose: false, // Keep open until manually closed
+                        closeOnClick: false // Don't close when clicking on map
                     })
                         .setLatLng(e.latlng)
-                        .setContent(this.createPopupContent(item))
+                        .setContent(this.showTooltip(item))
                         .openOn(this.map);
                 }
             });
@@ -134,15 +137,15 @@ class RailCongestionMap {
         controlContainer.onAdd = () => {
             const div = L.DomUtil.create('div', 'map-control-container');
             div.innerHTML = `
-                <button class="rail-reset-btn reset-btn">Reset View</button>
+                <button class="truck-reset-btn reset-btn">Reset View</button>
             `;
 
-            div.querySelector('.rail-reset-btn').addEventListener('click', () => {
+            div.querySelector('.truck-reset-btn').addEventListener('click', () => {
                 this.map.setView([37.8, -96], 4);
                 this.renderMarkers(this.currentData);
-                if (this.filterControlInstance) {
-                    const yardFilter = this.filterControlInstance._container.querySelector('.yard-filter');
-                    if (yardFilter) yardFilter.value = '';
+                 if (this.filterControlInstance) {
+                    const locationFilter = this.filterControlInstance._container.querySelector('.location-filter');
+                    if (locationFilter) locationFilter.value = '';
                 }
             });
 
@@ -165,32 +168,32 @@ class RailCongestionMap {
         control.onAdd = () => {
             const div = L.DomUtil.create('div', 'filter-control');
 
-            const validYards = this.currentData
-                .filter(item => item.Yard && item.Yard.trim() !== '')
-                .map(item => item.Yard);
+            const validLocations = this.currentData
+                .filter(item => item.Location && item.Location.trim() !== '')
+                .map(item => item.Location);
 
-            const yards = [...new Set(validYards)].sort((a, b) => a.localeCompare(b));
+            const locations = [...new Set(validLocations)].sort((a, b) => a.localeCompare(b));
 
             div.innerHTML = `
-                <select class="yard-filter">
-                    <option value="">Select Yard</option>
-                    ${yards.map(yard =>
-                        `<option value="${yard}">${yard}</option>`
+                <select class="location-filter">
+                    <option value="">Select Location</option>
+                    ${locations.map(location =>
+                        `<option value="${location}">${location}</option>`
                     ).join('')}
                 </select>
             `;
 
-            div.querySelector('.yard-filter').addEventListener('change', (e) => {
-                const yardName = e.target.value;
-                if (!yardName) {
+            div.querySelector('.location-filter').addEventListener('change', (e) => {
+                const locationName = e.target.value;
+                if (!locationName) {
                     this.map.setView([37.8, -96], 4);
                     this.renderMarkers(this.currentData);
                     return;
                 }
 
-                const yardData = this.currentData.filter(item => item.Yard === yardName);
-                if (yardData.length > 0) {
-                    const center = this.getYardCenter(yardData);
+                const locationData = this.currentData.filter(item => item.Location === locationName);
+                if (locationData.length > 0) {
+                    const center = this.getLocationCenter(locationData);
                     this.map.setView(center, 8); // Use fixed zoom level 8 for consistency
                     this.renderMarkers(this.currentData); // Keep all markers visible
                 }
@@ -206,11 +209,11 @@ class RailCongestionMap {
         this.filterControlInstance = control;
     }
 
-    getYardCenter(yardData) {
-        if (!yardData || yardData.length === 0) return [37.8, -96];
+    getLocationCenter(locationData) {
+        if (!locationData || locationData.length === 0) return [37.8, -96];
 
-        const lats = yardData.map(item => item.lat);
-        const lngs = yardData.map(item => item.lng);
+        const lats = locationData.map(item => item.Latitude);
+        const lngs = locationData.map(item => item.Longitude);
 
         const minLat = Math.min(...lats);
         const maxLat = Math.max(...lats);
@@ -223,47 +226,60 @@ class RailCongestionMap {
         ];
     }
 
-    getRadiusByIndicator(indicator) {
-        if (indicator > 2) return 20;
-        if (indicator > 1) return 16;
-        if (indicator > -1) return 12;
-        if (indicator > -2) return 8;
+    getMarkerRadius(volume) {
+        if (volume > 500000) return 20;
+        if (volume > 200000) return 16;
+        if (volume > 100000) return 12;
+        if (volume > 50000) return 8;
         return 5;
     }
 
-    getColor(level, isText = false) {
-        const circleColors = {
-            'Very High': '#d62828',
-            'High': '#f88c2b',
-            'Low': '#5fa9f6',
-            'Very Low': '#004fc0',
-            'Average': '#bcbcbc'
-        };
-
-        const textColors = {
-            'Very High': '#6b1414',
-            'High': '#7c4616',
-            'Low': '#30557b',
-            'Very Low': '#002860',
-            'Average': '#5e5e5e'
-        };
-
-        return isText ? textColors[level] : circleColors[level];
+    getColor(congestion) {
+        if (congestion === 'Very High') return '#d62828';
+        if (congestion === 'High') return '#f88c2b';
+        if (congestion === 'Low') return '#5fa9f6';
+        if (congestion === 'Very Low') return '#004fc0';
+        return '#bcbcbc'; // Average or Unknown
     }
 
-    createPopupContent(data) {
-        const level = data.congestion_level || 'Unknown';
+    getCongestionTextColor(congestion) {
+        if (congestion === 'Very High') return '#6b1414';
+        if (congestion === 'High') return '#7c4616';
+        if (congestion === 'Low') return '#30557b';
+        if (congestion === 'Very Low') return '#002860';
+        return '#5e5e5e'; // Average or Unknown
+    }
 
-        // Removed the <div class="map-tooltip"> wrapper
+    showTooltip(data) {
+        const congestionLevel = data.Congestion || 'N/A';
+        const delay = data.DelayPercentage !== undefined ? data.DelayPercentage : 'N/A';
+        const dwellValue = data.DwellTimePercentage !== undefined ? data.DwellTimePercentage : 'N/A';
+
+        const format = (value) => {
+            if (typeof value === 'number') {
+                return value.toFixed(1);
+            }
+            return value;
+        };
+
+        // Removed the <div class="map-tooltip"> wrapper as requested
         return `
-            <h4>${data.location || 'Unknown Location'}</h4>
-            <p><strong>Company:</strong> ${data.company || 'Unknown'}</p>
-            <p><strong>Congestion Level:</strong>
-                <span style="color: ${this.getColor(level, true)}">
-                    ${level}
-                </span>
-            </p>
-            <p><strong>Dwell Time:</strong> ${data.congestion_score?.toFixed(1) || 'N/A'} hours</p>
+            <h4>${data.Location || 'Unknown'}</h4>
+            <div>
+                <strong>Truck Movement</strong>
+                <p class="${delay >= 0 ? 'truck-positive' : 'truck-negative'}">
+                    ${delay >= 0 ? '↑' : '↓'} ${format(delay)}%
+                    <span class="truck-normal-text">${delay >= 0 ? 'above' : 'below'} 2-week avg</span>
+                </p>
+            </div>
+            <div>
+                <strong>Dwell Time</strong>
+                <p class="${dwellValue >= 0 ? 'truck-positive' : 'truck-negative'}">
+                    ${dwellValue >= 0 ? '↑' : '↓'} ${format(dwellValue)}%
+                    <span class="truck-normal-text">${dwellValue >= 0 ? 'above' : 'below'} 2-week avg</span>
+                </p>
+            </div>
+            <p><strong>Congestion Level:</strong> <span style="color: ${this.getCongestionTextColor(congestionLevel)}">${congestionLevel}</span></p>
         `;
     }
 
@@ -283,4 +299,4 @@ class RailCongestionMap {
     }
 }
 
-window.RailCongestionMap = RailCongestionMap;
+window.TruckCongestionMap = TruckCongestionMap;
