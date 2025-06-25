@@ -2,18 +2,15 @@ class RailCongestionMap {
     constructor(mapElementId) {
         this.map = L.map(mapElementId).setView([37.8, -96], 4);
         
-        // 클러스터링 설정 최적화
         this.allMarkers = L.markerClusterGroup({
-            maxClusterRadius: 20, // 축소된 클러스터 반경
-            disableClusteringAtZoom: 7, // 더 낮은 줌 레벨에서 클러스터 해제
-            spiderfyOnMaxZoom: true,
-            animate: false, // 모바일 성능 향상
-            chunkedLoading: true, // 대량의 마커를 위한 성능 최적화
+            maxClusterRadius: 40, 
+            disableClusteringAtZoom: 9, 
+            spiderfyOnMaxZoom: true, 
             
             iconCreateFunction: (cluster) => {
                 const childMarkers = cluster.getAllChildMarkers();
                 let highestCongestionLevelValue = -1;
-                let dominantColor = this.getColor('Average');
+                let dominantColor = this.getColor('Average'); 
 
                 const congestionLevelToValue = (level) => {
                     switch (level) {
@@ -46,61 +43,89 @@ class RailCongestionMap {
                 });
             }
         });
-
-        // 상태 관리 변수들
         this.currentData = null;
         this.lastUpdated = null;
         this.filterControlInstance = null;
         this.errorControl = null;
         this.lastUpdatedControl = null;
-        this.markerToOpenAfterMove = null;
-        this.isMarkerPopupClickedOpen = false; // 클릭으로 열린 팝업 상태 추적
+        this.markerToOpenAfterMove = null; // 필터링 후 팝업을 열 마커를 저장하는 속성
 
-        // 타일 레이어 설정
         L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', {
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
             maxZoom: 18,
             minZoom: 3
         }).addTo(this.map);
 
-        // 지도 경계 설정
         this.map.setMaxBounds([
             [-85, -180],
             [85, 180]
         ]);
 
-        // 이벤트 핸들러 설정
-        this.setupEventHandlers();
         this.loadData();
-    }
 
-    setupEventHandlers() {
         // 맵 클릭 시 열려 있는 팝업 닫기
         this.map.on('click', () => {
             console.log("Map clicked. Closing any open popups.");
-            this.map.closePopup();
+            this.map.closePopup(); 
         });
 
         // 맵 이동/확대/축소 완료 시 필터링된 마커의 팝업 열기 시도
-        this.map.on('moveend zoomend', () => {
+        this.map.on('moveend', () => {
             if (this.markerToOpenAfterMove) {
                 console.log('Map animation ended, attempting to open queued popup with polling.');
                 const targetMarker = this.markerToOpenAfterMove;
-                this.markerToOpenAfterMove = null;
+                this.markerToOpenAfterMove = null; // 큐에서 마커 제거
                 this.pollForMarkerAndOpenPopup(targetMarker);
             }
         });
         
-        // 마커가 실제로 지도에 추가될 때 팝업 열기 시도
+        // MarkerClusterGroup의 layeradd 이벤트를 사용하여 마커가 실제로 지도에 추가될 때 팝업 열기 시도
         this.allMarkers.on('layeradd', (e) => {
             const addedLayer = e.layer;
-            if (this.markerToOpenAfterMove && addedLayer.options.itemData && 
-                this.markerToOpenAfterMove.options.itemData.Yard === addedLayer.options.itemData.Yard) {
-                console.log(`Layer added for queued marker: ${addedLayer.options.itemData.Yard}`);
-                this.pollForMarkerAndOpenPopup(addedLayer);
-                this.markerToOpenAfterMove = null;
+            // 필터링으로 인해 맵에 추가된 마커인지 확인
+            if (this.markerToOpenAfterMove && addedLayer.options.itemData && this.markerToOpenAfterMove.options.itemData.Yard === addedLayer.options.itemData.Yard) {
+                 console.log(`Layer added for queued marker: ${addedLayer.options.itemData.Yard}. Attempting to open popup.`);
+                 this.pollForMarkerAndOpenPopup(addedLayer);
+                 this.markerToOpenAfterMove = null; // 큐에서 마커 제거
             }
         });
+    }
+
+    // 마커가 DOM에 완전히 렌더링될 때까지 폴링하여 팝업 열기
+    pollForMarkerAndOpenPopup(marker) {
+        if (!marker || !marker.getPopup()) {
+            console.warn("pollForMarkerAndOpenPopup: Invalid marker or no popup associated.");
+            return;
+        }
+
+        this.map.closePopup(); // 다른 팝업 닫기
+
+        let attempts = 0;
+        const maxAttempts = 30; // 재시도 횟수 증가
+        const retryInterval = 100; // 재시도 간격 증가
+
+        const checkAndOpen = () => {
+            // 마커의 _icon (실제 DOM 요소)이 존재하고, 마커가 지도에 있는지 확인
+            if (marker._icon && marker._map) { 
+                console.log(`Poll success for ${marker.options.itemData.Yard} (Attempt ${attempts + 1}). Opening popup.`);
+                marker.openPopup();
+                if (marker.getPopup().isOpen()) {
+                    console.log(`Popup for ${marker.options.itemData.Yard} successfully confirmed open.`);
+                } else {
+                    console.warn(`Popup for ${marker.options.itemData.Yard} did not confirm open after direct call. Final retry via map.`);
+                    this.map.openPopup(marker.getPopup()); // 폴백 (fallback)
+                }
+            } else if (attempts < maxAttempts) {
+                console.log(`Polling for ${marker.options.itemData.Yard} (Attempt ${attempts + 1}): Marker not ready. Retrying...`);
+                attempts++;
+                setTimeout(checkAndOpen, retryInterval);
+            } else {
+                console.error(`Failed to open popup for ${marker.options.itemData.Yard} after max polling attempts.`);
+            }
+        };
+        
+        // 폴링 시작 전 초기 지연
+        setTimeout(checkAndOpen, 50); 
     }
 
     async loadData() {
@@ -123,9 +148,39 @@ class RailCongestionMap {
                 !isNaN(item.lat) && !isNaN(item.lng) && item.location && item.congestion_level
             );
 
-            // 좌표 중복 처리
-            const jitteredData = this.processDuplicateCoordinates(processedData);
-            this.currentData = jitteredData;
+            const coordinateMap = new Map(); 
+
+            processedData.forEach(item => {
+                const coordKey = `${item.lat},${item.lng}`;
+                if (!coordinateMap.has(coordKey)) {
+                    coordinateMap.set(coordKey, []);
+                }
+                coordinateMap.get(coordKey).push(item);
+            });
+
+            const jitteredData = [];
+            coordinateMap.forEach(itemsAtCoord => {
+                if (itemsAtCoord.length > 1) {
+                    const baseLat = itemsAtCoord[0].lat;
+                    const baseLng = itemsAtCoord[0].lng;
+                    
+                    const offsetScale = 0.1; 
+
+                    itemsAtCoord.forEach((item, index) => {
+                        const angle = (index / itemsAtCoord.length) * 2 * Math.PI;
+                        const jitterLat = baseLat + (Math.cos(angle) * offsetScale);
+                        const jitterLng = baseLng + (Math.sin(angle) * offsetScale);
+
+                        item.lat = jitterLat;
+                        item.lng = jitterLng;
+                        jitteredData.push(item);
+                    });
+                } else {
+                    jitteredData.push(itemsAtCoord[0]);
+                }
+            });
+
+            this.currentData = jitteredData; 
 
             if (this.currentData.length > 0) {
                 this.lastUpdated = this.currentData[0].date;
@@ -134,49 +189,17 @@ class RailCongestionMap {
             this.renderMarkers(); 
             this.addRightControls();
             this.addLastUpdatedText();
-            this.addLegend();
+            // this.addLegend(); 
 
         } catch (error) {
             console.error("Failed to load rail data:", error);
             this.displayErrorMessage("Failed to load rail data. Please try again later.");
         }
     }
-
-    processDuplicateCoordinates(data) {
-        const coordinateMap = new Map();
-        const jitteredData = [];
-
-        data.forEach(item => {
-            const coordKey = `${item.lat},${item.lng}`;
-            if (!coordinateMap.has(coordKey)) {
-                coordinateMap.set(coordKey, []);
-            }
-            coordinateMap.get(coordKey).push(item);
-        });
-
-        coordinateMap.forEach(itemsAtCoord => {
-            if (itemsAtCoord.length > 1) {
-                const baseLat = itemsAtCoord[0].lat;
-                const baseLng = itemsAtCoord[0].lng;
-                const offsetScale = 0.1;
-
-                itemsAtCoord.forEach((item, index) => {
-                    const angle = (index / itemsAtCoord.length) * 2 * Math.PI;
-                    item.lat = baseLat + (Math.cos(angle) * offsetScale);
-                    item.lng = baseLng + (Math.sin(angle) * offsetScale);
-                    jitteredData.push(item);
-                });
-            } else {
-                jitteredData.push(itemsAtCoord[0]);
-            }
-        });
-
-        return jitteredData;
-    }
-
+    
     renderMarkers(data = this.currentData) {
         if (!data || data.length === 0) {
-            console.warn("No data to render. Clearing map layers.");
+            console.warn("No data provided to renderMarkers or data is empty. Clearing map layers.");
             this.allMarkers.clearLayers();
             if (this.map.hasLayer(this.allMarkers)) {
                 this.map.removeLayer(this.allMarkers);
@@ -195,48 +218,43 @@ class RailCongestionMap {
             this.map.addLayer(this.allMarkers);
         }
         
-        // 클러스터 클릭 핸들러
         this.allMarkers.off('clusterclick');
         this.allMarkers.on('clusterclick', (a) => {
             console.log("Cluster clicked, zooming to bounds.");
             a.layer.zoomToBounds();
         });
 
-        // PC 전용 클러스터 호버 핸들러
+        // 클러스터 마우스 오버/아웃 (PC 전용)
         if (!L.Browser.mobile) {
-            this.setupClusterHoverHandlers();
+            this.allMarkers.off('clustermouseover');
+            this.allMarkers.on('clustermouseover', (a) => {
+                const clusterItems = a.layer.getAllChildMarkers().map(m => m.options.itemData);
+                const childCount = clusterItems.length; 
+
+                const popupContent = `
+                    <div class="cluster-hover-info">
+                        <h4>${childCount} Locations Clustered</h4>
+                        <p>Click or zoom in to see individual details.</p>
+                    </div>
+                `;
+
+                L.popup({
+                    closeButton: false,
+                    autoClose: true, 
+                    closeOnClick: false, 
+                    maxHeight: 300,
+                    maxWidth: 300
+                })
+                .setLatLng(a.latlng)
+                .setContent(popupContent)
+                .openOn(this.map);
+            });
+
+            this.allMarkers.off('clustermouseout');
+            this.allMarkers.on('clustermouseout', () => {
+                this.map.closePopup(); 
+            });
         }
-    }
-
-    setupClusterHoverHandlers() {
-        this.allMarkers.off('clustermouseover');
-        this.allMarkers.on('clustermouseover', (a) => {
-            if (this.isMarkerPopupClickedOpen) return; // 이미 클릭 팝업이 열려있으면 무시
-
-            const childCount = a.layer.getChildCount();
-            const popupContent = `
-                <div class="cluster-hover-info">
-                    <h4>${childCount} Locations Clustered</h4>
-                    <p>Click or zoom in to see individual details.</p>
-                </div>
-            `;
-
-            L.popup({
-                closeButton: false,
-                autoClose: true,
-                closeOnClick: false,
-                maxHeight: 300,
-                maxWidth: 300
-            })
-            .setLatLng(a.latlng)
-            .setContent(popupContent)
-            .openOn(this.map);
-        });
-
-        this.allMarkers.off('clustermouseout');
-        this.allMarkers.on('clustermouseout', () => {
-            this.map.closePopup();
-        });
     }
 
     createSingleMarker(item) {
@@ -267,117 +285,73 @@ class RailCongestionMap {
 
         const marker = L.marker([item.lat, item.lng], { 
             icon: customIcon,
-            itemData: item,
-            riseOnHover: true
+            itemData: item 
         });
 
         const popupOptions = {
             closeButton: true,
-            autoClose: false, // 수동으로 닫을 때까지 유지
-            closeOnClick: false, // 지도 클릭 시 닫히지 않음
+            autoClose: true, 
+            closeOnClick: true, 
             maxHeight: 300,
-            maxWidth: 300,
-            className: 'rail-congestion-popup'
+            maxWidth: 300
         };
 
+        // 팝업 내용 바인딩
         marker.bindPopup(this.createPopupContent([item]), popupOptions);
         
-        // 팝업 이벤트 핸들러
+        // 팝업 열림/닫힘 시 콘솔 로그 (디버깅용)
         marker.on('popupopen', (e) => {
-            console.log(`Popup for ${item.Yard} opened.`);
-            this.isMarkerPopupClickedOpen = true;
-            e.popup.getElement().style.zIndex = 10000;
+            console.log(`Popup for ${item.Yard} just opened.`);
+            e.popup.getElement().style.zIndex = 10000; // 팝업을 맨 위로
         });
-
         marker.on('popupclose', (e) => {
-            console.log(`Popup for ${item.Yard} closed.`);
-            this.isMarkerPopupClickedOpen = false;
+            console.log(`Popup for ${item.Yard} just closed.`);
         });
 
-        // PC 전용 호버 이벤트
+        // PC 전용 호버 로직
         if (!L.Browser.mobile) {
-            this.setupDesktopHoverEvents(marker);
+            marker.on('mouseover', () => {
+                console.log("PC: Mouseover on marker.");
+                this.map.closePopup(); // 다른 팝업 먼저 닫기
+                marker.openPopup();
+            });
+            // 마우스가 마커에서 벗어나면 팝업 닫기
+            marker.on('mouseout', () => {
+                console.log("PC: Mouseout from marker.");
+                setTimeout(() => {
+                    if (marker.getPopup() && marker.getPopup().isOpen()) {
+                         marker.closePopup();
+                    }
+                }, 50); 
+            });
         }
-
-        // 공통 클릭/탭 이벤트
-        this.setupClickEvents(marker, item);
-
-        return marker;
-    }
-
-    setupDesktopHoverEvents(marker) {
-        marker.on('mouseover', () => {
-            if (this.isMarkerPopupClickedOpen) return;
+        
+        // PC 및 모바일 공통 클릭/탭 로직
+        marker.on('click', (e) => { 
+            L.DomEvent.stopPropagation(e); // 맵의 클릭/탭 이벤트 전파 방지
+            console.log(`Clicked/Tapped marker: ${item.Yard}. Current popup state: ${marker.getPopup().isOpen()}`);
             
-            console.log("PC: Mouseover on marker.");
-            this.map.closePopup();
-            marker.openPopup();
-        });
-
-        marker.on('mouseout', () => {
-            if (this.isMarkerPopupClickedOpen) return;
-            
-            console.log("PC: Mouseout from marker.");
-            setTimeout(() => {
-                if (marker.getPopup() && marker.getPopup().isOpen()) {
-                    marker.closePopup();
-                }
-            }, 50);
-        });
-    }
-
-    setupClickEvents(marker, item) {
-        marker.on(L.Browser.touch ? 'click' : 'click', (e) => {
-            L.DomEvent.stopPropagation(e);
-            console.log(`${L.Browser.touch ? 'Mobile' : 'PC'}: Clicked marker: ${item.Yard}`);
-
+            // 팝업 토글: 열려있으면 닫고, 닫혀있으면 열기
             if (marker.getPopup().isOpen()) {
                 marker.closePopup();
             } else {
-                this.map.closePopup();
+                this.map.closePopup(); // 다른 팝업 먼저 닫기
+                // 모바일 터치 안정성 확보를 위한 짧은 지연 추가
                 setTimeout(() => {
-                    if (marker && marker._map) {
+                    if (marker && marker._map) { // 마커가 지도에 있는지 다시 확인
                         marker.openPopup();
                         if (!marker.getPopup().isOpen()) {
-                            console.warn("Popup did not open, trying fallback.");
-                            this.map.openPopup(marker.getPopup());
+                            console.warn("Mobile/Click: Popup did not open immediately, trying map.openPopup as fallback.");
+                            this.map.openPopup(marker.getPopup()); // 마지막 폴백
                         }
+                    } else {
+                        console.warn("Mobile/Click: Marker not available for popup after delay.");
                     }
-                }, L.Browser.touch ? 150 : 0); // 모바일에서는 약간의 지연 추가
+                }, 100); 
             }
         });
-    }
 
-    pollForMarkerAndOpenPopup(marker) {
-        if (!marker || !marker.getPopup()) {
-            console.warn("Invalid marker or no popup.");
-            return;
-        }
-
-        this.map.closePopup();
-
-        let attempts = 0;
-        const maxAttempts = 30;
-        const retryInterval = 100;
-
-        const checkAndOpen = () => {
-            if (marker._icon && marker._map) {
-                console.log(`Opening popup for ${marker.options.itemData.Yard}`);
-                marker.openPopup();
-                
-                if (!marker.getPopup().isOpen()) {
-                    console.warn("Popup not open, using fallback.");
-                    this.map.openPopup(marker.getPopup());
-                }
-            } else if (attempts < maxAttempts) {
-                attempts++;
-                setTimeout(checkAndOpen, retryInterval);
-            } else {
-                console.error(`Failed to open popup after ${maxAttempts} attempts.`);
-            }
-        };
-
-        setTimeout(checkAndOpen, 50);
+        return marker;
     }
 
     createPopupContent(items) {
@@ -583,61 +557,4 @@ class RailCongestionMap {
         const maxLng = Math.max(...lngs);
 
         return [
-            (minLat + maxLat) / 2,
-            (minLng + maxLng) / 2
-        ];
-    }
-
-    getRadiusByIndicator(indicator) {
-        if (indicator > 2) return 20;
-        if (indicator > 1) return 16;
-        if (indicator > -1) return 12;
-        if (indicator > -2) return 8;
-        return 5;
-    }
-
-    getColor(level, isText = false) {
-        const circleColors = {
-            'Very High': '#d62828',
-            'High': '#f88c2b',
-            'Low': '#5fa9f6',
-            'Very Low': '#004fc0',
-            'Average': '#bcbcbc',
-            'Unknown': '#bcbcbc' 
-        };
-
-        const textColors = {
-            'Very High': '#6b1414',
-            'High': '#7c4616',
-            'Low': '#30557b',
-            'Very Low': '#002860',
-            'Average': '#5e5e5e',
-            'Unknown': '#5e5e5e'
-        };
-
-        return isText ? textColors[level] : circleColors[level];
-    }
-
-    displayErrorMessage(message) {
-        if (this.errorControl) {
-            this.map.removeControl(this.errorControl);
-        }
-
-        const errorControl = L.control({ position: 'topleft' });
-        errorControl.onAdd = function() {
-            const div = L.DomUtil.create('div', 'error-message');
-            div.innerHTML = message;
-            return div;
-        };
-        errorControl.addTo(this.map);
-        this.errorControl = errorControl;
-
-        setTimeout(() => {
-            if (this.map.hasControl(this.errorControl)) {
-                this.map.removeControl(this.errorControl);
-            }
-        }, 5000);
-    }
-}
-
-window.RailCongestionMap = RailCongestionMap;
+            (minLat + maxLat)
