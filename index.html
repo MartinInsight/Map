@@ -76,45 +76,40 @@
         <button class="transport-tab active" data-map="truck">Truck</button>
         <button class="transport-tab" data-map="rail">Rail</button>
         <button class="transport-tab" data-map="ocean">Ocean</button>
-        <button class="transport-tab" data-map="air">Air</button>
-    </div>
+        <button class="transport-tab" data-map="air">Air</button> </div>
 
     <div id="map-container">
         <div id="truck-map" class="transport-map active"></div>
         <div id="rail-map" class="transport-map"></div>
         <div id="ocean-map" class="transport-map"></div>
-        <div id="air-map" class="transport-map"></div>
-    </div>
+        <div id="air-map" class="transport-map"></div> </div>
 
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
-    <!--
-        Removed explicit script imports for truck_map.js, rail_map.js, ocean_map.js, air_map.js.
-        The Canvas environment automatically injects these class definitions.
-    -->
-    <script>
+    <script src="js/truck_map.js"></script>
+    <script src="js/rail_map.js"></script>
+    <script src="js/ocean_map.js"></script>
+    <script src="js/air_map.js"></script> <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // Ensure all map classes are defined by the Canvas environment before instantiation.
-            // These classes are made global by `window.ClassName = ClassName;` in their respective files.
             const truckMap = new TruckCongestionMap('truck-map');
             const railMap = new RailCongestionMap('rail-map');
             const oceanMap = new OceanCongestionMap('ocean-map');
-            const airMap = new AirCongestionMap('air-map');
+            const airMap = new AirCongestionMap('air-map'); // Air 맵 인스턴스 생성
 
             document.querySelectorAll('.transport-tab').forEach(tab => {
                 tab.addEventListener('click', () => {
-                    // Tab switching
+                    // 탭 전환
                     document.querySelectorAll('.transport-tab').forEach(t => {
                         t.classList.remove('active');
                     });
                     tab.classList.add('active');
 
-                    // Map switching
+                    // 지도 전환
                     document.querySelectorAll('.transport-map').forEach(m => {
                         m.classList.remove('active');
                     });
                     document.getElementById(`${tab.dataset.map}-map`).classList.add('active');
 
-                    // Invalidate map size to ensure proper rendering after switching
+                    // 지도 크기 조정
                     setTimeout(() => {
                         switch(tab.dataset.map) {
                             case 'truck':
@@ -126,7 +121,7 @@
                             case 'ocean':
                                 oceanMap.map.invalidateSize();
                                 break;
-                            case 'air':
+                            case 'air': // Air 맵 크기 조정 추가
                                 airMap.map.invalidateSize();
                                 break;
                         }
@@ -134,9 +129,8 @@
                 });
             });
 
-            // Initial invalidation for the active truck map
-            // This is crucial to ensure the map renders correctly on first load.
-            truckMap.map.invalidateSize();
+            // 초기 로드 시 트럭 맵이 활성화되도록 설정 (필요시)
+            // truckMap.map.invalidateSize();
         });
     </script>
 </body>
