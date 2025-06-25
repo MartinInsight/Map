@@ -5,6 +5,7 @@ class RailCongestionMap {
         this.currentData = null;
         this.lastUpdated = null;
         this.filterControlInstance = null;
+        this.errorControl = null; // Ensure errorControl is initialized
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© OpenStreetMap',
@@ -94,29 +95,31 @@ class RailCongestionMap {
 
             marker.on({
                 mouseover: (e) => {
-                    // Mouseover will show popup
                     this.map.closePopup();
-                    const popup = L.popup()
+                    const popup = L.popup({
+                        closeButton: false,
+                        autoClose: true,
+                        closeOnClick: true
+                    })
                         .setLatLng(e.latlng)
                         .setContent(this.createPopupContent(item))
                         .openOn(this.map);
                 },
                 mouseout: () => {
-                    // Mouseout will close popup
                     this.map.closePopup();
                 },
                 click: (e) => {
-                    // On click: zoom to marker and show popup (for mobile compatibility)
-                    this.map.closePopup(); // Close any other open popups
-                    this.map.setView(e.latlng, 8); // Zoom to clicked marker's location with fixed zoom level 8
+                    this.map.closePopup();
+                    this.map.setView(e.latlng, 8);
                     
-                    const popup = L.popup()
-                        .setLatLng(e.latlng) // Use the clicked latlng for the popup position
+                    L.popup({
+                        closeButton: true,
+                        autoClose: false,
+                        closeOnClick: false
+                    })
+                        .setLatLng(e.latlng)
                         .setContent(this.createPopupContent(item))
                         .openOn(this.map);
-                    
-                    // Note: renderMarkers(this.currentData) is not called here because we want
-                    // all markers to remain visible; only the map view changes.
                 }
             });
 
@@ -252,16 +255,14 @@ class RailCongestionMap {
         const level = data.congestion_level || 'Unknown';
 
         return `
-            <div class="map-tooltip">
-                <h4>${data.location || 'Unknown Location'}</h4>
-                <p><strong>Company:</strong> ${data.company || 'Unknown'}</p>
-                <p><strong>Congestion Level:</strong>
-                    <span style="color: ${this.getColor(level, true)}">
-                        ${level}
-                    </span>
-                </p>
-                <p><strong>Dwell Time:</strong> ${data.congestion_score?.toFixed(1) || 'N/A'} hours</p>
-            </div>
+            <h4>${data.location || 'Unknown Location'}</h4>
+            <p><strong>Company:</strong> ${data.company || 'Unknown'}</p>
+            <p><strong>Congestion Level:</strong>
+                <span style="color: ${this.getColor(level, true)}">
+                    ${level}
+                </span>
+            </p>
+            <p><strong>Dwell Time:</strong> ${data.congestion_score?.toFixed(1) || 'N/A'} hours</p>
         `;
     }
 
