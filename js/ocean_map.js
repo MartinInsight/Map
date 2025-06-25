@@ -4,7 +4,7 @@ class OceanCongestionMap {
     this.markers = [];
     this.currentData = [];
     this.lastUpdated = null;
-    this.filterControlInstance = null; // Ensure this is initialized
+    this.filterControlInstance = null; // This will now manage the combined right control
     this.lastUpdatedControl = null; // Initialize for consistency
     this.errorControl = null; // Initialize for consistency
 
@@ -22,14 +22,13 @@ class OceanCongestionMap {
     
     this.map.on('zoomend', () => {
       const currentZoom = this.map.getZoom();
-      // This zoom logic is for preventing excessive zoom out, not direct filter behavior
       if (currentZoom < this.map.getMinZoom()) {
         this.map.setZoom(this.map.getMinZoom());
       }
     });
     
     this.loadData();
-    this.addControls();
+    // this.addControls(); // Old call - no longer needed as addRightControls handles it
   }
 
   async loadData() {
@@ -60,8 +59,9 @@ class OceanCongestionMap {
   
       this.renderMarkers();
       this.addLastUpdatedText();
-  
-      this.addFilterControl();
+      
+      // Call the new combined right controls method after data is loaded
+      this.addRightControls(); // Combines filter and reset
   
     } catch (error) {
       console.error("Failed to load ocean data:", error);
@@ -147,72 +147,54 @@ class OceanCongestionMap {
     }
   }
 
-  addControls() {
-    const controlContainer = L.control({ position: 'topright' });
-    
-    controlContainer.onAdd = () => {
-      const div = L.DomUtil.create('div', 'map-control-container');
-      div.innerHTML = `
-        <button class="ocean-reset-btn reset-btn">Reset View</button>
-      `;
-  
-      div.querySelector('.ocean-reset-btn').addEventListener('click', () => {
-        this.map.setView([37.8, -96], 4);
-        this.renderMarkers(this.currentData); // Ensure all markers are rendered on reset
-        // Reset filter dropdowns if they exist
-        if (this.filterControlInstance) {
-            const countryFilter = this.filterControlInstance._container.querySelector('.country-filter');
-            if (countryFilter) countryFilter.value = '';
-            const portFilter = this.filterControlInstance._container.querySelector('.port-filter');
-            if (portFilter) {
-                portFilter.innerHTML = '<option value="">Select Port</option>';
-                portFilter.disabled = true;
-            }
-        }
-      });
-
-      // Prevent map events on the control
-      L.DomEvent.disableClickPropagation(div);
-      L.DomEvent.disableScrollPropagation(div);
-  
-      return div;
-    };
-    
-    controlContainer.addTo(this.map);
-  }
-  
-  addFilterControl() {
-    // Remove existing filter control if it exists
+  // New combined method for right-side controls (Filter and Reset)
+  addRightControls() {
+    // Remove existing filter control if it exists (now managed by this method)
     if (this.filterControlInstance) {
         this.map.removeControl(this.filterControlInstance);
     }
 
-    const control = L.control({ position: 'bottomright' });
+    const control = L.control({ position: 'topright' });
     
     control.onAdd = () => {
-      const div = L.DomUtil.create('div', 'filter-control');
+      const div = L.DomUtil.create('div', 'map-control-group-right'); // Use the grouping class for consistent styling
+      
+      // Get unique sorted countries
       const countries = [...new Set(this.currentData
         .map(p => p.country)
         .filter(c => c && c.trim() !== '')
       )].sort((a, b) => a.localeCompare(b));
   
-      div.innerHTML = `
+      // Country Filter Dropdown (first element)
+      const countryFilterHtml = `
         <select class="country-filter">
           <option value="">Select Country</option>
           ${countries.map(c => `<option value="${c}">${c}</option>`).join('')}
         </select>
+      `;
+      div.insertAdjacentHTML('beforeend', countryFilterHtml);
+
+      // Port Filter Dropdown (second element) - initially disabled
+      const portFilterHtml = `
         <select class="port-filter" disabled>
           <option value="">Select Port</option>
         </select>
       `;
-  
+      div.insertAdjacentHTML('beforeend', portFilterHtml);
+      
+      // Reset View Button (third element, rightmost)
+      const resetButtonHtml = `
+        <button class="ocean-reset-btn reset-btn">Reset View</button>
+      `;
+      div.insertAdjacentHTML('beforeend', resetButtonHtml);
+
       const countryFilter = div.querySelector('.country-filter');
       const portFilter = div.querySelector('.port-filter');
   
       countryFilter.addEventListener('change', (e) => {
         const country = e.target.value;
-        portFilter.innerHTML = '<option value="">Select Port</option>';
-        portFilter.disabled = !country;
+        portFilter.innerHTML = '<option value="">Select Port</option>'; // Clear existing ports
+        portFilter.disabled = !country; // Disable if no country selected
   
         if (!country) {
           this.map.setView([37.8, -96], 4);
@@ -260,6 +242,16 @@ class OceanCongestionMap {
         }
       });
 
+      // Event listener for the new reset button within this group
+      div.querySelector('.ocean-reset-btn').addEventListener('click', () => {
+        this.map.setView([37.8, -96], 4);
+        this.renderMarkers(this.currentData); // Ensure all markers are rendered on reset
+        // Reset both filter dropdowns
+        countryFilter.value = '';
+        portFilter.innerHTML = '<option value="">Select Port</option>';
+        portFilter.disabled = true;
+      });
+
       // Prevent map events on the control
       L.DomEvent.disableClickPropagation(div);
       L.DomEvent.disableScrollPropagation(div);
@@ -268,7 +260,7 @@ class OceanCongestionMap {
     };
     
     control.addTo(this.map);
-    this.filterControlInstance = control; // Store instance to manage it
+    this.filterControlInstance = control; // Store instance to manage the combined control
   }
   
   getCountryCenter(ports) {
@@ -305,7 +297,6 @@ class OceanCongestionMap {
   }
 
   createPopupContent(port) {
-    // Removed the <div class="map-tooltip"> wrapper
     return `
         <h4>${port.port}, ${port.country}</h4>
         <p><strong>Current Delay:</strong> ${port.current_delay}</p>
@@ -320,7 +311,6 @@ class OceanCongestionMap {
     `;
   }
 
-  // Adding displayErrorMessage for consistency and good practice as it was previously commented out.
   displayErrorMessage(message) {
     if (this.errorControl) {
         this.map.removeControl(this.errorControl);
