@@ -11,8 +11,12 @@
     "d0_percent": 75,
     "average_txo": 14.11,
     "last_updated": "2025-06-24T20:17:45.134Z",
+    "latitude_deg": 30.492469,
+    "longitude_deg": -81.687813,
     "lat": 30.492469,
-    "lng": -81.687813
+    "lng": -81.687813,
+    "iso_region": "US-FL",
+    "municipality": "Jacksonville"
   },
   {
     "airport_code": "CMH",
@@ -26,8 +30,12 @@
     "d0_percent": 81.4,
     "average_txo": 15.25,
     "last_updated": "2025-06-24T20:17:45.134Z",
+    "latitude_deg": 39.998001,
+    "longitude_deg": -82.891899,
     "lat": 39.998001,
-    "lng": -82.891899
+    "lng": -82.891899,
+    "iso_region": "US-OH",
+    "municipality": "Columbus"
   },
   {
     "airport_code": "PHL",
@@ -41,8 +49,12 @@
     "d0_percent": 73.4,
     "average_txo": 20.15,
     "last_updated": "2025-06-24T20:17:45.134Z",
+    "latitude_deg": 39.871899,
+    "longitude_deg": -75.241096,
     "lat": 39.871899,
-    "lng": -75.241096
+    "lng": -75.241096,
+    "iso_region": "US-PA",
+    "municipality": "Philadelphia"
   },
   {
     "airport_code": "JFK",
@@ -56,8 +68,12 @@
     "d0_percent": 70.2,
     "average_txo": 22.91,
     "last_updated": "2025-06-24T20:17:45.134Z",
+    "latitude_deg": 40.639447,
+    "longitude_deg": -73.779317,
     "lat": 40.639447,
-    "lng": -73.779317
+    "lng": -73.779317,
+    "iso_region": "US-NY",
+    "municipality": "New York"
   },
   {
     "airport_code": "STL",
@@ -71,8 +87,12 @@
     "d0_percent": 74.8,
     "average_txo": 12.4,
     "last_updated": "2025-06-24T20:17:45.134Z",
+    "latitude_deg": 38.748697,
+    "longitude_deg": -90.370003,
     "lat": 38.748697,
-    "lng": -90.370003
+    "lng": -90.370003,
+    "iso_region": "US-MO",
+    "municipality": "St Louis"
   },
   {
     "airport_code": "EWR",
@@ -86,8 +106,12 @@
     "d0_percent": 76.6,
     "average_txo": 20.08,
     "last_updated": "2025-06-24T20:17:45.134Z",
+    "latitude_deg": 40.692501,
+    "longitude_deg": -74.168701,
     "lat": 40.692501,
-    "lng": -74.168701
+    "lng": -74.168701,
+    "iso_region": "US-NJ",
+    "municipality": "Newark"
   },
   {
     "airport_code": "LGA",
@@ -101,8 +125,12 @@
     "d0_percent": 81.7,
     "average_txo": 28.13,
     "last_updated": "2025-06-24T20:17:45.134Z",
+    "latitude_deg": 40.777199,
+    "longitude_deg": -73.872597,
     "lat": 40.777199,
-    "lng": -73.872597
+    "lng": -73.872597,
+    "iso_region": "US-NY",
+    "municipality": "New York"
   },
   {
     "airport_code": "TPA",
@@ -116,8 +144,12 @@
     "d0_percent": 77.5,
     "average_txo": 13.64,
     "last_updated": "2025-06-24T20:17:45.134Z",
+    "latitude_deg": 27.9755,
+    "longitude_deg": -82.533203,
     "lat": 27.9755,
-    "lng": -82.533203
+    "lng": -82.533203,
+    "iso_region": "US-FL",
+    "municipality": "Tampa"
   },
   {
     "airport_code": "FLL",
@@ -131,8 +163,12 @@
     "d0_percent": 74.9,
     "average_txo": 15.03,
     "last_updated": "2025-06-24T20:17:45.134Z",
+    "latitude_deg": 26.072599,
+    "longitude_deg": -80.152702,
     "lat": 26.072599,
-    "lng": -80.152702
+    "lng": -80.152702,
+    "iso_region": "US-FL",
+    "municipality": "Fort Lauderdale"
   },
   {
     "airport_code": "BOS",
@@ -146,8 +182,12 @@
     "d0_percent": 76.6,
     "average_txo": 21.11,
     "last_updated": "2025-06-24T20:17:45.134Z",
+    "latitude_deg": 42.36197,
+    "longitude_deg": -71.0079,
     "lat": 42.36197,
-    "lng": -71.0079
+    "lng": -71.0079,
+    "iso_region": "US-MA",
+    "municipality": "Boston"
   },
   {
     "airport_code": "DFW",
@@ -161,8 +201,12 @@
     "d0_percent": 65.4,
     "average_txo": 17.5,
     "last_updated": "2025-06-24T20:17:45.134Z",
+    "latitude_deg": 32.896801,
+    "longitude_deg": -97.038002,
     "lat": 32.896801,
-    "lng": -97.038002
+    "lng": -97.038002,
+    "iso_region": "US-TX",
+    "municipality": "Dallas-Fort Worth"
   },
   {
     "airport_code": "IAH",
@@ -176,8 +220,12 @@
     "d0_percent": 76.1,
     "average_txo": 18.91,
     "last_updated": "2025-06-24T20:17:45.134Z",
+    "latitude_deg": 29.9843998,
+    "longitude_deg": -95.34140015,
     "lat": 29.9843998,
-    "lng": -95.34140015
+    "lng": -95.34140015,
+    "iso_region": "US-TX",
+    "municipality": "Houston"
   },
   {
     "airport_code": "MCO",
@@ -191,8 +239,12 @@
     "d0_percent": 75.4,
     "average_txo": 15.56,
     "last_updated": "2025-06-24T20:17:45.134Z",
+    "latitude_deg": 28.42939949,
+    "longitude_deg": -81.30899811,
     "lat": 28.42939949,
-    "lng": -81.30899811
+    "lng": -81.30899811,
+    "iso_region": "US-FL",
+    "municipality": "Orlando"
   },
   {
     "airport_code": "MIA",
@@ -206,8 +258,12 @@
     "d0_percent": 79,
     "average_txo": 19.4,
     "last_updated": "2025-06-24T20:17:45.134Z",
+    "latitude_deg": 25.79319954,
+    "longitude_deg": -80.29060364,
     "lat": 25.79319954,
-    "lng": -80.29060364
+    "lng": -80.29060364,
+    "iso_region": "US-FL",
+    "municipality": "Miami"
   },
   {
     "airport_code": "LAX",
@@ -221,8 +277,12 @@
     "d0_percent": 75.7,
     "average_txo": 16.62,
     "last_updated": "2025-06-24T20:17:45.134Z",
+    "latitude_deg": 33.942501,
+    "longitude_deg": -118.407997,
     "lat": 33.942501,
-    "lng": -118.407997
+    "lng": -118.407997,
+    "iso_region": "US-CA",
+    "municipality": "Los Angeles"
   },
   {
     "airport_code": "ORD",
@@ -236,8 +296,12 @@
     "d0_percent": 76.3,
     "average_txo": 27.07,
     "last_updated": "2025-06-24T20:17:45.134Z",
+    "latitude_deg": 41.9786,
+    "longitude_deg": -87.9048,
     "lat": 41.9786,
-    "lng": -87.9048
+    "lng": -87.9048,
+    "iso_region": "US-IL",
+    "municipality": "Chicago"
   },
   {
     "airport_code": "ABQ",
@@ -251,8 +315,12 @@
     "d0_percent": 77.1,
     "average_txo": 14.83,
     "last_updated": "2025-06-24T20:17:45.134Z",
+    "latitude_deg": 35.039976,
+    "longitude_deg": -106.608925,
     "lat": 35.039976,
-    "lng": -106.608925
+    "lng": -106.608925,
+    "iso_region": "US-NM",
+    "municipality": "Albuquerque"
   },
   {
     "airport_code": "ANC",
@@ -266,8 +334,12 @@
     "d0_percent": 75,
     "average_txo": 13.26,
     "last_updated": "2025-06-24T20:17:45.134Z",
+    "latitude_deg": 61.179004,
+    "longitude_deg": -149.992561,
     "lat": 61.179004,
-    "lng": -149.992561
+    "lng": -149.992561,
+    "iso_region": "US-AK",
+    "municipality": "Anchorage"
   },
   {
     "airport_code": "ATL",
@@ -281,8 +353,12 @@
     "d0_percent": 76.1,
     "average_txo": 15.8,
     "last_updated": "2025-06-24T20:17:45.134Z",
+    "latitude_deg": 33.6367,
+    "longitude_deg": -84.428101,
     "lat": 33.6367,
-    "lng": -84.428101
+    "lng": -84.428101,
+    "iso_region": "US-GA",
+    "municipality": "Atlanta"
   },
   {
     "airport_code": "AUS",
@@ -296,8 +372,12 @@
     "d0_percent": 77.5,
     "average_txo": 14.43,
     "last_updated": "2025-06-24T20:17:45.134Z",
+    "latitude_deg": 30.197535,
+    "longitude_deg": -97.662015,
     "lat": 30.197535,
-    "lng": -97.662015
+    "lng": -97.662015,
+    "iso_region": "US-TX",
+    "municipality": "Austin"
   },
   {
     "airport_code": "BDL",
@@ -311,8 +391,12 @@
     "d0_percent": 75,
     "average_txo": 12.46,
     "last_updated": "2025-06-24T20:17:45.134Z",
+    "latitude_deg": 41.93851,
+    "longitude_deg": -72.688066,
     "lat": 41.93851,
-    "lng": -72.688066
+    "lng": -72.688066,
+    "iso_region": "US-CT",
+    "municipality": "Hartford"
   },
   {
     "airport_code": "BNA",
@@ -326,8 +410,12 @@
     "d0_percent": 67,
     "average_txo": 15.12,
     "last_updated": "2025-06-24T20:17:45.134Z",
+    "latitude_deg": 36.1245,
+    "longitude_deg": -86.6782,
     "lat": 36.1245,
-    "lng": -86.6782
+    "lng": -86.6782,
+    "iso_region": "US-TN",
+    "municipality": "Nashville"
   },
   {
     "airport_code": "BUF",
@@ -341,8 +429,12 @@
     "d0_percent": 87.5,
     "average_txo": 12.92,
     "last_updated": "2025-06-24T20:17:45.134Z",
+    "latitude_deg": 42.940498,
+    "longitude_deg": -78.732201,
     "lat": 42.940498,
-    "lng": -78.732201
+    "lng": -78.732201,
+    "iso_region": "US-NY",
+    "municipality": "Buffalo"
   },
   {
     "airport_code": "BWI",
@@ -356,8 +448,12 @@
     "d0_percent": 50.6,
     "average_txo": 14.75,
     "last_updated": "2025-06-24T20:17:45.134Z",
+    "latitude_deg": 39.1754,
+    "longitude_deg": -76.668297,
     "lat": 39.1754,
-    "lng": -76.668297
+    "lng": -76.668297,
+    "iso_region": "US-MD",
+    "municipality": "Baltimore"
   },
   {
     "airport_code": "CLE",
@@ -371,8 +467,12 @@
     "d0_percent": 66.3,
     "average_txo": 14.6,
     "last_updated": "2025-06-24T20:17:45.134Z",
+    "latitude_deg": 41.411701,
+    "longitude_deg": -81.8498,
     "lat": 41.411701,
-    "lng": -81.8498
+    "lng": -81.8498,
+    "iso_region": "US-OH",
+    "municipality": "Cleveland"
   },
   {
     "airport_code": "CLT",
@@ -386,8 +486,12 @@
     "d0_percent": 72.9,
     "average_txo": 20.05,
     "last_updated": "2025-06-24T20:17:45.134Z",
+    "latitude_deg": 35.2140007,
+    "longitude_deg": -80.94309998,
     "lat": 35.2140007,
-    "lng": -80.94309998
+    "lng": -80.94309998,
+    "iso_region": "US-NC",
+    "municipality": "Charlotte"
   },
   {
     "airport_code": "CVG",
@@ -401,8 +505,12 @@
     "d0_percent": 82.2,
     "average_txo": 13.64,
     "last_updated": "2025-06-24T20:17:45.134Z",
+    "latitude_deg": 39.048801,
+    "longitude_deg": -84.667801,
     "lat": 39.048801,
-    "lng": -84.667801
+    "lng": -84.667801,
+    "iso_region": "US-KY",
+    "municipality": "Cincinnati / Covington"
   },
   {
     "airport_code": "DAL",
@@ -416,8 +524,12 @@
     "d0_percent": 65.8,
     "average_txo": 11.45,
     "last_updated": "2025-06-24T20:17:45.134Z",
+    "latitude_deg": 32.847099,
+    "longitude_deg": -96.851799,
     "lat": 32.847099,
-    "lng": -96.851799
+    "lng": -96.851799,
+    "iso_region": "US-TX",
+    "municipality": "Dallas"
   },
   {
     "airport_code": "DCA",
@@ -431,8 +543,12 @@
     "d0_percent": 71.2,
     "average_txo": 20.01,
     "last_updated": "2025-06-24T20:17:45.134Z",
+    "latitude_deg": 38.8521,
+    "longitude_deg": -77.037697,
     "lat": 38.8521,
-    "lng": -77.037697
+    "lng": -77.037697,
+    "iso_region": "US-DC",
+    "municipality": "Washington"
   },
   {
     "airport_code": "DEN",
@@ -446,8 +562,12 @@
     "d0_percent": 65.2,
     "average_txo": 19.7,
     "last_updated": "2025-06-24T20:17:45.134Z",
+    "latitude_deg": 39.86169815,
+    "longitude_deg": -104.6729965,
     "lat": 39.86169815,
-    "lng": -104.6729965
+    "lng": -104.6729965,
+    "iso_region": "US-CO",
+    "municipality": "Denver"
   },
   {
     "airport_code": "DTW",
@@ -461,8 +581,12 @@
     "d0_percent": 80.5,
     "average_txo": 15.45,
     "last_updated": "2025-06-24T20:17:45.134Z",
+    "latitude_deg": 42.21377,
+    "longitude_deg": -83.353786,
     "lat": 42.21377,
-    "lng": -83.353786
+    "lng": -83.353786,
+    "iso_region": "US-MI",
+    "municipality": "Detroit"
   },
   {
     "airport_code": "HNL",
@@ -476,8 +600,12 @@
     "d0_percent": 85.7,
     "average_txo": 15.08,
     "last_updated": "2025-06-24T20:17:45.134Z",
+    "latitude_deg": 21.32062,
+    "longitude_deg": -157.924228,
     "lat": 21.32062,
-    "lng": -157.924228
+    "lng": -157.924228,
+    "iso_region": "US-HI",
+    "municipality": "Honolulu, Oahu"
   },
   {
     "airport_code": "HOU",
@@ -491,8 +619,12 @@
     "d0_percent": 70.6,
     "average_txo": 15.38,
     "last_updated": "2025-06-24T20:17:45.134Z",
+    "latitude_deg": 29.645399,
+    "longitude_deg": -95.2789,
     "lat": 29.645399,
-    "lng": -95.2789
+    "lng": -95.2789,
+    "iso_region": "US-TX",
+    "municipality": "Houston"
   },
   {
     "airport_code": "IAD",
@@ -506,8 +638,12 @@
     "d0_percent": 78.6,
     "average_txo": 20.21,
     "last_updated": "2025-06-24T20:17:45.134Z",
+    "latitude_deg": 38.9445,
+    "longitude_deg": -77.455803,
     "lat": 38.9445,
-    "lng": -77.455803
+    "lng": -77.455803,
+    "iso_region": "US-VA",
+    "municipality": "Dulles"
   },
   {
     "airport_code": "IND",
@@ -521,8 +657,12 @@
     "d0_percent": 84.2,
     "average_txo": 13.66,
     "last_updated": "2025-06-24T20:17:45.134Z",
+    "latitude_deg": 39.7173,
+    "longitude_deg": -86.294403,
     "lat": 39.7173,
-    "lng": -86.294403
+    "lng": -86.294403,
+    "iso_region": "US-IN",
+    "municipality": "Indianapolis"
   },
   {
     "airport_code": "LAS",
@@ -536,8 +676,12 @@
     "d0_percent": 69.4,
     "average_txo": 14.9,
     "last_updated": "2025-06-24T20:17:45.134Z",
+    "latitude_deg": 36.083361,
+    "longitude_deg": -115.151817,
     "lat": 36.083361,
-    "lng": -115.151817
+    "lng": -115.151817,
+    "iso_region": "US-NV",
+    "municipality": "Las Vegas"
   },
   {
     "airport_code": "MCI",
@@ -551,8 +695,12 @@
     "d0_percent": 74.7,
     "average_txo": 16.37,
     "last_updated": "2025-06-24T20:17:45.134Z",
+    "latitude_deg": 39.2976,
+    "longitude_deg": -94.713898,
     "lat": 39.2976,
-    "lng": -94.713898
+    "lng": -94.713898,
+    "iso_region": "US-MO",
+    "municipality": "Kansas City"
   },
   {
     "airport_code": "MDW",
@@ -566,8 +714,12 @@
     "d0_percent": 57.4,
     "average_txo": 14.53,
     "last_updated": "2025-06-24T20:17:45.134Z",
+    "latitude_deg": 41.785999,
+    "longitude_deg": -87.752403,
     "lat": 41.785999,
-    "lng": -87.752403
+    "lng": -87.752403,
+    "iso_region": "US-IL",
+    "municipality": "Chicago"
   },
   {
     "airport_code": "MKE",
@@ -581,8 +733,12 @@
     "d0_percent": 85,
     "average_txo": 16.02,
     "last_updated": "2025-06-24T20:17:45.134Z",
+    "latitude_deg": 42.947201,
+    "longitude_deg": -87.896599,
     "lat": 42.947201,
-    "lng": -87.896599
+    "lng": -87.896599,
+    "iso_region": "US-WI",
+    "municipality": "Milwaukee"
   },
   {
     "airport_code": "MSP",
@@ -596,8 +752,12 @@
     "d0_percent": 80.8,
     "average_txo": 15.82,
     "last_updated": "2025-06-24T20:17:45.134Z",
+    "latitude_deg": 44.880081,
+    "longitude_deg": -93.221741,
     "lat": 44.880081,
-    "lng": -93.221741
+    "lng": -93.221741,
+    "iso_region": "US-MN",
+    "municipality": "Minneapolis"
   },
   {
     "airport_code": "MSY",
@@ -611,8 +771,12 @@
     "d0_percent": 50.6,
     "average_txo": 12.87,
     "last_updated": "2025-06-24T20:17:45.134Z",
+    "latitude_deg": 29.993401,
+    "longitude_deg": -90.258003,
     "lat": 29.993401,
-    "lng": -90.258003
+    "lng": -90.258003,
+    "iso_region": "US-LA",
+    "municipality": "New Orleans"
   },
   {
     "airport_code": "OAK",
@@ -626,8 +790,12 @@
     "d0_percent": 63.5,
     "average_txo": 11.98,
     "last_updated": "2025-06-24T20:17:45.134Z",
+    "latitude_deg": 37.720085,
+    "longitude_deg": -122.221184,
     "lat": 37.720085,
-    "lng": -122.221184
+    "lng": -122.221184,
+    "iso_region": "US-CA",
+    "municipality": "Oakland"
   },
   {
     "airport_code": "OGG",
@@ -641,8 +809,12 @@
     "d0_percent": 75,
     "average_txo": 10.09,
     "last_updated": "2025-06-24T20:17:45.134Z",
+    "latitude_deg": 20.896263,
+    "longitude_deg": -156.431837,
     "lat": 20.896263,
-    "lng": -156.431837
+    "lng": -156.431837,
+    "iso_region": "US-HI",
+    "municipality": "Kahului"
   },
   {
     "airport_code": "OMA",
@@ -656,8 +828,12 @@
     "d0_percent": 70.9,
     "average_txo": 14.7,
     "last_updated": "2025-06-24T20:17:45.134Z",
+    "latitude_deg": 41.3032,
+    "longitude_deg": -95.894096,
     "lat": 41.3032,
-    "lng": -95.894096
+    "lng": -95.894096,
+    "iso_region": "US-NE",
+    "municipality": "Omaha"
   },
   {
     "airport_code": "ONT",
@@ -671,8 +847,12 @@
     "d0_percent": 71.7,
     "average_txo": 13.39,
     "last_updated": "2025-06-24T20:17:45.134Z",
+    "latitude_deg": 34.056,
+    "longitude_deg": -117.600998,
     "lat": 34.056,
-    "lng": -117.600998
+    "lng": -117.600998,
+    "iso_region": "US-CA",
+    "municipality": "Ontario"
   },
   {
     "airport_code": "PBI",
@@ -686,8 +866,12 @@
     "d0_percent": 74.5,
     "average_txo": 13.57,
     "last_updated": "2025-06-24T20:17:45.134Z",
+    "latitude_deg": 26.683201,
+    "longitude_deg": -80.095596,
     "lat": 26.683201,
-    "lng": -80.095596
+    "lng": -80.095596,
+    "iso_region": "US-FL",
+    "municipality": "West Palm Beach"
   },
   {
     "airport_code": "PDX",
@@ -701,8 +885,12 @@
     "d0_percent": 73.3,
     "average_txo": 15.38,
     "last_updated": "2025-06-24T20:17:45.134Z",
+    "latitude_deg": 45.588699,
+    "longitude_deg": -122.598,
     "lat": 45.588699,
-    "lng": -122.598
+    "lng": -122.598,
+    "iso_region": "US-OR",
+    "municipality": "Portland"
   },
   {
     "airport_code": "PHX",
@@ -716,8 +904,12 @@
     "d0_percent": 68.8,
     "average_txo": 17.18,
     "last_updated": "2025-06-24T20:17:45.134Z",
+    "latitude_deg": 33.435302,
+    "longitude_deg": -112.005905,
     "lat": 33.435302,
-    "lng": -112.005905
+    "lng": -112.005905,
+    "iso_region": "US-AZ",
+    "municipality": "Phoenix"
   },
   {
     "airport_code": "PIT",
@@ -731,8 +923,12 @@
     "d0_percent": 88.9,
     "average_txo": 16.46,
     "last_updated": "2025-06-24T20:17:45.134Z",
+    "latitude_deg": 40.491501,
+    "longitude_deg": -80.232903,
     "lat": 40.491501,
-    "lng": -80.232903
+    "lng": -80.232903,
+    "iso_region": "US-PA",
+    "municipality": "Pittsburgh"
   },
   {
     "airport_code": "RDU",
@@ -746,8 +942,12 @@
     "d0_percent": 83.2,
     "average_txo": 15.78,
     "last_updated": "2025-06-24T20:17:45.134Z",
+    "latitude_deg": 35.877602,
+    "longitude_deg": -78.787498,
     "lat": 35.877602,
-    "lng": -78.787498
+    "lng": -78.787498,
+    "iso_region": "US-NC",
+    "municipality": "Raleigh/Durham"
   },
   {
     "airport_code": "RSW",
@@ -761,8 +961,12 @@
     "d0_percent": 88.7,
     "average_txo": 11.62,
     "last_updated": "2025-06-24T20:17:45.134Z",
+    "latitude_deg": 26.53619957,
+    "longitude_deg": -81.75520325,
     "lat": 26.53619957,
-    "lng": -81.75520325
+    "lng": -81.75520325,
+    "iso_region": "US-FL",
+    "municipality": "Fort Myers"
   },
   {
     "airport_code": "SAN",
@@ -776,8 +980,12 @@
     "d0_percent": 76.9,
     "average_txo": 23.72,
     "last_updated": "2025-06-24T20:17:45.134Z",
+    "latitude_deg": 32.73360062,
+    "longitude_deg": -117.1900024,
     "lat": 32.73360062,
-    "lng": -117.1900024
+    "lng": -117.1900024,
+    "iso_region": "US-CA",
+    "municipality": "San Diego"
   },
   {
     "airport_code": "SAT",
@@ -791,8 +999,12 @@
     "d0_percent": 83.5,
     "average_txo": 13.85,
     "last_updated": "2025-06-24T20:17:45.134Z",
+    "latitude_deg": 29.533701,
+    "longitude_deg": -98.469803,
     "lat": 29.533701,
-    "lng": -98.469803
+    "lng": -98.469803,
+    "iso_region": "US-TX",
+    "municipality": "San Antonio"
   },
   {
     "airport_code": "SEA",
@@ -806,8 +1018,12 @@
     "d0_percent": 56.7,
     "average_txo": 24.33,
     "last_updated": "2025-06-24T20:17:45.134Z",
+    "latitude_deg": 47.447943,
+    "longitude_deg": -122.310276,
     "lat": 47.447943,
-    "lng": -122.310276
+    "lng": -122.310276,
+    "iso_region": "US-WA",
+    "municipality": "Seattle"
   },
   {
     "airport_code": "SFO",
@@ -821,8 +1037,12 @@
     "d0_percent": 74.4,
     "average_txo": 19.78,
     "last_updated": "2025-06-24T20:17:45.134Z",
+    "latitude_deg": 37.619806,
+    "longitude_deg": -122.374821,
     "lat": 37.619806,
-    "lng": -122.374821
+    "lng": -122.374821,
+    "iso_region": "US-CA",
+    "municipality": "San Francisco"
   },
   {
     "airport_code": "SJC",
@@ -836,8 +1056,12 @@
     "d0_percent": 77.3,
     "average_txo": 15.43,
     "last_updated": "2025-06-24T20:17:45.134Z",
+    "latitude_deg": 37.362452,
+    "longitude_deg": -121.929188,
     "lat": 37.362452,
-    "lng": -121.929188
+    "lng": -121.929188,
+    "iso_region": "US-CA",
+    "municipality": "San Jose"
   },
   {
     "airport_code": "SJU",
@@ -851,8 +1075,12 @@
     "d0_percent": 78.8,
     "average_txo": 12.27,
     "last_updated": "2025-06-24T20:17:45.134Z",
+    "latitude_deg": 18.4394,
+    "longitude_deg": -66.001801,
     "lat": 18.4394,
-    "lng": -66.001801
+    "lng": -66.001801,
+    "iso_region": "PR-U-A",
+    "municipality": "San Juan"
   },
   {
     "airport_code": "SLC",
@@ -866,8 +1094,12 @@
     "d0_percent": 76.9,
     "average_txo": 17.32,
     "last_updated": "2025-06-24T20:17:45.134Z",
+    "latitude_deg": 40.78886,
+    "longitude_deg": -111.979866,
     "lat": 40.78886,
-    "lng": -111.979866
+    "lng": -111.979866,
+    "iso_region": "US-UT",
+    "municipality": "Salt Lake City"
   },
   {
     "airport_code": "SMF",
@@ -881,8 +1113,12 @@
     "d0_percent": 79.8,
     "average_txo": 13.87,
     "last_updated": "2025-06-24T20:17:45.134Z",
+    "latitude_deg": 38.6954,
+    "longitude_deg": -121.591003,
     "lat": 38.6954,
-    "lng": -121.591003
+    "lng": -121.591003,
+    "iso_region": "US-CA",
+    "municipality": "Sacramento"
   },
   {
     "airport_code": "SNA",
@@ -896,7 +1132,11 @@
     "d0_percent": 65.2,
     "average_txo": 17.21,
     "last_updated": "2025-06-24T20:17:45.134Z",
+    "latitude_deg": 33.675701,
+    "longitude_deg": -117.867996,
     "lat": 33.675701,
-    "lng": -117.867996
+    "lng": -117.867996,
+    "iso_region": "US-CA",
+    "municipality": "Santa Ana"
   }
 ]
