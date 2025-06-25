@@ -114,15 +114,15 @@ class TruckCongestionMap {
                 const center = layer.getBounds().getCenter();
                 this.showTooltip(center, data);
                 layer.setStyle({
-                    weight: 2, // 테두리 두께를 2로 줄였습니다.
-                    color: '#000', // 검은색 테두리로 변경하여 다른 주와 겹치지 않도록 했습니다.
+                    weight: 1, // 테두리 두께를 기본값과 동일하게 유지하여 바깥으로 확장되지 않도록 함
+                    color: '#003A52', // 진한 파란색으로 변경하여 강조 효과를 줌
                     dashArray: '',
                     fillOpacity: 0.9
                 });
             },
             mouseout: (e) => {
                 this.map.closePopup();
-                this.stateLayer.resetStyle(layer);
+                this.stateLayer.resetStyle(layer); // 원래 스타일로 복원
             },
             click: () => this.zoomToState(feature)
         });
