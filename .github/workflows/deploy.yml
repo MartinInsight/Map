@@ -61,10 +61,6 @@ jobs:
             echo "No ocean data file exists"
           fi
 
-      ---
-
-      # 다음 스텝을 추가합니다: Fetch Air Data
-
       - name: Fetch Air Data
         env:
           GOOGLE_CREDENTIAL_JSON: ${{ secrets.GOOGLE_CREDENTIAL_JSON }}
@@ -80,8 +76,6 @@ jobs:
           else
             echo "No air data file exists"
           fi
-
-      ---
 
       - name: Verify JSON files
         run: |
