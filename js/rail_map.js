@@ -102,7 +102,7 @@ class RailCongestionMap {
                     const baseLng = itemsAtCoord[0].lng;
                     
                     // --- 이 값을 더 크게 조정합니다! ---
-                    const offsetScale = 0.0005; // 0.0001 -> 0.0005 (약 55미터)로 변경
+                    const offsetScale = 0.1; // 0.0001 -> 0.0005 (약 55미터)로 변경
                                                 // 0.001 (약 111미터)까지 시도해 볼 수 있습니다.
                     // -----------------------------------
 
@@ -143,7 +143,7 @@ class RailCongestionMap {
             if (this.map.hasLayer(this.allMarkers)) {
                 this.map.removeLayer(this.allMarkers);
             }
-            return; 
+            return;
         }
 
         this.allMarkers.clearLayers();
@@ -154,11 +154,10 @@ class RailCongestionMap {
         });
 
         if (!this.map.hasLayer(this.allMarkers)) {
-            this.map.addLayer(this.allMarkers); 
+            this.map.addLayer(this.allMarkers);
         }
         
         // --- 기존 이벤트 리스너 제거 후 다시 추가 (중복 방지) ---
-        // 이 부분은 클러스터 클릭 이벤트에만 해당하며, 개별 마커 이벤트는 createSingleMarker 내부에서 처리됩니다.
         this.allMarkers.off('clusterclick');
         this.allMarkers.on('clusterclick', (a) => {
             a.layer.zoomToBounds();
@@ -168,15 +167,26 @@ class RailCongestionMap {
         this.allMarkers.off('clustermouseover');
         this.allMarkers.on('clustermouseover', (a) => {
             const clusterItems = a.layer.getAllChildMarkers().map(m => m.options.itemData);
+            const childCount = clusterItems.length; // 클러스터 내 마커 개수
+
+            // --- 여기를 수정합니다! ---
+            const popupContent = `
+                <div class="cluster-hover-info">
+                    <h4>${childCount} Locations Clustered</h4>
+                    <p>Click or zoom in to see individual details.</p>
+                </div>
+            `;
+            // ------------------------
+
             const popup = L.popup({
                 closeButton: false,
                 autoClose: true,
                 closeOnClick: false,
-                maxHeight: 300,
+                maxHeight: 300, // 이 값은 이제 중요하지 않을 수 있지만, 안전을 위해 유지합니다.
                 maxWidth: 300
             })
             .setLatLng(a.latlng)
-            .setContent(this.createPopupContent(clusterItems))
+            .setContent(popupContent) // 수정된 popupContent 사용
             .openOn(this.map);
         });
 
