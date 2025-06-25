@@ -308,11 +308,10 @@ html, body {
 /* This element is the div created by L.DomUtil.create('div', 'map-control-container truck-toggle-map-control') in JS */
 .truck-toggle-map-control {
     position: absolute; /* 절대 위치를 사용하여 맵 내에서 직접 중앙 정렬 */
-    top: 18px; /* 맵 상단에서 18px 떨어진 위치로 조정 */
+    top: 10px; /* 맵 상단에서 10px 떨어진 위치로 조정 */
     left: 50%; /* 맵 너비의 50% 지점 */
     transform: translateX(-50%); /* X축으로 요소 너비의 절반만큼 이동하여 정확히 중앙 정렬 */
     z-index: 1000; /* 다른 컨트롤 위에 표시되도록 z-index 설정 */
-    /* .map-control-container의 스타일 (배경, 그림자, 패딩 등)은 그대로 유지 */
     display: flex; /* Ensure buttons are aligned horizontally */
     gap: 0; /* Remove gap between buttons, let borders handle separation */
     padding: 0; /* Remove padding from this container as buttons have their own padding */
@@ -389,7 +388,8 @@ html, body {
     width: auto;
     height: auto;
     margin-bottom: 0; /* Remove any default margins that might interfere */
-    z-index: 900; /* Ensure it's above the map but below other interactive controls */
+    z-index: 9999 !important; /* Ensure it's absolutely on top */
+    pointer-events: none; /* Allow map interaction through it if it's just text */
 }
 
 
@@ -405,9 +405,11 @@ html, body {
     color: black; /* 상단 탭 비활성화 시 텍스트 색상과 동일하게 */
     font-weight: 600; /* 요청에 따라 두꺼운 글씨로 변경 */
     /* text-shadow for white border effect */
-    text-shadow: 0.5px 0.5px 0 #fff, -0.5px -0.5px 0 #fff, 0.5px -0.5px 0 #fff, -0.5px 0.5px 0 #fff,
-                 1px 1px 0 #fff, -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff; /* Increased for better visibility */
+    text-shadow: 1px 1px 0 #fff, -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff,
+                 2px 2px 0 #fff, -2px -2px 0 #fff, 2px -2px 0 #fff, -2px 2px 0 #fff,
+                 3px 3px 0 #fff, -3px -3px 0 #fff, 3px -3px 0 #fff, -3px 3px 0 #fff; /* Very aggressive for visibility */
     white-space: nowrap; /* Prevent text wrapping */
+    line-height: 1.2; /* Ensure line height is compact for single line text */
 }
 
 /* Error Message */
