@@ -13,7 +13,7 @@ class TruckCongestionMap {
         L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', {
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
             maxZoom: 18,
-            minZoom: 3
+            minZoom: 2
         }).addTo(this.map);
 
         this.map.setMaxBounds([
@@ -45,8 +45,9 @@ class TruckCongestionMap {
             this.metricData = sheetData;
 
             this.renderMap();
-            this.addControls();
-            this.addFilterControl();
+            // 컨트롤 추가 함수 호출 변경
+            this.addToggleControls(); // INBOUND/OUTBOUND 토글 버튼 (상단 중앙)
+            this.addRightControls();   // 리셋 버튼과 필터 드롭다운 (상단 우측)
             this.initialized = true;
         } catch (err) {
             console.error("Initialization failed:", err);
@@ -177,57 +178,60 @@ class TruckCongestionMap {
         this.map.setView(center, fixedZoomLevel);
     }
 
-    addControls() {
-        const control = L.control({ position: 'topright' });
-
+    // INBOUND/OUTBOUND 토글 버튼 컨트롤 (상단 중앙 배치)
+    addToggleControls() {
+        const control = L.control({ position: 'topleft' }); // 초기 위치는 topleft로 설정
         control.onAdd = () => {
-            const div = L.DomUtil.create('div', 'map-control-container');
-            this.controlDiv = div;
-            this.renderControls();
+            const div = L.DomUtil.create('div', 'map-control-container truck-toggle-map-control'); // 새로운 클래스 추가
+            this.controlDiv = div; // 이전에 controlDiv가 INBOUND/OUTBOUND와 Reset을 모두 가졌으므로, 이제 토글 전용
+            this.renderToggleButtons();
             return div;
         };
-
         control.addTo(this.map);
     }
 
-    renderControls() {
+    renderToggleButtons() {
         this.controlDiv.innerHTML = `
             <div class="truck-toggle-container">
                 <div class="truck-toggle-wrapper">
                     <button class="truck-toggle-btn ${this.currentMode === 'inbound' ? 'truck-active' : ''}" data-mode="inbound">INBOUND</button>
                     <button class="truck-toggle-btn ${this.currentMode === 'outbound' ? 'truck-active' : ''}" data-mode="outbound">OUTBOUND</button>
                 </div>
-                <button class="truck-reset-btn reset-btn">Reset View</button>
             </div>
         `;
 
         this.controlDiv.querySelectorAll('.truck-toggle-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 this.currentMode = btn.dataset.mode;
-                this.renderControls();
+                this.renderToggleButtons(); // 토글 버튼 상태 업데이트
                 this.stateLayer.setStyle(this.getStyle.bind(this));
             });
         });
-
-        this.controlDiv.querySelector('.truck-reset-btn').addEventListener('click', () => {
-            this.map.setView([37.8, -96], 4);
-            if (this.filterControlInstance) {
-                const stateFilter = this.filterControlInstance._container.querySelector('.state-filter');
-                if (stateFilter) stateFilter.value = '';
-            }
-        });
     }
 
-    addFilterControl() {
-        if (this.filterControlInstance) {
-            this.map.removeControl(this.filterControlInstance);
-        }
-
-        const control = L.control({ position: 'bottomright' });
+    // 리셋 버튼과 필터 드롭다운 컨트롤 (상단 우측에 나란히 배치)
+    addRightControls() {
+        // 기존 addControls와 addFilterControl의 기능을 통합
+        const control = L.control({ position: 'topright' });
 
         control.onAdd = () => {
-            const div = L.DomUtil.create('div', 'filter-control');
+            const div = L.DomUtil.create('div', 'map-control-group-right'); // 새로운 그룹핑 클래스
+            div.style.display = 'flex';
+            div.style.flexDirection = 'row';
+            div.style.gap = '10px';
+            div.style.background = 'white';
+            div.style.padding = '8px 12px';
+            div.style.borderRadius = '8px';
+            div.style.boxShadow = '0 2px 10px rgba(0,0,0,0.15)';
+            div.style.alignItems = 'center'; // 수직 중앙 정렬
 
+            // 리셋 버튼 추가
+            const resetButtonHtml = `
+                <button class="truck-reset-btn reset-btn">Reset View</button>
+            `;
+            div.insertAdjacentHTML('beforeend', resetButtonHtml);
+
+            // 주 선택 필터 드롭다운 추가
             const states = this.geoJsonData.features
                 .map(f => ({
                     id: f.id,
@@ -235,7 +239,7 @@ class TruckCongestionMap {
                 }))
                 .sort((a, b) => a.name.localeCompare(b.name));
 
-            div.innerHTML = `
+            const filterDropdownHtml = `
                 <select class="state-filter">
                     <option value="">Select State</option>
                     ${states.map(state =>
@@ -243,6 +247,14 @@ class TruckCongestionMap {
                     ).join('')}
                 </select>
             `;
+            div.insertAdjacentHTML('beforeend', filterDropdownHtml);
+
+            // 이벤트 리스너 추가
+            div.querySelector('.truck-reset-btn').addEventListener('click', () => {
+                this.map.setView([37.8, -96], 4);
+                const stateFilter = div.querySelector('.state-filter'); // 현재 div 내에서 찾음
+                if (stateFilter) stateFilter.value = '';
+            });
 
             div.querySelector('.state-filter').addEventListener('change', (e) => {
                 const stateId = e.target.value;
@@ -255,17 +267,19 @@ class TruckCongestionMap {
                 if (state) {
                     const bounds = L.geoJSON(state).getBounds();
                     const center = bounds.getCenter();
-                    const fixedZoomLevel = 7; // 필터 드롭다운에서도 동일한 줌 레벨을 사용합니다.
+                    const fixedZoomLevel = 7;
 
                     this.map.setView(center, fixedZoomLevel);
                 }
             });
 
+            L.DomEvent.disableClickPropagation(div);
+            L.DomEvent.disableScrollPropagation(div);
+
+            this.filterControlInstance = control; // 이제 전체 그룹핑 컨트롤이 됨
             return div;
         };
-
         control.addTo(this.map);
-        this.filterControlInstance = control;
     }
 
     showError(message) {
