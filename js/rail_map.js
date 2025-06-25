@@ -6,6 +6,7 @@ class RailCongestionMap {
         this.lastUpdated = null;
         this.filterControlInstance = null;
         this.errorControl = null; // Ensure errorControl is initialized
+        this.lastUpdatedControl = null; // Initialize lastUpdatedControl
 
         // 지도 타일 레이어를 CartoDB Light All로 변경하여 영어 지명 통일
         L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', {
@@ -26,7 +27,7 @@ class RailCongestionMap {
             }
         });
 
-        // this.addControls(); // Old call, removed
+        // this.addControls(); // 기존 중복 컨트롤 호출 제거
         this.loadData();
     }
 
@@ -46,13 +47,12 @@ class RailCongestionMap {
             })).filter(item => item.lat && item.lng && item.Yard);
 
             if (this.currentData.length > 0) {
-                this.lastUpdated = this.currentData[0].date;
+                this.lastUpdated = this.currentData[0].date; // 'date' 필드를 lastUpdated로 설정
             }
 
             this.renderMarkers();
             this.addLastUpdatedText();
-            // Call the new combined controls method after data is loaded
-            this.addRightControls(); // Now combines filter and reset
+            this.addRightControls(); // 필터 및 리셋 버튼을 포함하는 새로운 컨트롤 추가
         } catch (error) {
             console.error("Failed to load rail data:", error);
             this.displayErrorMessage("Failed to load rail data. Please try again later.");
@@ -66,7 +66,15 @@ class RailCongestionMap {
 
         if (this.lastUpdated) {
             const date = new Date(this.lastUpdated);
-            const formattedDate = `${date.getMonth() + 1}-${date.getDate()}-${date.getFullYear()}`;
+            // AirCongestionMap과 동일한 toLocaleString 포맷 사용
+            const formattedDate = date.toLocaleString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: 'numeric',
+                minute: 'numeric',
+                hour12: false
+            });
 
             const infoControl = L.control({ position: 'bottomleft' });
 
@@ -197,7 +205,6 @@ class RailCongestionMap {
 
         control.addTo(this.map);
     }
-
 
     getYardCenter(yardData) {
         if (!yardData || yardData.length === 0) return [37.8, -96];
