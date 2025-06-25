@@ -52,8 +52,6 @@ class RailCongestionMap {
             this.addFilterControl();
         } catch (error) {
             console.error("Failed to load rail data:", error);
-            // It's good practice to display an error message on the map for the user.
-            // Assuming displayErrorMessage method exists in this class.
             this.displayErrorMessage("Failed to load rail data. Please try again later.");
         }
     }
@@ -65,7 +63,6 @@ class RailCongestionMap {
 
         if (this.lastUpdated) {
             const date = new Date(this.lastUpdated);
-            // Format date for display (e.g., "10-27-2023").
             const formattedDate = `${date.getMonth() + 1}-${date.getDate()}-${date.getFullYear()}`;
 
             const infoControl = L.control({ position: 'bottomleft' });
@@ -97,6 +94,7 @@ class RailCongestionMap {
 
             marker.on({
                 mouseover: (e) => {
+                    // Mouseover will show popup
                     this.map.closePopup();
                     const popup = L.popup()
                         .setLatLng(e.latlng)
@@ -104,10 +102,21 @@ class RailCongestionMap {
                         .openOn(this.map);
                 },
                 mouseout: () => {
+                    // Mouseout will close popup
                     this.map.closePopup();
                 },
-                click: () => {
-                    this.map.closePopup();
+                click: (e) => {
+                    // On click: zoom to marker and show popup (for mobile compatibility)
+                    this.map.closePopup(); // Close any other open popups
+                    this.map.setView(e.latlng, 8); // Zoom to clicked marker's location with fixed zoom level 8
+                    
+                    const popup = L.popup()
+                        .setLatLng(e.latlng) // Use the clicked latlng for the popup position
+                        .setContent(this.createPopupContent(item))
+                        .openOn(this.map);
+                    
+                    // Note: renderMarkers(this.currentData) is not called here because we want
+                    // all markers to remain visible; only the map view changes.
                 }
             });
 
@@ -127,15 +136,13 @@ class RailCongestionMap {
 
             div.querySelector('.rail-reset-btn').addEventListener('click', () => {
                 this.map.setView([37.8, -96], 4);
-                this.renderMarkers(this.currentData); // Ensure all markers are rendered on reset
-                // Reset filter dropdown if it exists
+                this.renderMarkers(this.currentData);
                 if (this.filterControlInstance) {
                     const yardFilter = this.filterControlInstance._container.querySelector('.yard-filter');
                     if (yardFilter) yardFilter.value = '';
                 }
             });
 
-            // Prevent map events on the control
             L.DomEvent.disableClickPropagation(div);
             L.DomEvent.disableScrollPropagation(div);
 
@@ -174,19 +181,18 @@ class RailCongestionMap {
                 const yardName = e.target.value;
                 if (!yardName) {
                     this.map.setView([37.8, -96], 4);
-                    this.renderMarkers(this.currentData); // Render ALL markers
+                    this.renderMarkers(this.currentData);
                     return;
                 }
 
                 const yardData = this.currentData.filter(item => item.Yard === yardName);
                 if (yardData.length > 0) {
                     const center = this.getYardCenter(yardData);
-                    this.map.setView(center, 8); // Move and zoom to the selected yard
-                    this.renderMarkers(this.currentData); // Render ALL markers, only change view
+                    this.map.setView(center, 8); // Use fixed zoom level 8 for consistency
+                    this.renderMarkers(this.currentData); // Keep all markers visible
                 }
             });
 
-            // Prevent map events on the control
             L.DomEvent.disableClickPropagation(div);
             L.DomEvent.disableScrollPropagation(div);
 
@@ -245,8 +251,6 @@ class RailCongestionMap {
     createPopupContent(data) {
         const level = data.congestion_level || 'Unknown';
 
-        // --- CHANGE START ---
-        // Changed from rail-tooltip to map-tooltip
         return `
             <div class="map-tooltip">
                 <h4>${data.location || 'Unknown Location'}</h4>
@@ -259,7 +263,6 @@ class RailCongestionMap {
                 <p><strong>Dwell Time:</strong> ${data.congestion_score?.toFixed(1) || 'N/A'} hours</p>
             </div>
         `;
-        // --- CHANGE END ---
     }
 
     displayErrorMessage(message) {
