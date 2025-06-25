@@ -5,6 +5,8 @@ class OceanCongestionMap {
     this.currentData = [];
     this.lastUpdated = null;
     this.filterControlInstance = null; // Ensure this is initialized
+    this.lastUpdatedControl = null; // Initialize for consistency
+    this.errorControl = null; // Initialize for consistency
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© OpenStreetMap',
@@ -19,11 +21,9 @@ class OceanCongestionMap {
     
     this.map.on('zoomend', () => {
       const currentZoom = this.map.getZoom();
-      const bounds = this.map.getBounds();
-      const mapHeight = bounds.getNorth() - bounds.getSouth();
       // This zoom logic is for preventing excessive zoom out, not direct filter behavior
-      if (mapHeight > 140) {
-        this.map.setZoom(Math.max(2, currentZoom - 1));
+      if (currentZoom < this.map.getMinZoom()) {
+        this.map.setZoom(this.map.getMinZoom());
       }
     });
     
@@ -34,6 +34,9 @@ class OceanCongestionMap {
   async loadData() {
     try {
       const response = await fetch('data/global-ports.json');
+      if (!response.ok) { // Check for HTTP errors
+          throw new Error(`HTTP error! status: ${response.status}`);
+      }
       const rawData = await response.json();
   
       this.currentData = rawData.map(p => ({
@@ -61,9 +64,8 @@ class OceanCongestionMap {
   
     } catch (error) {
       console.error("Failed to load ocean data:", error);
-      // It's good practice to display an error message on the map for the user
-      // if this class also has a displayErrorMessage method.
-      // e.g., this.displayErrorMessage("Failed to load ocean data.");
+      // Display error message on the map for the user
+      this.displayErrorMessage("Failed to load ocean data. Please try again later.");
     }
   }
 
@@ -83,13 +85,36 @@ class OceanCongestionMap {
 
       marker.on({
         mouseover: (e) => {
-          const popup = L.popup()
+          // Mouseover will show popup
+          this.map.closePopup(); // Close any existing popups
+          const popup = L.popup({
+              // Default popup settings for mouseover (closes on mouseout)
+              closeButton: false,
+              autoClose: true,
+              closeOnClick: true // Allow closing on map click
+          })
             .setLatLng(e.latlng)
             .setContent(this.createPopupContent(port))
             .openOn(this.map);
         },
         mouseout: () => {
+          // Mouseout will close popup (if autoClose is true)
           this.map.closePopup();
+        },
+        click: (e) => {
+          // On click: zoom to marker and show popup (for mobile compatibility)
+          this.map.closePopup(); // Close any other open popups (including mouseover one)
+          this.map.setView(e.latlng, 8); // Zoom to clicked marker's location with fixed zoom level 8
+          
+          L.popup({
+              // Settings for click popup (sticky for mobile)
+              closeButton: true, // Allow manual closing for click popup
+              autoClose: false, // Keep open until manually closed or another action
+              closeOnClick: false // Do not close on map click
+          })
+            .setLatLng(e.latlng) // Use the clicked latlng for the popup position
+            .setContent(this.createPopupContent(port))
+            .openOn(this.map);
         }
       });
 
@@ -113,11 +138,6 @@ class OceanCongestionMap {
       infoControl.onAdd = () => {
         const div = L.DomUtil.create('div', 'last-updated-info');
         div.innerHTML = `<strong>Last Updated:</strong> ${formattedDate}`;
-        // CSS properties were moved to main.css, no need for inline styles here
-        // div.style.backgroundColor = 'white';
-        // div.style.padding = '5px 10px';
-        // div.style.borderRadius = '5px';
-        // div.style.boxShadow = '0 0 5px rgba(0,0,0,0.2)';
         return div;
       };
 
@@ -204,7 +224,7 @@ class OceanCongestionMap {
           .sort((a, b) => a.port.localeCompare(b.port));
   
         const countryCenter = this.getCountryCenter(countryPorts);
-        this.map.setView(countryCenter, 5);
+        this.map.setView(countryCenter, 5); // Use fixed zoom level 5 for consistency
         this.renderMarkers(this.currentData); // Render ALL markers, only change view
       });
   
@@ -216,7 +236,7 @@ class OceanCongestionMap {
             if (country) {
                 const countryPorts = this.currentData.filter(p => p.country === country);
                 const countryCenter = this.getCountryCenter(countryPorts);
-                this.map.setView(countryCenter, 5);
+                this.map.setView(countryCenter, 5); // Use fixed zoom level 5 for consistency
             } else {
                 this.map.setView([37.8, -96], 4); // If no country selected, reset to global view
             }
@@ -226,7 +246,7 @@ class OceanCongestionMap {
   
         const port = this.currentData.find(p => p.port === portName);
         if (port) {
-          this.map.setView([port.lat, port.lng], 8);
+          this.map.setView([port.lat, port.lng], 8); // Use fixed zoom level 8 for consistency
           this.renderMarkers(this.currentData); // Render ALL markers, only change view
         }
       });
@@ -290,6 +310,22 @@ class OceanCongestionMap {
         <p><strong>Monthly Max:</strong> ${port.monthly_max_delay} days</p>
       </div>
     `;
+  }
+
+  // Adding displayErrorMessage for consistency and good practice as it was previously commented out.
+  displayErrorMessage(message) {
+    if (this.errorControl) {
+        this.map.removeControl(this.errorControl);
+    }
+
+    const errorControl = L.control({ position: 'topleft' });
+    errorControl.onAdd = function() {
+        const div = L.DomUtil.create('div', 'error-message');
+        div.innerHTML = message;
+        return div;
+    };
+    errorControl.addTo(this.map);
+    this.errorControl = errorControl;
   }
 }
 
