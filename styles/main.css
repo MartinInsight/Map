@@ -68,9 +68,11 @@ html, body {
     width: 100%; /* 부모 컨테이너 너비를 채움 */
     height: 34px; /* 버튼 높이 고정 */
     background-color: white; /* 줌 컨트롤 자체의 배경 */
-    padding: 8px 12px; /* 줌 컨트롤 자체의 패딩 */
-    border-radius: 8px; /* 줌 컨트롤 자체의 테두리 반경 */
-    box-shadow: none; /* 줌 컨트롤 자체의 그림자 제거 */
+    /* padding, border-radius, box-shadow는 이제 .leaflet-top.leaflet-right에서 통합 관리 */
+    padding: 0; /* 내부 패딩 제거 */
+    border-radius: 0;
+    box-shadow: none;
+    border: none; /* 컨테이너 자체의 테두리 제거 */
 }
 
 .leaflet-control-zoom a {
@@ -213,6 +215,7 @@ html, body {
     gap: 8px; /* Reset 버튼과 Select 드롭다운 사이의 간격 조정 */
     width: 100%; /* 부모(.leaflet-top.leaflet-right)의 너비를 채움 */
     box-sizing: border-box;
+    /* margin-top은 이제 .leaflet-top.leaflet-right에서 통합 관리 */
 }
 
 /* Reset Button Style */
@@ -341,8 +344,8 @@ html, body {
     right: 10px !important;
     width: 160px; /* 데스크톱에서 모든 컨트롤의 고정 너비 */
     height: auto;
-    background: none; /* 전체 컨트롤 블록의 배경 제거 */
-    padding: 0; /* 전체 컨트롤 블록의 패딩 제거 */
+    background: none; /* 전체 컨테이너 배경 제거 (개별 컨트롤에 배경 적용) */
+    padding: 0; /* 전체 컨테이너 패딩 제거 */
     border-radius: 0;
     box-shadow: none; /* 전체 컨테이너 그림자 제거 */
 }
@@ -635,6 +638,7 @@ html, body {
     /* Zoom buttons on mobile */
     .leaflet-control-zoom {
         height: 30px; /* 모바일에서 줌 버튼 높이 조정 */
+        padding: 6px 8px; /* 모바일에서 줌 컨트롤 자체의 패딩 조정 */
     }
     .leaflet-control-zoom a {
         height: 30px !important;
