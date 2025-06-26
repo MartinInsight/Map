@@ -93,7 +93,7 @@ class RailCongestionMap {
 
         // 줌 컨트롤을 우측 상단에 추가 (다른 컨트롤보다 먼저 오도록)
         // 사용자가 요청한 순서에 따라 Reset View와 Select Yard 위에 둠
-        L.control.zoom({ position: 'topright' }).addTo(this.map);
+        // L.control.zoom({ position: 'topright' }).addTo(this.map);
 
         // 데이터 로드 시작
         this.loadData();
@@ -530,7 +530,7 @@ class RailCongestionMap {
             control.onAdd = () => {
                 const div = L.DomUtil.create('div', 'map-control-group-right');
                 
-                // 줌 컨트롤 추가
+                // 커스텀 줌 컨트롤 추가
                 const zoomControl = L.DomUtil.create('div', 'leaflet-control-zoom');
                 zoomControl.innerHTML = `
                     <a class="leaflet-control-zoom-in" href="#" title="Zoom in">+</a>
