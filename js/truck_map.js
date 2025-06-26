@@ -18,7 +18,7 @@ class TruckCongestionMap {
 
         // Change map tile layer to CartoDB Light All for consistent English place names
         L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.com/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
             maxZoom: 18,
             minZoom: 3
         }).addTo(this.map);
@@ -131,16 +131,16 @@ class TruckCongestionMap {
     getCongestionLevelByTruckValue(delayPercentage) {
         if (delayPercentage == null || isNaN(delayPercentage)) return 'Unknown';
 
-        // 물동량 감소 (혼잡)
+        // Volume Decrease (Higher Congestion)
         if (delayPercentage <= -15) return 'Extremely High Congestion';
         if (delayPercentage > -15 && delayPercentage <= -11) return 'Very High Congestion';
         if (delayPercentage > -11 && delayPercentage <= -6) return 'High Congestion';
         if (delayPercentage > -6 && delayPercentage < 0) return 'Moderate Congestion';
 
-        // 변동 없음 (중립)
+        // No Change (Neutral)
         if (delayPercentage === 0) return 'No Change (Steady)';
 
-        // 물동량 증가 (원활)
+        // Volume Increase (Lower Congestion / Optimal Flow)
         if (delayPercentage > 0 && delayPercentage <= 5) return 'Low Congestion';
         if (delayPercentage > 5 && delayPercentage <= 10) return 'Very Low Congestion';
         if (delayPercentage > 10 && delayPercentage <= 15) return 'Minimal Congestion';
@@ -151,21 +151,22 @@ class TruckCongestionMap {
 
     /**
      * Returns the fill color based on the conceptual congestion level (9 levels).
+     * Uses a diverging Red-Yellow-Green (RdYlGn) scale for consistency with other maps,
+     * where red signifies congestion (volume decrease) and green signifies clear flow (volume increase).
      * @param {string} level - Congestion level string.
      * @returns {string} CSS color code.
      */
     getColor(level) {
-        // 9-class RdYlGn scale (Red for congestion, Green for clear flow, Yellow for no change)
         const fillColors = {
-            'Extremely High Congestion': '#a50026', // Darkest Red
+            'Extremely High Congestion': '#a50026', // Darkest Red for significant decrease
             'Very High Congestion': '#d73027',      // Red
             'High Congestion': '#f46d43',           // Orange-Red
-            'Moderate Congestion': '#fdae61',       // Orange
-            'No Change (Steady)': '#fee08b',        // Yellow
-            'Low Congestion': '#d9ef8b',            // Light Green-Yellow
+            'Moderate Congestion': '#fdae61',       // Orange (approaching no change)
+            'No Change (Steady)': '#fee08b',        // Yellow (neutral)
+            'Low Congestion': '#d9ef8b',            // Light Green-Yellow (slight increase)
             'Very Low Congestion': '#a6d96a',       // Light Green
             'Minimal Congestion': '#66bd63',        // Green
-            'Optimal Flow (Highly Clear)': '#1a9850', // Darkest Green
+            'Optimal Flow (Highly Clear)': '#1a9850', // Darkest Green for significant increase
             'Unknown': '#cccccc'                    // Default grey
         };
         return fillColors[level] || '#cccccc';
@@ -182,9 +183,9 @@ class TruckCongestionMap {
             'Extremely High Congestion': '#7f0000',  // Darker Red
             'Very High Congestion': '#b71c1c',       // Darker red
             'High Congestion': '#e65100',            // Darker orange
-            'Moderate Congestion': '#616161',        // Darker gray (for yellow background)
+            'Moderate Congestion': '#616161',        // Darker gray (for orange/yellow backgrounds)
             'No Change (Steady)': '#616161',         // Darker gray for yellow
-            'Low Congestion': '#2196F3',             // Darker light blue
+            'Low Congestion': '#2196F3',             // Darker light blue (shifted towards blue for better contrast on greens)
             'Very Low Congestion': '#1976D2',        // Darker blue
             'Minimal Congestion': '#006837',         // Darker Green
             'Optimal Flow (Highly Clear)': '#006837', // Darker Green
@@ -255,30 +256,30 @@ class TruckCongestionMap {
         const format = (v) => isNaN(Number(v)) ? 'N/A' : Number(v).toFixed(2); // Keep sign for display
         const isInbound = this.currentMode === 'inbound';
         const delayPercentage = isInbound ? data.inboundDelay : data.outboundDelay;
-        const dwellValue = isInbound ? data.dwellInbound : data.outboundDwell; // Corrected to outboundDwell for consistency
+        const dwellValue = isInbound ? data.dwellInbound : data.outboundDwell;
         
         const congestionLevel = this.getCongestionLevelByTruckValue(delayPercentage);
         const levelColor = this.getTextColorForLevel(congestionLevel);
 
         const content = `
             <h4>${data.name || 'Unknown State'}</h4>
-            <p><strong>혼잡도 (${this.currentMode === 'inbound' ? '유입' : '유출'}):</strong>
+            <p><strong>Congestion Level (${this.currentMode === 'inbound' ? 'Inbound' : 'Outbound'}):</strong>
                 <span style="color: ${levelColor}; font-weight: bold;">
                     ${congestionLevel}
                 </span>
             </p>
             <div>
-                <strong>물동량 변동:</strong>
+                <strong>Volume Change:</strong>
                 <p style="color: ${delayPercentage <= 0 ? this.getTextColorForLevel('Extremely High Congestion') : this.getTextColorForLevel('Optimal Flow (Highly Clear)')};">
                     ${delayPercentage >= 0 ? '↑' : '↓'} ${Math.abs(delayPercentage).toFixed(2)}%
-                    <span style="color: ${this.getTextColorForLevel('No Change (Steady)')};"> 2주 평균 대비 ${delayPercentage >= 0 ? '증가' : '감소'}</span>
+                    <span style="color: ${this.getTextColorForLevel('No Change (Steady)')};"> compared to 2-week avg</span>
                 </p>
             </div>
             <div>
-                <strong>Dwell Time 변동:</strong>
+                <strong>Dwell Time Change:</strong>
                 <p style="color: ${dwellValue >= 0 ? this.getTextColorForLevel('Extremely High Congestion') : this.getTextColorForLevel('Optimal Flow (Highly Clear)')};">
                     ${dwellValue >= 0 ? '↑' : '↓'} ${Math.abs(dwellValue).toFixed(2)}%
-                    <span style="color: ${this.getTextColorForLevel('No Change (Steady)')};"> 2주 평균 대비 ${dwellValue >= 0 ? '증가' : '감소'}</span>
+                    <span style="color: ${this.getTextColorForLevel('No Change (Steady)')};"> compared to 2-week avg</span>
                 </p>
             </div>
         `;
