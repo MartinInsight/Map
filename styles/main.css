@@ -198,22 +198,26 @@ html, body {
     margin: 0 !important; /* 기존 마진 제거 */
 }
 
+/* 줌 버튼 텍스트 가운데 정렬 수정 */
 .leaflet-control-zoom a {
-    text-decoration: none !important;
+    /* 기존 스타일 유지 */
     width: 50% !important;
     height: 34px !important;
     background-color: white !important;
     border: 1px solid #e0e0e0 !important;
-    transition: all 0.2s;
-    background-image: none !important;
-    text-indent: 0 !important;
-    text-align: center !important;
+    text-decoration: none !important;
     font-family: 'Noto Sans KR', sans-serif;
     font-weight: 500 !important;
     font-size: 13px !important;
-    line-height: 34px !important;
     color: #333 !important;
     box-sizing: border-box;
+    
+    /* 추가: 텍스트 가운데 정렬 */
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    line-height: 1 !important; /* 기존 line-height 제거 */
+    padding-top: 0 !important; /* 상단 패딩 초기화 */
 }
 
 /* Reset Button Style */
@@ -514,16 +518,6 @@ html, body {
     margin: 0 !important; /* 기본 마진 제거 */
 }
 
-/* 모바일 대응 */
-@media (max-width: 768px) {
-    .last-updated-info {
-        right: 10px !important;
-        bottom: 25px !important; /* 모바일에서 더 올림 */
-        max-width: calc(100% - 20px); /* 화면 너비에 맞춤 */
-        font-size: 12px; /* 글자 크기 축소 */
-    }
-}
-
 /* Error message control */
 .error-message {
     background-color: #ffe0e0; /* Light red */
@@ -680,6 +674,9 @@ html, body {
     }
 
     .last-updated-info {
-        font-size: 12px;
+        right: 10px !important;
+        bottom: 25px !important; /* 모바일에서 더 올림 */
+        max-width: calc(100% - 20px); /* 화면 너비에 맞춤 */
+        font-size: 12px; /* 글자 크기 축소 */
     }
 }
