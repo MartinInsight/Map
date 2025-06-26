@@ -26,17 +26,17 @@ class AirCongestionMap {
 
             iconCreateFunction: (cluster) => {
                 const childMarkers = cluster.getAllChildMarkers();
-                let lowestA14Value = 101; // Represents the "worst" congestion (lower A14 means worse)
+                let highestTXOValue = -1; // Represents the "worst" congestion
                 let dominantLevel = 'Average'; // Default to Average level for clusters
                 let dominantColor = this.getColor(dominantLevel); // Default to Average color
 
-                // Determine the highest congestion level (lowest A14) within the cluster
+                // Determine the highest congestion level (highest TXO) within the cluster
                 childMarkers.forEach(marker => {
                     const itemData = marker.options.itemData;
-                    if (itemData && typeof itemData.a14 === 'number' && !isNaN(itemData.a14)) {
-                        if (itemData.a14 < lowestA14Value) { // Lower A14 indicates higher congestion
-                            lowestA14Value = itemData.a14;
-                            dominantLevel = this.getCongestionLevelByA14(itemData.a14);
+                    if (itemData && typeof itemData.average_txo === 'number' && !isNaN(itemData.average_txo)) {
+                        if (itemData.average_txo > highestTXOValue) {
+                            highestTXOValue = itemData.average_txo;
+                            dominantLevel = this.getCongestionLevelByTXO(itemData.average_txo);
                             dominantColor = this.getColor(dominantLevel);
                         }
                     }
@@ -188,29 +188,21 @@ class AirCongestionMap {
             const rawData = await response.json();
 
             // Data cleansing and parsing
-            let processedData = rawData.map(item => {
-                let parsedA14 = parseFloat(item.A14);
-                return {
-                    lat: item.latitude_deg, // Ensure latitude_deg is used
-                    lng: item.longitude_deg, // Ensure longitude_deg is used
-                    Airport: item.airport_code, // Standardized as 'airport_code'
-                    name: item.name, // Airport full name
-                    municipality: item.municipality,
-                    iso_region: item.iso_region,
-                    average_txo: parseFloat(item.average_txo), // Parse TXO to float
-                    scheduled: item.scheduled,
-                    departed: item.departed,
-                    completed: item.Completed, // Add Completed
-                    cancelled: item.Cancelled, // Add Cancelled
-                    d15: item.D15, // Add D15
-                    a14: parsedA14, // Use the parsed value
-                    d0_percent: item['D0 Percent'], // Add D0 Percent
-                    completion_factor: item.completion_factor,
-                    last_updated: item.last_updated // Keep this for potential future use or debugging, but not for UI display as per Rail version
-                };
-            }).filter(item =>
-                // Basic validation: ensure lat, lng, Airport code exist, and a14 is a valid number
-                typeof item.lat === 'number' && typeof item.lng === 'number' && item.Airport && item.Airport.trim() !== '' && !isNaN(item.a14)
+            let processedData = rawData.map(item => ({
+                lat: item.latitude_deg, // Ensure latitude_deg is used
+                lng: item.longitude_deg, // Ensure longitude_deg is used
+                Airport: item.airport_code, // Standardized as 'airport_code'
+                name: item.name, // Airport full name
+                municipality: item.municipality,
+                iso_region: item.iso_region,
+                average_txo: parseFloat(item.average_txo), // Parse TXO to float
+                scheduled: item.scheduled,
+                departed: item.departed,
+                completion_factor: item.completion_factor,
+                last_updated: item.last_updated // Keep this for potential future use or debugging, but not for UI display as per Rail version
+            })).filter(item =>
+                // Basic validation: ensure lat, lng, and Airport code exist
+                typeof item.lat === 'number' && typeof item.lng === 'number' && item.Airport && item.Airport.trim() !== ''
             );
 
             const coordinateMap = new Map();
@@ -230,7 +222,7 @@ class AirCongestionMap {
                     const baseLat = itemsAtCoord[0].lat;
                     const baseLng = itemsAtCoord[0].lng;
 
-                    const offsetScale = 0.0005; // Jittering offset scale (smaller for air data usually)
+                    const offsetScale = 0.15; // Jittering offset scale (smaller for air data usually)
 
                     itemsAtCoord.forEach((item, index) => {
                         const angle = (index / itemsAtCoord.length) * 2 * Math.PI;
@@ -248,6 +240,7 @@ class AirCongestionMap {
             });
 
             this.currentData = jitteredData;
+
             this.renderMarkers(); // Render markers
             this.addRightControls(); // Add filter control and other right controls (call after data load)
 
@@ -296,10 +289,9 @@ class AirCongestionMap {
      * @returns {L.Marker} The created Leaflet marker object.
      */
     createSingleMarker(item) {
-        // Use A14 for determining congestion level and color/radius
-        const level = this.getCongestionLevelByA14(item.a14);
+        const level = this.getCongestionLevelByTXO(item.average_txo);
         const color = this.getColor(level);
-        const radius = this.getRadiusByA14(item.a14);
+        const radius = this.getRadiusByTXO(item.average_txo);
 
         // Create marker icon HTML (circular, color based on congestion)
         const iconHtml = `
@@ -427,34 +419,29 @@ class AirCongestionMap {
                 return;
             }
 
-            const level = this.getCongestionLevelByA14(item.a14); // Now based on A14
+            const level = this.getCongestionLevelByTXO(item.average_txo);
             const airportName = item.Airport || 'Unknown Airport';
             const municipality = item.municipality || 'Unknown City';
             const regionCode = item.iso_region ? item.iso_region.split('-').pop() : 'N/A';
             const avgTxo = (typeof item.average_txo === 'number' && !isNaN(item.average_txo)) ? item.average_txo.toFixed(2) : 'N/A';
             const scheduled = item.scheduled || 'N/A';
             const departed = item.departed || 'N/A';
-            const completed = item.completed || 'N/A';
-            const cancelled = item.cancelled || 'N/A';
+            const completionFactor = item.completion_factor || 'N/A';
 
-            const levelColor = this.getTextColorForLevel(level);
 
             content += `
                         <div class="location-info">
-                            <h5>${municipality}</h5>
-                            <p><strong>Airport Code:</strong> ${airportName}</p>
+                            <h5>${airportName}</h5>
                             <p><strong>Location:</strong> ${municipality}, ${regionCode}</p>
                             <p><strong>Congestion Level:</strong>
-                                <span style="color: ${levelColor};">
+                                <span style="color: ${this.getColor(level, true)}">
                                     ${level}
                                 </span>
-                                (based on 14 Min or Less Arrival Rate)
                             </p>
-                            <p><strong>Average TXO:</strong> ${avgTxo} min</p>
+                            <p><strong>Average Taxi-Out:</strong> ${avgTxo} min</p>
                             <p><strong>Scheduled Flights:</strong> ${scheduled}</p>
-                            <p><strong>Completed Flights:</strong> ${completed}</p>
                             <p><strong>Departed Flights:</strong> ${departed}</p>
-                            <p><strong>Cancelled Flights:</strong> ${cancelled}</p>
+                            <p><strong>Completion Factor:</strong> ${completionFactor}%</p>
                         </div>
                         ${isMultiple && safeItems.indexOf(item) !== safeItems.length - 1 ? '<hr>' : ''}
                     `;
@@ -573,6 +560,7 @@ class AirCongestionMap {
                 }
             });
 
+            // Prevent click/scroll propagation (allow independent interaction with controls)
             L.DomEvent.disableClickPropagation(div);
             L.DomEvent.disableScrollPropagation(div);
 
@@ -606,70 +594,63 @@ class AirCongestionMap {
     }
 
     /**
-     * Determines the marker radius based on the A14 value.
-     * Lower A14 means higher congestion, thus larger radius.
-     * @param {number} a14 - A14 value (percentage).
+     * Determines the marker radius based on the average Taxi-Out (TXO) value.
+     * @param {number} txo - Average TXO value (in minutes).
      * @returns {number} Marker radius (in pixels).
      */
-    getRadiusByA14(a14) {
-        if (a14 == null || isNaN(a14)) return 6; // Default size for unknown/null
-        // Radii are inversely proportional to A14 (lower A14 = larger marker)
-        if (a14 < 60) return 14; // Very High Congestion
-        if (a14 < 70) return 12; // High Congestion
-        if (a14 < 80) return 10; // Average Congestion
-        if (a14 < 90) return 8; // Low Congestion
-        return 6; // Very Low Congestion (A14 >= 90)
+    getRadiusByTXO(txo) {
+        if (txo == null || isNaN(txo)) return 6; // Default size for unknown/null
+        if (txo >= 25) return 14;
+        if (txo >= 20) return 12;
+        if (txo >= 15) return 10;
+        if (txo >= 10) return 8;
+        return 6;
     }
 
     /**
-     * Determines the congestion level string based on A14 value.
-     * @param {number} a14 - A14 value (percentage).
+     * Determines the congestion level string based on TXO value.
+     * @param {number} txo - Average TXO value (in minutes).
      * @returns {string} Congestion level string.
      */
-    getCongestionLevelByA14(a14) {
-        if (a14 == null || isNaN(a14)) return 'Unknown';
-        if (a14 < 60) return 'Very High'; // < 60%
-        if (a14 < 70) return 'High';      // 60-69%
-        if (a14 < 80) return 'Average';   // 70-79%
-        if (a14 < 90) return 'Low';       // 80-89%
-        if (a14 >= 90) return 'Very Low'; // 90-100%
-        return 'Unknown'; // Fallback for unexpected values
+    getCongestionLevelByTXO(txo) {
+        if (txo == null || isNaN(txo)) return 'Unknown';
+        // Thresholds aligned with RailCongestionMap's logic
+        if (txo >= 25) return 'Very High';
+        if (txo >= 20) return 'High';
+        if (txo >= 15) return 'Average';
+        if (txo >= 10) return 'Low';
+        return 'Very Low';
     }
 
     /**
      * Returns color based on congestion level for circles or text.
      * @param {string} level - Congestion level string.
+     * @param {boolean} [isText=false] - Whether to return text color.
      * @returns {string} CSS color code.
      */
-    getColor(level) {
-        // Colors consistent with Ocean and Rail maps (5-tier system)
-        const colors = {
+    getColor(level, isText = false) {
+        // Colors matched to RailCongestionMap's scheme:
+        // Very Low: Blue, Low: Light Blue, Average: Gray, High: Orange, Very High: Red
+        const circleColors = {
             'Very High': '#E53935',  // Red
             'High': '#FFB300',       // Orange
-            'Average': '#9E9E9E',    // Gray (Reverted to gray for consistency with Rail)
+            'Average': '#9E9E9E',    // Gray
             'Low': '#90CAF9',        // Light Blue
             'Very Low': '#42A5F5',   // Blue
             'Unknown': '#cccccc'     // Default gray for unknown
         };
-        return colors[level] || '#cccccc';
-    }
 
-    /**
-     * Returns a text color based on the congestion level for better contrast.
-     * @param {string} level - Congestion level string.
-     * @returns {string} CSS color code for text.
-     */
-    getTextColorForLevel(level) {
-        // Consistent text colors for better contrast across all maps
+        // Text colors for better contrast
         const textColors = {
             'Very High': '#b71c1c',  // Darker red
             'High': '#e65100',       // Darker orange
-            'Average': '#616161',    // Darker gray (for gray background)
+            'Average': '#616161',    // Darker gray
             'Low': '#2196F3',        // Darker light blue
             'Very Low': '#1976D2',   // Darker blue
             'Unknown': '#5e5e5e'     // Darker default gray
         };
-        return textColors[level] || '#5e5e5e';
+
+        return isText ? textColors[level] : circleColors[level];
     }
 
     /**
@@ -701,3 +682,8 @@ class AirCongestionMap {
 
 // Expose AirCongestionMap class to the global scope
 window.AirCongestionMap = AirCongestionMap;
+
+// Initialize the map when the DOM is ready (moved to HTML script block if needed, or external loader)
+// document.addEventListener('DOMContentLoaded', () => {
+//     new AirCongestionMap('map');
+// });
