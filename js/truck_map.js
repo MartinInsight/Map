@@ -18,7 +18,7 @@ class TruckCongestionMap {
 
         // Change map tile layer to CartoDB Light All for consistent English place names
         L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+            attribution: '&copy; <a href="https://www.openstreetmap.com/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
             maxZoom: 18,
             minZoom: 3
         }).addTo(this.map);
@@ -102,16 +102,20 @@ class TruckCongestionMap {
     getStyle(feature) {
         const stateCode = feature.id;
         const data = this.metricData[stateCode] || {};
-        const colorValue = this.currentMode === 'inbound'
-            ? data.inboundColor
-            : data.outboundColor;
+        // Use the delay percentage for congestion level determination
+        const delayValue = this.currentMode === 'inbound'
+            ? data.inboundDelay
+            : data.outboundDelay;
 
-        const level = this.getCongestionLevelByTruckValue(colorValue);
-        const fillColor = this.getColor(level);
+        const congestionLevel = this.getCongestionLevelByTruckValue(delayValue);
+        const fillColor = this.getColor(congestionLevel); // Use unified color scheme
+
+        // Determine border weight based on congestion level for visual emphasis
+        const weight = this.getRadiusByTruckValue(delayValue); // Using radius function to determine border weight
 
         return {
             fillColor: fillColor,
-            weight: 1,
+            weight: weight,
             opacity: 1,
             color: 'white', // Default border color is white
             fillOpacity: 0.7
@@ -119,77 +123,98 @@ class TruckCongestionMap {
     }
 
     /**
-     * Determines the congestion level string based on the truck data color value.
-     * Maps the -3 to 3 scale to 5 congestion levels.
-     * @param {number} value - The inboundColor or outboundColor value (-3 to 3).
+     * Determines the congestion level string based on the truck data delay percentage.
+     * Maps the delay percentage to 9 distinct congestion levels as per user's request.
+     * @param {number} delayPercentage - The inboundDelay or outboundDelay value (percentage).
      * @returns {string} Congestion level string.
      */
-    getCongestionLevelByTruckValue(value) {
-        if (value == null || isNaN(value)) return 'Unknown';
-        // Mapping -3 to 3 to 5 congestion levels
-        // -3: Most delayed -> Very High
-        // -2: Highly delayed -> High
-        // -1: Moderately delayed -> Average
-        // 0: Near average -> Average
-        // 1: Slightly below average -> Low
-        // 2: Moderately below average -> Low
-        // 3: Significantly below average -> Very Low
-        if (value === -3) return 'Very High';
-        if (value === -2) return 'High';
-        if (value === -1 || value === 0) return 'Average';
-        if (value === 1 || value === 2) return 'Low';
-        if (value === 3) return 'Very Low';
-        return 'Unknown'; // Fallback for unexpected values
+    getCongestionLevelByTruckValue(delayPercentage) {
+        if (delayPercentage == null || isNaN(delayPercentage)) return 'Unknown';
+
+        // 물동량 감소 (혼잡)
+        if (delayPercentage <= -15) return 'Extremely High Congestion';
+        if (delayPercentage > -15 && delayPercentage <= -11) return 'Very High Congestion';
+        if (delayPercentage > -11 && delayPercentage <= -6) return 'High Congestion';
+        if (delayPercentage > -6 && delayPercentage < 0) return 'Moderate Congestion';
+
+        // 변동 없음 (중립)
+        if (delayPercentage === 0) return 'No Change (Steady)';
+
+        // 물동량 증가 (원활)
+        if (delayPercentage > 0 && delayPercentage <= 5) return 'Low Congestion';
+        if (delayPercentage > 5 && delayPercentage <= 10) return 'Very Low Congestion';
+        if (delayPercentage > 10 && delayPercentage <= 15) return 'Minimal Congestion';
+        if (delayPercentage > 15) return 'Optimal Flow (Highly Clear)';
+
+        return 'Unknown';
     }
 
     /**
-     * Returns color based on congestion level for polygons or text.
-     * This function is consistent with Ocean and Air maps.
+     * Returns the fill color based on the conceptual congestion level (9 levels).
      * @param {string} level - Congestion level string.
-     * @param {boolean} [isText=false] - Whether to return text color.
      * @returns {string} CSS color code.
      */
-    getColor(level, isText = false) {
-        // Colors matched to RailCongestionMap's scheme:
-        // Very Low: Blue, Low: Light Blue, Average: Gray, High: Orange, Very High: Red
-        const circleColors = {
-            'Very High': '#E53935',  // Red
-            'High': '#FFB300',       // Orange
-            'Average': '#9E9E9E',    // Gray
-            'Low': '#90CAF9',        // Light Blue
-            'Very Low': '#42A5F5',   // Blue
-            'Unknown': '#cccccc'     // Default gray for unknown
+    getColor(level) {
+        // 9-class RdYlGn scale (Red for congestion, Green for clear flow, Yellow for no change)
+        const fillColors = {
+            'Extremely High Congestion': '#a50026', // Darkest Red
+            'Very High Congestion': '#d73027',      // Red
+            'High Congestion': '#f46d43',           // Orange-Red
+            'Moderate Congestion': '#fdae61',       // Orange
+            'No Change (Steady)': '#fee08b',        // Yellow
+            'Low Congestion': '#d9ef8b',            // Light Green-Yellow
+            'Very Low Congestion': '#a6d96a',       // Light Green
+            'Minimal Congestion': '#66bd63',        // Green
+            'Optimal Flow (Highly Clear)': '#1a9850', // Darkest Green
+            'Unknown': '#cccccc'                    // Default grey
         };
-
-        // Text colors for better contrast
-        const textColors = {
-            'Very High': '#b71c1c',  // Darker red
-            'High': '#e65100',       // Darker orange
-            'Average': '#616161',    // Darker gray
-            'Low': '#2196F3',        // Darker light blue
-            'Very Low': '#1976D2',   // Darker blue
-            'Unknown': '#5e5e5e'     // Darker default gray
-        };
-
-        return isText ? textColors[level] : circleColors[level];
+        return fillColors[level] || '#cccccc';
     }
 
     /**
-     * Determines the marker radius based on the truck data color value.
-     * Lower value (more delayed) means larger radius.
-     * @param {number} value - The inboundColor or outboundColor value (-3 to 3).
-     * @returns {number} Marker radius (in pixels).
+     * Returns a text color based on the conceptual congestion level for readability in tooltips.
+     * @param {string} level - Congestion level string.
+     * @returns {string} CSS color code for text.
      */
-    getRadiusByTruckValue(value) {
-        if (value == null || isNaN(value)) return 10; // Default size for unknown/null
-        // Radii inversely proportional to "goodness" of value (lower value = larger marker)
-        if (value === -3) return 20; // Very High Congestion
-        if (value === -2) return 18; // High Congestion
-        if (value === -1 || value === 0) return 15; // Average Congestion
-        if (value === 1 || value === 2) return 12; // Low Congestion
-        if (value === 3) return 10; // Very Low Congestion
-        return 10; // Default
+    getTextColorForLevel(level) {
+        // Consistent text colors for better contrast across all maps
+        const textColors = {
+            'Extremely High Congestion': '#7f0000',  // Darker Red
+            'Very High Congestion': '#b71c1c',       // Darker red
+            'High Congestion': '#e65100',            // Darker orange
+            'Moderate Congestion': '#616161',        // Darker gray (for yellow background)
+            'No Change (Steady)': '#616161',         // Darker gray for yellow
+            'Low Congestion': '#2196F3',             // Darker light blue
+            'Very Low Congestion': '#1976D2',        // Darker blue
+            'Minimal Congestion': '#006837',         // Darker Green
+            'Optimal Flow (Highly Clear)': '#006837', // Darker Green
+            'Unknown': '#5e5e5e'                      // Darker default gray
+        };
+        return textColors[level] || '#5e5e5e';
     }
+
+    /**
+     * Determines the border weight (acting as radius equivalent for polygon)
+     * based on the truck data delay percentage. Higher congestion means thicker border.
+     * @param {number} delayPercentage - The inboundDelay or outboundDelay value (percentage).
+     * @returns {number} Border weight (in pixels).
+     */
+    getRadiusByTruckValue(delayPercentage) {
+        if (delayPercentage == null || isNaN(delayPercentage)) return 1; // Default thin border
+
+        // Border weights are inversely proportional to "goodness" of value (more negative % means thicker border)
+        if (delayPercentage <= -15) return 4; // Extremely High Congestion
+        if (delayPercentage > -15 && delayPercentage <= -11) return 3.5; // Very High Congestion
+        if (delayPercentage > -11 && delayPercentage <= -6) return 3;   // High Congestion
+        if (delayPercentage > -6 && delayPercentage < 0) return 2.5;   // Moderate Congestion
+        if (delayPercentage === 0) return 2;                           // No Change (Steady)
+        if (delayPercentage > 0 && delayPercentage <= 5) return 1.5;   // Low Congestion
+        if (delayPercentage > 5 && delayPercentage <= 10) return 1.2;  // Very Low Congestion
+        if (delayPercentage > 10 && delayPercentage <= 15) return 1;   // Minimal Congestion
+        if (delayPercentage > 15) return 0.8;                         // Optimal Flow (Highly Clear)
+        return 1; // Default
+    }
+
 
     /**
      * Binds mouse events (mouseover, mouseout, click) to each state layer.
@@ -205,7 +230,7 @@ class TruckCongestionMap {
                 const center = layer.getBounds().getCenter();
                 this.showTooltip(center, data);
                 layer.setStyle({
-                    weight: 2, // Thicker border on hover
+                    weight: this.getRadiusByTruckValue(this.currentMode === 'inbound' ? data.inboundDelay : data.outboundDelay) + 1, // Make border slightly thicker on hover
                     color: 'white', // White border color on hover
                     dashArray: '',
                     fillOpacity: 0.9
@@ -227,33 +252,33 @@ class TruckCongestionMap {
     showTooltip(latlng, data) {
         if (!this.initialized) return;
 
-        const format = (v) => isNaN(Number(v)) ? 'N/A' : Math.abs(Number(v)).toFixed(2);
+        const format = (v) => isNaN(Number(v)) ? 'N/A' : Number(v).toFixed(2); // Keep sign for display
         const isInbound = this.currentMode === 'inbound';
-        const delay = isInbound ? data.inboundDelay : data.outboundDelay;
-        const dwellValue = isInbound ? data.dwellInbound : data.dwellOutbound;
-        const colorValue = isInbound ? data.inboundColor : data.outboundColor; // Get the raw color value
-        const congestionLevel = this.getCongestionLevelByTruckValue(colorValue);
-        const levelColor = this.getColor(congestionLevel, true); // Get text color for the level
+        const delayPercentage = isInbound ? data.inboundDelay : data.outboundDelay;
+        const dwellValue = isInbound ? data.dwellInbound : data.outboundDwell; // Corrected to outboundDwell for consistency
+        
+        const congestionLevel = this.getCongestionLevelByTruckValue(delayPercentage);
+        const levelColor = this.getTextColorForLevel(congestionLevel);
 
         const content = `
             <h4>${data.name || 'Unknown State'}</h4>
-            <p><strong>Congestion Level (${this.currentMode.toUpperCase()}):</strong>
+            <p><strong>혼잡도 (${this.currentMode === 'inbound' ? '유입' : '유출'}):</strong>
                 <span style="color: ${levelColor}; font-weight: bold;">
                     ${congestionLevel}
                 </span>
             </p>
             <div>
-                <strong>Truck Movement Delay:</strong>
-                <p style="color: ${delay >= 0 ? this.getColor('Very High', true) : this.getColor('Very Low', true)};">
-                    ${delay >= 0 ? '↑' : '↓'} ${format(delay)}%
-                    <span style="color: ${this.getColor('Average', true)};"> ${delay >= 0 ? 'above' : 'below'} 2-week avg</span>
+                <strong>물동량 변동:</strong>
+                <p style="color: ${delayPercentage <= 0 ? this.getTextColorForLevel('Extremely High Congestion') : this.getTextColorForLevel('Optimal Flow (Highly Clear)')};">
+                    ${delayPercentage >= 0 ? '↑' : '↓'} ${Math.abs(delayPercentage).toFixed(2)}%
+                    <span style="color: ${this.getTextColorForLevel('No Change (Steady)')};"> 2주 평균 대비 ${delayPercentage >= 0 ? '증가' : '감소'}</span>
                 </p>
             </div>
             <div>
-                <strong>Dwell Time:</strong>
-                <p style="color: ${dwellValue >= 0 ? this.getColor('Very High', true) : this.getColor('Very Low', true)};">
-                    ${dwellValue >= 0 ? '↑' : '↓'} ${format(dwellValue)}%
-                    <span style="color: ${this.getColor('Average', true)};"> ${dwellValue >= 0 ? 'above' : 'below'} 2-week avg</span>
+                <strong>Dwell Time 변동:</strong>
+                <p style="color: ${dwellValue >= 0 ? this.getTextColorForLevel('Extremely High Congestion') : this.getTextColorForLevel('Optimal Flow (Highly Clear)')};">
+                    ${dwellValue >= 0 ? '↑' : '↓'} ${Math.abs(dwellValue).toFixed(2)}%
+                    <span style="color: ${this.getTextColorForLevel('No Change (Steady)')};"> 2주 평균 대비 ${dwellValue >= 0 ? '증가' : '감소'}</span>
                 </p>
             </div>
         `;
