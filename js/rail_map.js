@@ -71,10 +71,10 @@ class RailCongestionMap {
         });
 
         this.currentData = null; // 현재 로드된 데이터
-        this.lastUpdated = null; // 마지막 업데이트 날짜
+        // this.lastUpdated = null; // 마지막 업데이트 날짜 - REMOVED
         this.filterControlInstance = null; // 필터 컨트롤 인스턴스
         this.errorControl = null; // 에러 메시지 컨트롤
-        this.lastUpdatedControl = null; // 마지막 업데이트 정보 컨트롤
+        // this.lastUpdatedControl = null; // 마지막 업데이트 정보 컨트롤 - REMOVED
         this.markerToOpenAfterMove = null; // 지도 이동 후 팝업을 열 마커 이름
         this.lastOpenedMarker = null; // 마지막으로 열린 팝업의 마커 참조
 
@@ -261,12 +261,12 @@ class RailCongestionMap {
             this.currentData = jitteredData;
 
             if (this.currentData.length > 0) {
-                this.lastUpdated = this.currentData[0].date;
+                // this.lastUpdated = this.currentData[0].date; // REMOVED
             }
 
             this.renderMarkers(); // 마커 렌더링
             this.addRightControls(); // 필터 컨트롤 및 기타 우측 컨트롤 추가 (데이터 로드 후 호출)
-            this.addLastUpdatedText(); // 마지막 업데이트 텍스트 추가
+            // this.addLastUpdatedText(); // 마지막 업데이트 텍스트 추가 - REMOVED
             // this.addLegend(); // 주석 해제하여 범례 추가 가능
 
         } catch (error) {
@@ -490,6 +490,8 @@ class RailCongestionMap {
     /**
      * 지도에 마지막 업데이트 시간을 표시하는 컨트롤을 추가합니다.
      */
+    // REMOVED - addLastUpdatedText() function
+    /*
     addLastUpdatedText() {
         if (this.lastUpdatedControl) {
             this.map.removeControl(this.lastUpdatedControl);
@@ -516,6 +518,7 @@ class RailCongestionMap {
             this.lastUpdatedControl = infoControl;
         }
     }
+    */
 
     /**
      * 지도 우측 상단에 필터 드롭다운과 리셋 버튼 컨트롤을 추가합니다.
@@ -524,9 +527,9 @@ class RailCongestionMap {
             if (this.filterControlInstance) {
                 this.map.removeControl(this.filterControlInstance);
             }
-        
+            
             const control = L.control({ position: 'topright' });
-        
+            
             control.onAdd = () => {
                 const div = L.DomUtil.create('div', 'map-control-group-right');
                 
@@ -712,21 +715,21 @@ class RailCongestionMap {
         // 위 색상들이 "매우낮음은 파랑 낮음은 연파랑 에버리지는 회색, 하이는 주황 베리하이는 빨강"에 부합하므로 이 색상으로 변경합니다.
         const circleColors = {
             'Very High': '#E53935',  // 빨강
-            'High': '#FFB300',     // 주황
-            'Average': '#9E9E9E',   // 회색
+            'High': '#FFB300',      // 주황
+            'Average': '#9E9E9E',    // 회색
             'Low': '#90CAF9',      // 연파랑
             'Very Low': '#42A5F5', // 파랑
-            'Unknown': '#bcbcbc'   // 알 수 없음 (기존 회색 유지)
+            'Unknown': '#bcbcbc'    // 알 수 없음 (기존 회색 유지)
         };
 
         // 텍스트 색상도 위 색상에 맞게 조정 (대비가 잘 되도록)
         const textColors = {
             'Very High': '#b71c1c', // 기존보다 진한 빨강 계열
             'High': '#e65100',      // 기존보다 진한 주황 계열
-            'Average': '#616161',   // 기존보다 진한 회색 계열
-            'Low': '#2196F3',       // 기존보다 진한 파랑 계열
+            'Average': '#616161',    // 기존보다 진한 회색 계열
+            'Low': '#2196F3',        // 기존보다 진한 파랑 계열
             'Very Low': '#1976D2',  // 기존보다 진한 파랑 계열
-            'Unknown': '#5e5e5e'    // 기존 회색 유지
+            'Unknown': '#5e5e5e'     // 기존 회색 유지
         };
 
         return isText ? textColors[level] : circleColors[level];
