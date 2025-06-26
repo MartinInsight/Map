@@ -658,12 +658,18 @@ class OceanCongestionMap {
      */
     getCongestionLevelByDelay(delayDays) {
         if (delayDays == null || isNaN(delayDays)) return 'Unknown';
-        // Thresholds aligned with Rail/Air CongestionMap's logic, adapted for delay days
+        // Changed based on user feedback:
+        // 0 days: Very Low
+        // 1-2 days: Low
+        // 3-5 days: Average
+        // 6-9 days: High
+        // 10+ days: Very High
         if (delayDays >= 10) return 'Very High';
-        if (delayDays >= 5) return 'High';
-        if (delayDays >= 2) return 'Average';
-        if (delayDays >= 0.5) return 'Low'; // Small delay
-        return 'Very Low'; // No or minimal delay
+        if (delayDays >= 6) return 'High';
+        if (delayDays >= 3) return 'Average';
+        if (delayDays >= 1) return 'Low';
+        if (delayDays === 0) return 'Very Low';
+        return 'Unknown'; // Fallback for unexpected values
     }
 
     /**
