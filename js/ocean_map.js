@@ -418,7 +418,7 @@ class OceanCongestionMap {
             const level = this.getCongestionLevelByDelay(item.current_delay_days);
             const portName = item.port || 'Unknown Port';
             const country = item.country || 'Unknown Country';
-            const currentDelay = (typeof item.current_delay === 'number' && !isNaN(item.current_delay)) ? item.current_delay.toFixed(1) : 'N/A';
+            // Removed 'Current Delay' as requested by the user.
             const currentDelayDays = (typeof item.current_delay_days === 'number' && !isNaN(item.current_delay_days)) ? item.current_delay_days.toFixed(1) : 'N/A';
             const weeklyMedianDelay = (typeof item.weekly_median_delay === 'number' && !isNaN(item.weekly_median_delay)) ? item.weekly_median_delay.toFixed(1) : 'N/A';
             const monthlyMaxDelay = (typeof item.monthly_max_delay === 'number' && !isNaN(item.monthly_max_delay)) ? item.monthly_max_delay.toFixed(1) : 'N/A';
@@ -434,7 +434,6 @@ class OceanCongestionMap {
                                     ${level}
                                 </span>
                             </p>
-                            <p><strong>Current Delay:</strong> ${currentDelay} hours</p>
                             <p><strong>Current Delay Days:</strong> ${currentDelayDays} days</p>
                             <p><strong>Port Code:</strong> ${portCode}</p>
                             <p><strong>Weekly Median Delay:</strong> ${weeklyMedianDelay} days</p>
