@@ -52,15 +52,6 @@ html, body {
     box-shadow: 0 4px 15px rgba(0,0,0,0.2) !important;
 }
 
-/* Leaflet Tooltip general override (Removed conflicting positioning styles) */
-/*
-.leaflet-tooltip {
-    transform: translate(-50%, 0) !important;
-    left: 50% !important;
-    margin-top: 15px !important;
-}
-*/
-
 /* Leaflet Zoom Control Styling */
 .leaflet-control-zoom {
     display: flex;
@@ -562,7 +553,7 @@ html, body {
     /* width, height, line-height, background-color are set inline by JS */
 }
 
-/* Custom Tooltip Styling for visibility */
+/* Custom Tooltip Styling for visibility and appearance */
 .custom-marker-tooltip {
     background-color: rgba(0, 0, 0, 0.7); /* Dark background */
     color: white; /* White text */
@@ -575,9 +566,15 @@ html, body {
     pointer-events: none; /* Allow clicks to pass through to the map */
 }
 
-/* Leaflet's internal tooltip pane might need explicit opacity */
-.leaflet-tooltip-pane .leaflet-tooltip {
-    opacity: 1 !important; /* Force visibility */
+/* Ensure the tooltip is always displayed if bound, overriding any potential hidden states */
+/* This rule forces visibility and resets common negative transforms */
+.leaflet-tooltip {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    left: 0 !important; /* Reset any negative left transforms */
+    top: 0 !important; /* Reset any negative top transforms */
+    transform: none !important; /* Ensure no unwanted transforms hide it */
 }
 
 
