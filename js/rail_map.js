@@ -3,8 +3,8 @@ class RailCongestionMap {
         this.map = L.map(mapElementId).setView([37.8, -96], 4);
         
         this.allMarkers = L.markerClusterGroup({
-            maxClusterRadius: 20,
-            disableClusteringAtZoom: 7,
+            maxClusterRadius: 40,
+            disableClusteringAtZoom: 9,
             spiderfyOnMaxZoom: true,
             spiderfyDistanceMultiplier: 2,
             
@@ -59,8 +59,6 @@ class RailCongestionMap {
             minZoom: 3
         }).addTo(this.map);
 
-        // 지도 경계 설정: Leaflet의 setMaxBounds는 [[남위, 서경], [북위, 동경]] 형식의 배열을 받습니다.
-        // 이전에 발생했던 ']' 오류의 원인이었던 잘못된 구문을 수정했습니다.
         this.map.setMaxBounds([
             [-85, -180], // 남서쪽 경계
             [85, 180]    // 북동쪽 경계
