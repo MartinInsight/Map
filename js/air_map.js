@@ -469,7 +469,7 @@ class AirCongestionMap {
             const div = L.DomUtil.create('div', 'map-control-group-right');
 
             // Custom Zoom Controls (mimicking Leaflet's default look)
-            const zoomControl = L.DomUtil.create('div', 'leaflet-control-zoom leaflet-bar');
+            const zoomControl = L.DomUtil.create('div', 'leaflet-control-zoom');
             zoomControl.innerHTML = `
                 <a class="leaflet-control-zoom-in" href="#" title="Zoom in">+</a>
                 <a class="leaflet-control-zoom-out" href="#" title="Zoom out">-</a>
