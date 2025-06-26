@@ -100,7 +100,6 @@ html, body {
 .leaflet-control-zoom a:hover {
     background-color: #f5f5f5 !important;
     box-shadow: none !important; /* Explicitly remove box-shadow on hover */
-    transform: none !important; /* Explicitly remove transform on hover */
 }
 
 /* Ensure no shadow or transform on active (click) state for zoom buttons */
@@ -266,17 +265,16 @@ html, body {
 /* Truck specific styles for the toggle buttons (if used by other maps) */
 .truck-toggle-map-control { /* Wrapper for truck toggle buttons */
     position: absolute;
-    top: 0px !important; /* Adjusted top to be consistent with other top controls */
+    top: 5px !important; /* Adjusted top to be consistent with other top controls */
     left: 50%;
     transform: translateX(-50%);
     z-index: 1000;
     display: flex;
     gap: 0; /* Buttons are adjacent */
-    /* *** IMPORTANT: These lines are explicitly set to remove the unwanted background box *** */
-    background: none !important; /* Remove background */
-    padding: 0 !important; /* Remove padding */
-    border-radius: 0 !important; /* Remove border-radius */
-    box-shadow: none !important; /* Remove box-shadow */
+    padding: 0; /* No padding on this container */
+    background: none; /* Explicitly remove background */
+    border-radius: 0; /* Explicitly remove border-radius */
+    box-shadow: none; /* Explicitly remove box-shadow */
 }
 
 .truck-toggle-btn {
@@ -334,7 +332,7 @@ html, body {
     display: flex;
     flex-direction: column; /* Controls stack vertically */
     gap: 10px;
-    top: 0px !important; /* Adjusted top for desktop */
+    top: 5px !important; /* Adjusted top for desktop */
     right: 10px !important;
     width: auto;
     height: auto;
@@ -342,7 +340,7 @@ html, body {
 
 /* Top left (for zoom buttons) */
 .leaflet-top.leaflet-left {
-    top: 0px !important; /* Adjusted top for desktop */
+    top: 5px !important; /* Adjusted top for desktop */
     left: 10px !important;
     transform: none !important;
     width: auto;
@@ -463,4 +461,229 @@ html, body {
 
 .cluster-popup-header h4, .cluster-popup-header p {
     margin: 0;
-    padding:
+    padding: 0;
+}
+
+.cluster-popup-content {
+    max-height: 250px; /* Max height for scrollable content */
+    overflow-y: auto;
+    padding-right: 5px; /* Space for scrollbar */
+}
+
+.location-info {
+    margin: 10px 0;
+}
+
+.location-info h5 {
+    margin-bottom: 5px;
+    color: #333;
+}
+
+
+/* =====================================
+   7. Information & Error Messages
+   ===================================== */
+
+/* Last Updated Info Control - Now with a background box */
+.last-updated-info {
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 14px;
+    background-color: rgba(255, 255, 255, 0.9); /* Opaque white box */
+    padding: 6px 10px; /* Padding for the box */
+    border-radius: 5px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    color: #333; /* Darker text on white background */
+    font-weight: 600;
+    white-space: nowrap;
+    line-height: 1.2;
+    /* text-shadow removed as it's no longer needed on a solid background */
+    pointer-events: none; /* Make text non-interactive to not block map clicks */
+    z-index: 1001; /* Ensure it is above other elements in the same position */
+}
+
+/* Error message control */
+.error-message {
+    background-color: #ffe0e0; /* Light red */
+    color: #d63031; /* Darker red text */
+    padding: 10px 15px;
+    border-radius: 5px;
+    border: 1px solid #d63031;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    font-weight: bold;
+    font-size: 14px;
+    text-align: center;
+    z-index: 9999; /* Ensure it's on top */
+    font-family: 'Noto Sans KR', sans-serif;
+}
+
+/* =====================================
+   8. Custom Marker Icons
+   ===================================== */
+/* Base style for custom DivIcons (used for individual markers) */
+.custom-div-icon {
+    /* No specific styles here as the inner div handles visual properties.
+       This class can be used for debugging or additional outer wrappers. */
+}
+
+/* Style for the actual circular marker inside custom-div-icon */
+.custom-div-icon div {
+    border: 1.5px solid white; /* White border for the circle */
+    box-shadow: 0 0 3px rgba(0,0,0,0.5); /* Subtle shadow for depth */
+    box-sizing: border-box; /* Include padding and border in element's total width and height */
+    display: flex; /* Use flexbox to center any content if added later */
+    align-items: center;
+    justify-content: center;
+    /* background-color, width, height, border-radius are set inline by JS */
+}
+
+/* Style for marker cluster icons */
+.marker-cluster-custom {
+    background-color: transparent; /* Background is handled by the inner div */
+}
+
+.marker-cluster-custom div {
+    border-radius: 50%; /* Make it circular */
+    color: white;
+    font-weight: bold;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 3px rgba(0,0,0,0.5); /* Shadow for cluster icon */
+    /* width, height, line-height, background-color are set inline by JS */
+}
+
+
+/* =====================================
+   9. Responsive Design (Media Queries)
+   ===================================== */
+
+/* Mobile devices (max-width: 768px) */
+@media (max-width: 768px) {
+    .transport-tab-container {
+        height: 7%;
+        min-height: 36px;
+    }
+
+    .transport-tab {
+        font-size: 12px;
+        padding: 0 3px;
+    }
+
+    .transport-map {
+        top: 7%;
+        height: 93%;
+    }
+
+    /* Controls: Stack vertically on mobile */
+    .map-control-container,
+    .map-control-group-right {
+        padding: 6px 8px;
+        gap: 6px;
+        flex-direction: column; /* Stack items vertically */
+        align-items: stretch; /* Stretch items to fill container width */
+        width: 100%; /* Take full width within its flex container */
+    }
+
+    .reset-btn,
+    .map-control-group-right select,
+    .map-control-group-right button {
+        width: 100%; /* Make control elements full width */
+        box-sizing: border-box;
+    }
+
+    .reset-btn {
+        padding: 0 10px;
+        font-size: 12px;
+        height: 30px;
+        min-width: unset; /* Remove min-width constraint */
+    }
+
+    .filter-control select,
+    .map-control-group-right select {
+        padding: 6px 8px;
+        font-size: 12px;
+        min-width: unset; /* Remove min-width constraint */
+    }
+
+    /* Adjust position for top controls on mobile (closer to top tab) */
+    .leaflet-top.leaflet-right {
+        top: 5px !important; /* Adjusted top for mobile */
+        gap: 8px;
+    }
+    .leaflet-top.leaflet-left {
+        top: 5px !important; /* Adjusted top for mobile */
+    }
+
+    .leaflet-bottom.leaflet-right {
+        bottom: 30px !important; /* Adjusted for mobile */
+        right: 5px !important; /* Adjusted for mobile */
+    }
+
+    .leaflet-popup-content {
+        min-width: 180px !important;
+        padding: 12px !important;
+        font-size: 13px !important;
+    }
+
+    /* Truck toggle specific adjustments for mobile layout - Reverted to horizontal, apply common control container styles */
+    .truck-toggle-map-control {
+        top: 5px !important; /* Aligned with other top controls */
+        display: flex;
+        flex-direction: row;
+        width: fit-content;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+
+    .truck-toggle-btn {
+        font-size: 12px;
+        height: 30px;
+        min-width: unset;
+        padding: 0 10px;
+        /* Revert border-radius and border to desktop logic (handled by general rules) */
+        /* Specific overrides for truck-toggle-btn that were removed for mobile stacking are now re-evaluated */
+        border-radius: 0; /* Ensures consistent rounding, allowing first/last child to apply */
+    }
+    .truck-toggle-btn:first-child {
+        border-top-left-radius: 6px;
+        border-bottom-left-radius: 6px;
+        border-right: none; /* Connects with next button */
+    }
+    .truck-toggle-btn:last-child {
+        border-top-right-radius: 6px;
+        border-bottom-right-radius: 6px;
+        border-left: none; /* No double border with previous button */
+    }
+    /* Ensure intermediate buttons also have correct borders if more than 2 */
+    .truck-toggle-btn:not(:first-child):not(:last-child) {
+        border-left: none;
+        border-right: none;
+    }
+}
+
+/* Very Small Screens (max-width: 480px) */
+@media (max-width: 480px) {
+    .transport-tab {
+        font-size: 11px;
+    }
+
+    .leaflet-top.leaflet-right {
+        top: 5px !important; /* Further adjustment for very small screens */
+    }
+    .leaflet-top.leaflet-left {
+        top: 5px !important; /* Further adjustment for very small screens */
+    }
+    
+    .truck-toggle-map-control {
+        top: 5px !important; /* Aligned with other top controls for very small screens */
+    }
+
+    .leaflet-bottom.leaflet-right {
+        bottom: 20px !important;
+    }
+
+    .last-updated-info {
+        font-size: 12px;
+    }
+}
