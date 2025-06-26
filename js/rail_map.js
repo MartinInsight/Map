@@ -109,7 +109,7 @@ class RailCongestionMap {
             // 마커 팝업이 열려있거나 열릴 예정인 경우 맵 클릭은 무시
             if (this.lastOpenedMarker && this.lastOpenedMarker.getPopup().isOpen()) {
                 console.log('Map click: A marker popup is already open. Ignoring.');
-                return;
+                //return; // 이전에 열린 팝업이 있다면 무시 (이번에는 팝업 자동 닫힘 기능 활성화로 인해 이 조건이 필요 없을 수 있음)
             }
             if (this.markerToOpenAfterMove) { // 이동 후 팝업을 열기 위해 대기중인 경우
                 console.log('Map click: Waiting to open a marker popup. Ignoring.');
@@ -170,11 +170,8 @@ class RailCongestionMap {
                 console.log(`Poll success for ${targetMarker.options.itemData.Yard} (Attempt ${attempts + 1}). Opening popup.`);
                 targetMarker.openPopup(); // 마커에 직접 openPopup 호출 시도
 
-                // 팝업이 실제로 열렸는지 확인
-                if (targetMarker.getPopup().isOpen()) {
-                    console.log(`Popup for ${targetMarker.options.itemData.Yard} successfully confirmed open.`);
-                } else {
-                    // 마커의 openPopup이 실패했을 경우, 맵의 openPopup을 통해 강제로 열기 시도
+                // 팝업이 실제로 열렸는지 확인 (선택 필터링 시 안정성을 위함)
+                if (!targetMarker.getPopup().isOpen()) {
                     console.warn(`Popup for ${targetMarker.options.itemData.Yard} did not confirm open after direct call. Final retry via map.`);
                     this.map.openPopup(targetMarker.getPopup());
                 }
@@ -298,34 +295,8 @@ class RailCongestionMap {
             a.layer.zoomToBounds();
         });
 
-        // -----------------------------------------------------------
-        // 클러스터 마우스오버/아웃 팝업 (툴팁 문제 해결을 위해 제거)
-        // 이 부분은 기존에 호버시 엉뚱한 팝업을 띄우던 로직입니다.
-        // 요구사항에 맞춰 이 로직을 제거하여, 개별 마커 툴팁이 작동하도록 합니다.
-        // -----------------------------------------------------------
-        // if (!L.Browser.mobile) {
-        //     this.allMarkers.off('clustermouseover');
-        //     this.allMarkers.on('clustermouseover', (a) => {
-        //         const clusterItems = a.layer.getAllChildMarkers().map(m => m.options.itemData);
-        //         const childCount = clusterItems.length;
-        //         const popupContent = `<div class="cluster-hover-info"><h4>${childCount} Locations Clustered</h4><p>Click or zoom in to see individual details.</p></div>`;
-        //         L.popup({
-        //             closeButton: false,
-        //             autoClose: true,
-        //             closeOnClick: false,
-        //             maxHeight: 300,
-        //             maxWidth: 300,
-        //             className: 'cluster-hover-popup'
-        //         })
-        //         .setLatLng(a.latlng)
-        //         .setContent(popupContent)
-        //         .openOn(this.map);
-        //     });
-        //     this.allMarkers.off('clustermouseout');
-        //     this.allMarkers.on('clustermouseout', () => {
-        //         this.map.closePopup();
-        //     });
-        // }
+        // 클러스터 마우스오버/아웃 팝업 (이전 수정에서 제거됨)
+        // 이 로직은 더 이상 사용되지 않습니다.
     }
 
     /**
@@ -367,26 +338,43 @@ class RailCongestionMap {
 
         const popupOptions = {
             closeButton: true,
-            autoClose: false, // 마커 클릭시 닫히지 않고, 맵 배경 클릭시만 닫히도록 변경
-            closeOnClick: false, // 맵 배경 클릭 시 닫히도록 변경 (맵 클릭 이벤트에서 처리)
+            autoClose: true, // IMPORTANT: 다른 팝업이 열리거나 맵 클릭시 자동으로 닫히도록 변경
+            closeOnClick: true, // IMPORTANT: 맵 배경 클릭 시 자동으로 닫히도록 변경
             maxHeight: 300,
             maxWidth: 300,
             className: 'single-marker-popup' // 개별 마커 팝업 클래스 추가
         };
 
-        // 개별 마커의 팝업은 해당 마커의 데이터만 사용합니다.
+        // 개별 마커의 팝업을 해당 마커의 데이터로 바인딩합니다.
         marker.bindPopup(this.createPopupContent([item]), popupOptions);
 
-        // 개별 마커 툴팁 (마우스 오버 시)
-        // 이 툴팁이 사용자께서 원하시는 "호버시 툴팁"입니다.
-        if (!L.Browser.mobile) {
-            marker.bindTooltip(`Yard: ${item.Yard}<br>Level: ${item.congestion_level}`, {
-                permanent: false, // 마우스 아웃 시 사라짐
-                direction: 'top',
-                offset: L.point(0, -radius),
-                className: 'custom-marker-tooltip'
+        // 개별 마커 툴팁 (마우스 오버 시) -> 이제 호버시 팝업을 띄우므로 제거합니다.
+        // if (!L.Browser.mobile) {
+        //     marker.bindTooltip(`Yard: ${item.Yard}<br>Level: ${item.congestion_level}`, {
+        //         permanent: false,
+        //         direction: 'top',
+        //         offset: L.point(0, -radius),
+        //         className: 'custom-marker-tooltip'
+        //     });
+        // }
+
+        // 새로운 로직: 마커 호버 시 팝업을 띄우고, 마우스 아웃 시 닫습니다.
+        if (!L.Browser.mobile) { // 모바일에서는 호버 이벤트를 사용하지 않음
+            marker.on('mouseover', (e) => {
+                // 이미 열려 있는 팝업이 있다면 닫고, 현재 마커의 팝업을 엽니다.
+                // this.map.closePopup(); // autoClose:true로 인해 필요 없을 수 있으나, 명시적으로 닫는 것이 안전할 때도 있음
+                e.target.openPopup();
+            });
+
+            marker.on('mouseout', (e) => {
+                // 팝업이 실제로 열려있고, 마우스가 마커 밖으로 나갔을 때 팝업을 닫습니다.
+                // 팝업 안으로 마우스가 이동했을 때는 닫히지 않도록 Leaflet이 자동으로 처리합니다.
+                if (e.target.getPopup().isOpen()) {
+                    e.target.closePopup();
+                }
             });
         }
+
 
         // 팝업 열릴 때 z-index 조정 및 클릭/스크롤 전파 방지
         marker.on('popupopen', (e) => {
@@ -412,7 +400,7 @@ class RailCongestionMap {
         marker.on('click', (e) => {
             console.log(`Clicked/Tapped marker: ${item.Yard}. Current popup state: ${marker.getPopup().isOpen()}`);
 
-            this.map.closePopup(); // 다른 팝업 먼저 닫기
+            this.map.closePopup(); // 다른 팝업 먼저 닫기 (항상 새로운 팝업을 열기 전에 기존 팝업을 닫음)
 
             // `zoomToShowLayer`는 마커가 클러스터에 숨어있을 때 유용합니다.
             if (this.allMarkers.hasLayer(marker)) { // 마커가 클러스터 그룹에 속해 있다면 (클러스터링될 수 있다면)
@@ -420,19 +408,19 @@ class RailCongestionMap {
                     // zoomToShowLayer 완료 후 팝업 열기
                     marker.openPopup();
                     console.log(`Popup for ${item.Yard} opened after zoomToShowLayer.`);
-                    if (!marker.getPopup().isOpen()) {
-                        console.warn("Popup did not confirm open after direct call. Trying map.openPopup.");
-                        this.map.openPopup(marker.getPopup());
-                    }
+                    // if (!marker.getPopup().isOpen()) { // autoClose:true로 인해 이중 체크 불필요
+                    //     console.warn("Popup did not confirm open after direct call. Trying map.openPopup.");
+                    //     this.map.openPopup(marker.getPopup());
+                    // }
                 });
             } else {
                 // 마커가 클러스터링되지 않은 상태라면 바로 팝업 열기
                 marker.openPopup();
                 console.log(`Popup for ${item.Yard} opened directly.`);
-                if (!marker.getPopup().isOpen()) {
-                    console.warn("Popup did not confirm open after direct call (not in cluster). Trying map.openPopup.");
-                    this.map.openPopup(marker.getPopup());
-                }
+                // if (!marker.getPopup().isOpen()) { // autoClose:true로 인해 이중 체크 불필요
+                //     console.warn("Popup did not confirm open after direct call (not in cluster). Trying map.openPopup.");
+                //     this.map.openPopup(marker.getPopup());
+                // }
             }
         });
 
@@ -585,13 +573,13 @@ class RailCongestionMap {
                             console.log(`Found marker for filter: ${yardName}. Using zoomToShowLayer.`);
                             this.map.closePopup(); // 다른 팝업 먼저 닫기
                             this.allMarkers.zoomToShowLayer(foundMarker, () => {
-                                // zoomToShowLayer가 완료되면 팝업 열기
+                                // zoomToShowLayer 완료 후 팝업 열기
                                 foundMarker.openPopup();
                                 console.log(`Popup for ${yardName} opened after zoomToShowLayer.`);
-                                if (!foundMarker.getPopup().isOpen()) {
-                                    console.warn(`Popup for ${yardName} did not confirm open after direct call. Final retry via map.`);
-                                    this.map.openPopup(foundMarker.getPopup());
-                                }
+                                // if (!foundMarker.getPopup().isOpen()) { // autoClose:true로 인해 이중 체크 불필요
+                                //     console.warn(`Popup for ${yardName} did not confirm open after direct call. Final retry via map.`);
+                                //     this.map.openPopup(foundMarker.getPopup());
+                                // }
                             });
                             this.markerToOpenAfterMove = null; // 성공적으로 처리했으므로 초기화
                         } else {
