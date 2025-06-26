@@ -49,7 +49,7 @@ html, body {
 
 .leaflet-popup-tip {
     background-color: white !important;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2) !important;
+    box-shadow: 0 44px 15px rgba(0,0,0,0.2) !important;
 }
 
 /* Leaflet Tooltip general override (Removed conflicting positioning styles) */
@@ -65,42 +65,31 @@ html, body {
 .leaflet-control-zoom {
     display: flex;
     flex-direction: row; /* Changed to row for horizontal layout */
+    /* Give it a background similar to other controls */
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+    padding: 8px 12px; /* Padding inside the control box */
+    gap: 0; /* Remove gap between buttons, let borders handle separation */
+    width: fit-content; /* Default desktop width */
+    box-sizing: border-box;
 }
 
+/* Individual zoom button styling */
 .leaflet-control-zoom a {
-    width: 34px !important;
+    width: calc(50% - 1px); /* Each button is half the width of the container, minus border */
+    min-width: unset; /* Allow it to shrink */
     height: 34px !important;
-    background-color: white !important;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
-    border: 1px solid #e0e0e0 !important;
-    transition: all 0.2s;
-    background-image: none !important; /* Remove default Leaflet zoom icons */
-    text-indent: 0 !important;
-    text-align: center !important;
-    font-family: 'Noto Sans KR', sans-serif;
-    font-weight: 500 !important;
+    line-height: 34px !important;
     font-size: 13px !important;
-    line-height: 34px !important; /* Center text vertically */
-    color: #333 !important;
+    border: 1px solid #e0e0e0 !important;
+    background-color: white !important;
+    box-shadow: none !important; /* No individual button shadow */
+    transform: none !important; /* No transform */
+    transition: background-color 0.2s; /* Smooth hover */
 }
 
-/* Specific border-radius for top (+) button - now left button */
-.leaflet-control-zoom-in {
-    border-radius: 0 6px 6px 0 !important; /* Adjusted for right (+) button */
-    border-left: none !important; /* Connects with '-' button */
-    border-top: 1px solid #e0e0e0 !important; /* Re-add top border after changing order */
-    border-bottom: 1px solid #e0e0e0 !important; /* Re-add bottom border */
-}
-
-/* Specific border-radius for bottom (-) button - now left button */
-.leaflet-control-zoom-out {
-    border-radius: 6px 0 0 6px !important; /* Adjusted for left (-) button */
-    border-right: none !important; /* Connects with '+' button */
-    border-top: 1px solid #e0e0e0 !important; /* Re-add top border */
-    border-bottom: 1px solid #e0e0e0 !important; /* Re-add bottom border */
-}
-
-/* Ensure no shadow or transform on active (click) state for zoom buttons */
+/* Ensure hover/active states don't add shadow/transform */
 .leaflet-control-zoom a:hover,
 .leaflet-control-zoom a:active {
     background-color: #f5f5f5 !important;
@@ -113,7 +102,7 @@ html, body {
     margin-left: 0 !important; /* Now horizontal, use margin-left */
     margin-top: 0 !important; /* Ensure no vertical margin */
 }
-/* Ensure the order is - then + by swapping them visually if needed */
+/* Ensure the order is - then + by swapping them visually */
 .leaflet-control-zoom-in { order: 2; }
 .leaflet-control-zoom-out { order: 1; }
 
@@ -210,7 +199,15 @@ html, body {
     width: fit-content;
     box-sizing: border-box;
     /* Default for desktop: row layout */
-    flex-direction: row;
+    flex-direction: column; /* Force vertical stacking for Reset View and Select Box */
+}
+
+/* Re-order elements within map-control-group-right */
+.map-control-group-right .reset-btn {
+    order: 1; /* Reset View first */
+}
+.map-control-group-right .yard-filter {
+    order: 2; /* Select Box second */
 }
 
 /* Reset Button Style */
@@ -228,6 +225,8 @@ html, body {
     white-space: nowrap;
     transition: all 0.2s;
     color: #333;
+    width: 100%; /* Make it fill parent width */
+    box-sizing: border-box;
 }
 
 .reset-btn:hover {
@@ -256,6 +255,8 @@ html, body {
     appearance: none;
     -webkit-appearance: none;
     -moz-appearance: none;
+    width: 100%; /* Make it fill parent width */
+    box-sizing: border-box;
 }
 
 .filter-control select:focus,
@@ -336,7 +337,7 @@ html, body {
     display: flex;
     flex-direction: column; /* Controls stack vertically */
     gap: 10px;
-    top: calc(0px + 34px + 10px) !important; /* Position below zoom buttons */
+    top: calc(0px + 34px + 10px) !important; /* Position below zoom buttons (34px height + 10px gap) */
     right: 10px !important;
     width: auto;
     height: auto;
@@ -350,6 +351,11 @@ html, body {
     transform: none !important;
     width: auto;
     height: auto;
+    /* Apply styles similar to map-control-group-right for consistency */
+    background: white;
+    padding: 8px 12px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.15);
 }
 
 /* Bottom right (for legend - if uncommented) */
