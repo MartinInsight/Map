@@ -1,750 +1,685 @@
-/**
- * RailCongestionMap 클래스는 철도 혼잡도 데이터를 지도에 시각화하고 상호작용 기능을 제공합니다.
- * Leaflet.js와 Leaflet.markercluster 플러그인을 활용합니다.
- */
-class RailCongestionMap {
-    /**
-     * RailCongestionMap의 생성자입니다.
-     * @param {string} mapElementId - 지도를 렌더링할 HTML 요소의 ID입니다.
-     */
-    constructor(mapElementId) {
-        // Leaflet 지도 초기화: 기본 시점과 줌 레벨 설정 (미국 중심)
-        this.map = L.map(mapElementId).setView([37.8, -96], 4);
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600&display=swap');
 
-        // 마커 클러스터 그룹 초기화
-        // - maxClusterRadius: 클러스터링될 최대 픽셀 거리 (40px로 축소하여 더 빠르게 분리되도록)
-        // - disableClusteringAtZoom: 이 줌 레벨부터 클러스터링 비활성화 (개별 마커 표시)
-        // - spiderfyOnMaxZoom: 최대 줌에서 스파이더파이 (겹치는 마커 분산)
-        // - spiderfyDistanceMultiplier: 스파이더파이 시 마커 간 거리 조절
-        // - iconCreateFunction: 클러스터 아이콘을 커스터마이즈하는 함수
-        this.allMarkers = L.markerClusterGroup({
-            maxClusterRadius: 40,
-            disableClusteringAtZoom: 9,
-            spiderfyOnMaxZoom: true,
-            spiderfyDistanceMultiplier: 2,
+/* =====================================
+   1. Base Styles & Typography
+   ===================================== */
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden; /* Prevent body scroll, map handles its own scroll */
+    font-family: 'Noto Sans KR', sans-serif;
+    color: #333; /* Default text color */
+}
 
-            iconCreateFunction: (cluster) => {
-                const childMarkers = cluster.getAllChildMarkers();
-                let highestCongestionLevelValue = -1;
-                let dominantColor = this.getColor('Average'); // 기본값: 평균 색상
+/* =====================================
+   2. Global Leaflet Overrides
+   ===================================== */
+/* Leaflet default control box style override (remove default background/padding/shadow) */
+.leaflet-control {
+    background: none !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+}
 
-                // 혼잡도 레벨을 숫자로 매핑하여 비교 가능하게 함
-                const congestionLevelToValue = (level) => {
-                    switch (level) {
-                        case 'Very High': return 4;
-                        case 'High': return 3;
-                        case 'Low': return 2;
-                        case 'Very Low': return 1;
-                        default: return 0; // 'Average' 또는 'Unknown' 등
-                    }
-                };
+/* Adjusted Leaflet Popups' structural styles */
+.leaflet-popup {
+    /* pointer-events: none; /* Allows clicks to pass through to map when popup is not active - REMOVED */
+}
 
-                // 클러스터 내의 마커 중 가장 높은 혼잡도 레벨의 색상 선택
-                childMarkers.forEach(marker => {
-                    const itemData = marker.options.itemData;
-                    if (itemData && itemData.congestion_level) {
-                        const currentLevelValue = congestionLevelToValue(itemData.congestion_level);
-                        if (currentLevelValue > highestCongestionLevelValue) {
-                            highestCongestionLevelValue = currentLevelValue;
-                            dominantColor = this.getColor(itemData.congestion_level);
-                        }
-                    }
-                });
+.leaflet-popup-content-wrapper {
+    background-color: white !important;
+    border-radius: 8px !important;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2) !important;
+    padding: 0 !important; /* Managed by .leaflet-popup-content */
+    overflow: hidden;
+    font-family: 'Noto Sans KR', sans-serif !important;
+    min-width: 220px !important;
+}
 
-                const childCount = cluster.getChildCount();
-                // 클러스터 크기를 자식 마커 수에 따라 동적으로 조절
-                const size = 30 + Math.min(childCount * 0.5, 30);
+.leaflet-popup-content {
+    margin: 0 !important;
+    padding: 16px !important; /* Actual padding for popup content */
+}
 
-                // 커스텀 클러스터 아이콘 생성 (원형, 배경색은 가장 높은 혼잡도에 따라)
-                return new L.DivIcon({
-                    html: `<div style="background-color: ${dominantColor}; width: ${size}px; height: ${size}px; line-height: ${size}px; border-radius: 50%; color: white; font-weight: bold; text-align: center; display: flex; align-items: center; justify-content: center;"><span>${childCount}</span></div>`,
-                    className: 'marker-cluster-custom', // CSS 스타일링을 위한 클래스
-                    iconSize: new L.Point(size, size)
-                });
-            }
-        });
+.leaflet-popup-tip-container {
+    margin-top: -1px !important; /* Adjust tip position */
+}
 
-        this.currentData = null; // 현재 로드된 데이터
-        this.lastUpdated = null; // 마지막 업데이트 날짜
-        this.filterControlInstance = null; // 필터 컨트롤 인스턴스
-        this.errorControl = null; // 에러 메시지 컨트롤
-        this.lastUpdatedControl = null; // 마지막 업데이트 정보 컨트롤
-        this.markerToOpenAfterMove = null; // 지도 이동 후 팝업을 열 마커 이름
-        this.lastOpenedMarker = null; // 마지막으로 열린 팝업의 마커 참조
+.leaflet-popup-tip {
+    background-color: white !important;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2) !important;
+}
 
-        // 지도 타일 레이어 추가 (CARTO Light All)
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-            maxZoom: 18,
-            minZoom: 3
-        }).addTo(this.map);
+/* Leaflet Tooltip general override (Removed conflicting positioning styles) */
+/*
+.leaflet-tooltip {
+    transform: translate(-50%, 0) !important;
+    left: 50% !important;
+    margin-top: 15px !important;
+}
+*/
 
-        // 지도 경계 설정 (전 세계 범위)
-        this.map.setMaxBounds([
-            [-85, -180], // 남서쪽 경계
-            [85, 180]    // 북동쪽 경계
-        ]);
+/* Leaflet Zoom Control Styling */
+.leaflet-control-zoom {
+    display: flex;
+    flex-direction: column; /* Stack zoom buttons vertically */
+}
 
-        // 데이터 로드 시작
-        this.loadData();
+.leaflet-control-zoom a {
+    width: 34px !important;
+    height: 34px !important;
+    background-color: white !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
+    border: 1px solid #e0e0e0 !important;
+    transition: all 0.2s;
+    background-image: none !important; /* Remove default Leaflet zoom icons */
+    text-indent: 0 !important;
+    text-align: center !important;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-weight: 500 !important;
+    font-size: 13px !important;
+    line-height: 34px !important; /* Center text vertically */
+    color: #333 !important;
+}
 
-        // 팝업 열림 이벤트 핸들러
-        this.map.on('popupopen', (e) => {
-            if (e.popup && e.popup._source && e.popup._source instanceof L.Marker) {
-                this.lastOpenedMarker = e.popup._source;
-                console.log(`Popup for ${this.lastOpenedMarker.options.itemData.Yard} opened.`);
-            }
-        });
+/* Specific border-radius for top (+) button */
+.leaflet-control-zoom-in {
+    border-radius: 6px 6px 0 0 !important;
+    border-bottom: none !important; /* Connects with '-' button */
+}
 
-        // 팝업 닫힘 이벤트 핸들러
-        this.map.on('popupclose', (e) => {
-            console.log(`Popup for ${e.popup._source ? e.popup._source.options.itemData.Yard : 'unknown'} closed.`);
-            if (this.lastOpenedMarker === e.popup._source) {
-                this.lastOpenedMarker = null; // 닫힌 팝업의 마커를 lastOpenedMarker에서 제거
-            }
-        });
+/* Specific border-radius for bottom (-) button */
+.leaflet-control-zoom-out {
+    border-radius: 0 0 6px 6px !important;
+    border-top: none !important; /* Connects with '+' button */
+}
 
-        // 맵 클릭 이벤트 핸들러 조정
-        this.map.on('click', (e) => {
-            // 마커 팝업이 열려있거나 열릴 예정인 경우 맵 클릭은 무시
-            if (this.lastOpenedMarker && this.lastOpenedMarker.getPopup().isOpen()) {
-                console.log('Map click: A marker popup is already open. Ignoring.');
-                return;
-            }
-            if (this.markerToOpenAfterMove) { // 이동 후 팝업을 열기 위해 대기중인 경우
-                console.log('Map click: Waiting to open a marker popup. Ignoring.');
-                return;
-            }
-            // 맵 배경 클릭 시 기존 팝업 닫기
-            console.log('Map background clicked. Closing any open popups.');
-            this.map.closePopup();
-            this.lastOpenedMarker = null;
-        });
+.leaflet-control-zoom a:hover {
+    background-color: #f5f5f5 !important;
+    transform: translateY(-1px);
+    box-shadow: 0 3px 7px rgba(0,0,0,0.15) !important;
+}
 
-        // 지도 이동 종료 이벤트 핸들러
-        this.map.on('moveend', () => {
-            if (this.markerToOpenAfterMove) {
-                console.log('Map animation ended, attempting to open queued popup with polling.');
-                const yardName = this.markerToOpenAfterMove;
-                this.markerToOpenAfterMove = null; // 초기화
-                this.pollForMarkerAndOpenPopup(yardName);
-            }
-        });
+/* Remove margin between zoom buttons to make them stick together */
+.leaflet-control-zoom-in + .leaflet-control-zoom-out {
+    margin-top: 0 !important;
+}
+
+
+/* =====================================
+   3. Tab Menu Styles
+   ===================================== */
+.transport-tab-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 5%;
+    min-height: 40px;
+    z-index: 1000;
+    display: flex;
+    background: white;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.transport-tab {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: white;
+    cursor: pointer;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-weight: 400;
+    font-size: 14px;
+    color: black;
+    position: relative;
+    transition: all 0.3s ease;
+    padding: 0;
+    margin: 0;
+}
+
+.transport-tab::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background-color: #00657E; /* Accent color for active tab indicator */
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.transport-tab.active {
+    font-weight: 600;
+    color: #003A52; /* Darker accent for active text */
+}
+
+.transport-tab.active::after {
+    opacity: 1;
+}
+
+.transport-tab:not(.active):hover::after {
+    opacity: 0.5; /* Subtle hover effect for inactive tabs */
+}
+
+/* =====================================
+   4. Map Container Styles
+   ===================================== */
+.transport-map {
+    position: fixed;
+    top: 5%; /* Below the tab menu */
+    left: 0;
+    width: 100%;
+    height: 95%; /* Remaining height */
+    display: none; /* Hidden by default, activated by JS */
+}
+
+.transport-map.active {
+    display: block; /* Show active map */
+}
+
+/* =====================================
+   5. Control Styles (Common & Specific)
+   ===================================== */
+
+/* Common styling for control boxes (Reset button, Filter box, Toggle buttons container) */
+.map-control-container,
+.map-control-group-right {
+    background: white;
+    padding: 8px 12px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+    display: flex; /* Use flexbox for internal layout */
+    align-items: center;
+    gap: 10px; /* Space between elements */
+    width: fit-content;
+    box-sizing: border-box;
+    /* Default for desktop: row layout */
+    flex-direction: row;
+}
+
+/* Reset Button Style */
+.reset-btn {
+    padding: 0 15px;
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-weight: 500;
+    font-size: 13px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    height: 34px;
+    white-space: nowrap;
+    transition: all 0.2s;
+    color: #333;
+}
+
+.reset-btn:hover {
+    background: #f5f5f5;
+    transform: translateY(-1px);
+    box-shadow: 0 3px 7px rgba(0,0,0,0.15);
+}
+
+/* Filter Control Select Style */
+.filter-control select,
+.map-control-group-right select {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 13px;
+    min-width: 160px;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-weight: 500;
+    background-color: #f9f9f9;
+    transition: all 0.2s;
+    color: #333;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='%23003A52'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    padding-right: 30px; /* Space for custom arrow */
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+}
+
+.filter-control select:focus,
+.map-control-group-right select:focus {
+    outline: none;
+    border-color: #00657E;
+    box-shadow: 0 0 0 2px rgba(0,101,126,0.2);
+}
+
+/* Truck specific styles for the toggle buttons (if used by other maps) */
+.truck-toggle-map-control { /* Wrapper for truck toggle buttons */
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    display: flex;
+    gap: 0; /* Buttons are adjacent */
+    padding: 0; /* Pading is on .map-control-container */
+}
+
+.truck-toggle-btn {
+    padding: 0 16px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-weight: 500;
+    font-size: 13px;
+    transition: all 0.3s;
+    min-width: 85px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #333;
+    box-sizing: border-box;
+    /* Borders for separating buttons within the group */
+    border: 1px solid #e0e0e0;
+}
+
+.truck-toggle-btn:first-child {
+    border-top-left-radius: 6px;
+    border-bottom-left-radius: 6px;
+}
+
+.truck-toggle-btn:last-child {
+    border-top-right-radius: 6px;
+    border-bottom-right-radius: 6px;
+    border-left: none; /* No double border with previous button */
+}
+
+/* Ensure intermediate buttons also have correct borders if more than 2 */
+.truck-toggle-btn:not(:first-child):not(:last-child) {
+    border-left: none;
+}
+
+
+.truck-toggle-btn.truck-active {
+    background: #00657E;
+    color: white;
+    font-weight: 600;
+    border-color: transparent !important; /* Active button has no border */
+}
+
+.truck-toggle-btn:not(.truck-active):hover {
+    background: #f0f0f0;
+}
+
+
+/* Control Position Adjustments */
+/* Top right for Reset and Filter controls */
+.leaflet-top.leaflet-right {
+    display: flex;
+    flex-direction: column; /* Controls stack vertically */
+    gap: 10px;
+    top: 10px !important;
+    right: 10px !important;
+    width: auto;
+    height: auto;
+}
+
+/* Top left (for zoom buttons) */
+.leaflet-top.leaflet-left {
+    top: 10px !important;
+    left: 10px !important;
+    transform: none !important;
+    width: auto;
+    height: auto;
+}
+
+/* Bottom right (for legend - if uncommented) */
+.leaflet-bottom.leaflet-right {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    bottom: 10px !important;
+    right: 10px !important;
+    width: auto;
+    height: auto;
+}
+
+/* Bottom left (for last updated info) */
+.leaflet-bottom.leaflet-left {
+    bottom: 10px !important;
+    left: 10px !important;
+    width: auto;
+    height: auto;
+    margin-bottom: 0;
+    z-index: 9999 !important; /* Ensure it's on top */
+    pointer-events: none; /* Clicks pass through to map */
+}
+
+
+/* =====================================
+   6. Popup & Tooltip Styles
+   ===================================== */
+
+/* Common Popup Content Styles */
+.leaflet-popup-content h4 {
+    margin: 0 0 12px 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #222;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 8px;
+}
+
+.leaflet-popup-content p {
+    margin: 10px 0;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.leaflet-popup-content strong {
+    color: #444;
+    font-weight: 500;
+}
+
+/* Custom marker tooltip styling (for bindTooltip) */
+.custom-marker-tooltip {
+    background-color: rgba(0, 0, 0, 0.7);
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 5px 8px;
+    font-size: 12px;
+    white-space: nowrap; /* Tooltip content on single line */
+}
+
+/* Single marker popup styling (detailed information) */
+.single-marker-popup .leaflet-popup-content-wrapper {
+    background: white;
+    color: #333;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    /* padding handled by .leaflet-popup-content */
+    font-family: 'Noto Sans KR', sans-serif; /* Consistent font */
+}
+
+/* The tip shares the background of the wrapper */
+.single-marker-popup .leaflet-popup-tip {
+    background: white;
+}
+
+.single-marker-popup .location-info h5 {
+    margin-top: 0;
+    margin-bottom: 8px;
+    font-size: 18px;
+    color: #007bff; /* Primary color for location name */
+    border-bottom: 1px solid #eee;
+    padding-bottom: 5px;
+}
+
+.single-marker-popup .location-info p {
+    margin-bottom: 5px;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.single-marker-popup .location-info strong {
+    color: #555;
+}
+
+/* Optional: Styling for hr separator in multi-item popups */
+.single-marker-popup .location-info hr {
+    border: 0;
+    border-top: 1px dashed #ddd;
+    margin: 10px 0;
+}
+
+/* Truck specific text colors in popup content (if used for truck map) */
+.truck-positive {
+    color: #27ae60; /* Green for positive indicators */
+    font-weight: 600;
+}
+
+.truck-negative {
+    color: #e74c3c; /* Red for negative indicators */
+    font-weight: 600;
+}
+
+.truck-normal-text {
+    font-weight: 400;
+    color: #555;
+}
+
+/* Cluster popup header (when multiple items are shown in a popup after spiderfy) */
+.cluster-popup-header {
+    margin-bottom: 10px;
+    border-bottom: 1px solid #eee; /* Separator for header */
+    padding-bottom: 5px;
+}
+
+.cluster-popup-header h4, .cluster-popup-header p {
+    margin: 0;
+    padding: 0;
+}
+
+.cluster-popup-content {
+    max-height: 250px; /* Max height for scrollable content */
+    overflow-y: auto;
+    padding-right: 5px; /* Space for scrollbar */
+}
+
+.location-info {
+    margin: 10px 0;
+}
+
+.location-info h5 {
+    margin-bottom: 5px;
+    color: #333;
+}
+
+
+/* =====================================
+   7. Information & Error Messages
+   ===================================== */
+
+/* Last Updated Info Control */
+.last-updated-info {
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 14px;
+    background-color: transparent; /* Background is map */
+    padding: 0;
+    border-radius: 0;
+    box-shadow: none;
+    border: none;
+    color: black;
+    font-weight: 600;
+    /* Subtle white outline for readability on varying map backgrounds */
+    text-shadow:
+        -0.5px -0.5px 0 #fff,
+         0.5px -0.5px 0 #fff,
+        -0.5px  0.5px 0 #fff,
+         0.5px  0.5px 0 #fff;
+    white-space: nowrap;
+    line-height: 1.2;
+    pointer-events: none; /* Make text non-interactive to not block map clicks */
+}
+
+/* Error message control */
+.error-message {
+    background-color: #fdd; /* Light red */
+    color: #c00; /* Darker red text */
+    padding: 10px 15px;
+    border-radius: 5px;
+    border: 1px solid #c00;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    font-weight: bold;
+    font-size: 14px;
+    text-align: center;
+    z-index: 9999; /* Ensure it's on top */
+    font-family: 'Noto Sans KR', sans-serif;
+}
+
+/* =====================================
+   8. Custom Marker Icons
+   ===================================== */
+/* Base style for custom DivIcons (used for individual markers) */
+.custom-div-icon {
+    /* No specific styles here as the inner div handles visual properties.
+       This class can be used for debugging or additional outer wrappers. */
+}
+
+/* Style for the actual circular marker inside custom-div-icon */
+.custom-div-icon div {
+    border: 1.5px solid white; /* White border for the circle */
+    box-shadow: 0 0 3px rgba(0,0,0,0.5); /* Subtle shadow for depth */
+    box-sizing: border-box; /* Include padding and border in element's total width and height */
+    display: flex; /* Use flexbox to center any content if added later */
+    align-items: center;
+    justify-content: center;
+    /* background-color, width, height, border-radius are set inline by JS */
+}
+
+/* Style for marker cluster icons */
+.marker-cluster-custom {
+    background-color: transparent; /* Background is handled by the inner div */
+}
+
+.marker-cluster-custom div {
+    border-radius: 50%; /* Make it circular */
+    color: white;
+    font-weight: bold;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 3px rgba(0,0,0,0.5); /* Shadow for cluster icon */
+    /* width, height, line-height, background-color are set inline by JS */
+}
+
+
+/* =====================================
+   9. Responsive Design (Media Queries)
+   ===================================== */
+
+/* Mobile devices (max-width: 768px) */
+@media (max-width: 768px) {
+    .transport-tab-container {
+        height: 7%;
+        min-height: 36px;
     }
 
-    /**
-     * 특정 야드 이름에 해당하는 마커를 찾고, 폴링을 통해 마커가 준비되면 팝업을 엽니다.
-     * @param {string} yardName - 팝업을 열 야드의 이름입니다.
-     */
-    pollForMarkerAndOpenPopup(yardName) {
-        let targetMarker = null;
-        // 클러스터 그룹 내에서 마커를 찾습니다.
-        this.allMarkers.eachLayer(layer => {
-            if (layer.options.itemData && layer.options.itemData.Yard === yardName) {
-                targetMarker = layer;
-                return; // Leaflet eachLayer의 return은 break 역할
-            }
-        });
-
-        if (!targetMarker) {
-            console.warn(`pollForMarkerAndOpenPopup: Marker for yard '${yardName}' not found in current layers (might be in a cluster).`);
-            return;
-        }
-
-        // 팝업이 이미 마커에 바인딩되어 있는지 확인
-        if (!targetMarker.getPopup()) {
-            console.warn("pollForMarkerAndOpenPopup: Invalid marker or no popup associated.");
-            return;
-        }
-
-        // 기존 팝업 닫기 (새로운 팝업을 열기 전에 항상 닫음)
-        this.map.closePopup();
-
-        let attempts = 0;
-        const maxAttempts = 30; // 최대 시도 횟수
-        const retryInterval = 100; // 100ms 간격으로 재시도
-
-        const checkAndOpen = () => {
-            // 마커의 _icon이 DOM에 추가되었고, 맵에 속해 있는지 확인
-            if (targetMarker._icon && targetMarker._map) {
-                console.log(`Poll success for ${targetMarker.options.itemData.Yard} (Attempt ${attempts + 1}). Opening popup.`);
-                targetMarker.openPopup(); // 마커에 직접 openPopup 호출 시도
-
-                // 팝업이 실제로 열렸는지 확인
-                if (targetMarker.getPopup().isOpen()) {
-                    console.log(`Popup for ${targetMarker.options.itemData.Yard} successfully confirmed open.`);
-                } else {
-                    // 마커의 openPopup이 실패했을 경우, 맵의 openPopup을 통해 강제로 열기 시도
-                    console.warn(`Popup for ${targetMarker.options.itemData.Yard} did not confirm open after direct call. Final retry via map.`);
-                    this.map.openPopup(targetMarker.getPopup());
-                }
-            } else if (attempts < maxAttempts) {
-                console.log(`Polling for ${targetMarker.options.itemData.Yard} (Attempt ${attempts + 1}): Marker not ready. Retrying...`);
-                attempts++;
-                setTimeout(checkAndOpen, retryInterval);
-            } else {
-                console.error(`Failed to open popup for ${targetMarker.options.itemData.Yard} after max polling attempts.`);
-            }
-        };
-
-        setTimeout(checkAndOpen, 50); // 약간의 지연 후 첫 시도
+    .transport-tab {
+        font-size: 12px;
+        padding: 0 3px;
     }
 
-    /**
-     * 데이터를 불러와 처리하고 지도에 마커를 렌더링합니다.
-     */
-    async loadData() {
-        try {
-            const response = await fetch('data/us-rail.json');
-            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-            const rawData = await response.json();
-
-            // 데이터 정제 및 파싱
-            let processedData = rawData.map(item => ({
-                lat: parseFloat(item.lat || item.Latitude),
-                lng: parseFloat(item.lng || item.Longitude),
-                Yard: item.location || item.Yard || item.Location || 'Unknown',
-                location: item.location || item.Yard || item.Location || 'Unknown Location',
-                company: item.company || item.Railroad || 'Unknown',
-                congestion_score: parseFloat(item.congestion_score || item.DwellTime),
-                indicator: parseFloat(item.indicator || item.Indicator),
-                congestion_level: item.congestion_level || item.Category || 'Average',
-                date: item.date || item.DateMonth
-            })).filter(item =>
-                // 유효한 위도, 경도, 위치, 혼잡도 레벨을 가진 항목만 필터링
-                !isNaN(item.lat) && !isNaN(item.lng) && item.location && item.congestion_level
-            );
-
-            const coordinateMap = new Map();
-
-            // 중복 좌표 처리: 같은 위치에 여러 데이터가 있을 경우 지도에 겹쳐 표시되지 않도록 약간의 지터링 적용
-            processedData.forEach(item => {
-                const coordKey = `${item.lat},${item.lng}`;
-                if (!coordinateMap.has(coordKey)) {
-                    coordinateMap.set(coordKey, []);
-                }
-                coordinateMap.get(coordKey).push(item);
-            });
-
-            const jitteredData = [];
-            coordinateMap.forEach(itemsAtCoord => {
-                if (itemsAtCoord.length > 1) {
-                    const baseLat = itemsAtCoord[0].lat;
-                    const baseLng = itemsAtCoord[0].lng;
-
-                    const offsetScale = 0.0005; // 지터링 오프셋 스케일
-
-                    itemsAtCoord.forEach((item, index) => {
-                        const angle = (index / itemsAtCoord.length) * 2 * Math.PI;
-                        // Jittering을 위도, 경도 모두에 적용하여 원 형태로 분산
-                        const jitterLat = baseLat + (Math.cos(angle) * offsetScale * Math.random());
-                        const jitterLng = baseLng + (Math.sin(angle) * offsetScale * Math.random());
-
-                        item.lat = jitterLat;
-                        item.lng = jitterLng;
-                        jitteredData.push(item);
-                    });
-                } else {
-                    jitteredData.push(itemsAtCoord[0]);
-                }
-            });
-
-            this.currentData = jitteredData;
-
-            if (this.currentData.length > 0) {
-                this.lastUpdated = this.currentData[0].date;
-            }
-
-            this.renderMarkers(); // 마커 렌더링
-            this.addRightControls(); // 우측 컨트롤(필터, 리셋) 추가
-            this.addLastUpdatedText(); // 마지막 업데이트 텍스트 추가
-            // this.addLegend(); // 주석 해제하여 범례 추가 가능
-
-        } catch (error) {
-            console.error("Failed to load rail data:", error);
-            this.displayErrorMessage("Failed to load rail data. Please try again later.");
-        }
+    .transport-map {
+        top: 7%;
+        height: 93%;
     }
 
-    /**
-     * 지도에 마커를 렌더링하거나 업데이트합니다.
-     * @param {Array<Object>} [data=this.currentData] - 렌더링할 데이터 배열입니다.
-     */
-    renderMarkers(data = this.currentData) {
-        if (!data || data.length === 0) {
-            console.warn("No data provided to renderMarkers or data is empty. Clearing map layers.");
-            this.allMarkers.clearLayers();
-            if (this.map.hasLayer(this.allMarkers)) {
-                this.map.removeLayer(this.allMarkers);
-            }
-            return;
-        }
-
-        this.allMarkers.clearLayers(); // 기존 마커 모두 제거
-
-        data.forEach(item => {
-            const marker = this.createSingleMarker(item);
-            this.allMarkers.addLayer(marker); // 클러스터 그룹에 마커 추가
-        });
-
-        if (!this.map.hasLayer(this.allMarkers)) {
-            this.map.addLayer(this.allMarkers); // 클러스터 그룹을 지도에 추가
-        }
-
-        // 클러스터 클릭 이벤트 재정의 (줌인)
-        this.allMarkers.off('clusterclick');
-        this.allMarkers.on('clusterclick', (a) => {
-            console.log("Cluster clicked, zooming to bounds.");
-            a.layer.zoomToBounds();
-        });
-
-        // -----------------------------------------------------------
-        // 클러스터 마우스오버/아웃 팝업 (툴팁 문제 해결을 위해 제거)
-        // 이 부분은 기존에 호버시 엉뚱한 팝업을 띄우던 로직입니다.
-        // 요구사항에 맞춰 이 로직을 제거하여, 개별 마커 툴팁이 작동하도록 합니다.
-        // -----------------------------------------------------------
-        // if (!L.Browser.mobile) {
-        //     this.allMarkers.off('clustermouseover');
-        //     this.allMarkers.on('clustermouseover', (a) => {
-        //         const clusterItems = a.layer.getAllChildMarkers().map(m => m.options.itemData);
-        //         const childCount = clusterItems.length;
-        //         const popupContent = `<div class="cluster-hover-info"><h4>${childCount} Locations Clustered</h4><p>Click or zoom in to see individual details.</p></div>`;
-        //         L.popup({
-        //             closeButton: false,
-        //             autoClose: true,
-        //             closeOnClick: false,
-        //             maxHeight: 300,
-        //             maxWidth: 300,
-        //             className: 'cluster-hover-popup'
-        //         })
-        //         .setLatLng(a.latlng)
-        //         .setContent(popupContent)
-        //         .openOn(this.map);
-        //     });
-        //     this.allMarkers.off('clustermouseout');
-        //     this.allMarkers.on('clustermouseout', () => {
-        //         this.map.closePopup();
-        //     });
-        // }
+    /* Controls: Stack vertically on mobile */
+    .map-control-container,
+    .map-control-group-right {
+        padding: 6px 8px;
+        gap: 6px;
+        flex-direction: column; /* Stack items vertically */
+        align-items: stretch; /* Stretch items to fill container width */
+        width: 100%; /* Take full width within its flex container */
     }
 
-    /**
-     * 개별 마커를 생성합니다.
-     * @param {Object} item - 마커를 생성할 데이터 객체입니다.
-     * @returns {L.Marker} 생성된 Leaflet 마커 객체입니다.
-     */
-    createSingleMarker(item) {
-        const level = item.congestion_level || 'Average';
-        const color = this.getColor(level);
-        const radius = this.getRadiusByIndicator(item.indicator);
-
-        // 마커 아이콘 HTML 생성 (원형, 혼잡도에 따른 색상)
-        const iconHtml = `
-            <div style="
-                background-color: ${color};
-                width: ${radius * 2}px;
-                height: ${radius * 2}px;
-                border-radius: 50%;
-                border: 1.5px solid white;
-                box-shadow: 0 0 3px rgba(0,0,0,0.5);
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            "></div>
-        `;
-
-        const customIcon = L.divIcon({
-            className: 'custom-div-icon',
-            html: iconHtml,
-            iconSize: [radius * 2, radius * 2],
-            iconAnchor: [radius, radius]
-        });
-
-        const marker = L.marker([item.lat, item.lng], {
-            icon: customIcon,
-            itemData: item // 원본 데이터를 마커 옵션에 저장
-        });
-
-        const popupOptions = {
-            closeButton: true,
-            autoClose: false, // 마커 클릭시 닫히지 않고, 맵 배경 클릭시만 닫히도록 변경
-            closeOnClick: false, // 맵 배경 클릭 시 닫히도록 변경 (맵 클릭 이벤트에서 처리)
-            maxHeight: 300,
-            maxWidth: 300,
-            className: 'single-marker-popup' // 개별 마커 팝업 클래스 추가
-        };
-
-        // 개별 마커의 팝업은 해당 마커의 데이터만 사용합니다.
-        marker.bindPopup(this.createPopupContent([item]), popupOptions);
-
-        // 개별 마커 툴팁 (마우스 오버 시)
-        // 이 툴팁이 사용자께서 원하시는 "호버시 툴팁"입니다.
-        if (!L.Browser.mobile) {
-            marker.bindTooltip(`Yard: ${item.Yard}<br>Level: ${item.congestion_level}`, {
-                permanent: false, // 마우스 아웃 시 사라짐
-                direction: 'top',
-                offset: L.point(0, -radius),
-                className: 'custom-marker-tooltip'
-            });
-        }
-
-        // 팝업 열릴 때 z-index 조정 및 클릭/스크롤 전파 방지
-        marker.on('popupopen', (e) => {
-            console.log(`Popup for ${item.Yard} just opened.`);
-            e.popup.getElement().style.zIndex = 10000;
-            const popupDiv = e.popup.getElement();
-            if (popupDiv) {
-                L.DomEvent.disableClickPropagation(popupDiv);
-                L.DomEvent.disableScrollPropagation(popupDiv);
-            }
-            this.lastOpenedMarker = e.target; // 현재 열린 마커를 저장
-        });
-
-        // 팝업 닫힐 때 lastOpenedMarker 초기화
-        marker.on('popupclose', (e) => {
-            console.log(`Popup for ${item.Yard} just closed.`);
-            if (this.lastOpenedMarker === e.target) {
-                this.lastOpenedMarker = null; // 닫힌 팝업의 마커를 lastOpenedMarker에서 제거
-            }
-        });
-
-        // 마커 클릭 시 동작 정의
-        marker.on('click', (e) => {
-            console.log(`Clicked/Tapped marker: ${item.Yard}. Current popup state: ${marker.getPopup().isOpen()}`);
-
-            this.map.closePopup(); // 다른 팝업 먼저 닫기
-
-            // `zoomToShowLayer`는 마커가 클러스터에 숨어있을 때 유용합니다.
-            if (this.allMarkers.hasLayer(marker)) { // 마커가 클러스터 그룹에 속해 있다면 (클러스터링될 수 있다면)
-                this.allMarkers.zoomToShowLayer(marker, () => {
-                    // zoomToShowLayer 완료 후 팝업 열기
-                    marker.openPopup();
-                    console.log(`Popup for ${item.Yard} opened after zoomToShowLayer.`);
-                    if (!marker.getPopup().isOpen()) {
-                        console.warn("Popup did not confirm open after direct call. Trying map.openPopup.");
-                        this.map.openPopup(marker.getPopup());
-                    }
-                });
-            } else {
-                // 마커가 클러스터링되지 않은 상태라면 바로 팝업 열기
-                marker.openPopup();
-                console.log(`Popup for ${item.Yard} opened directly.`);
-                if (!marker.getPopup().isOpen()) {
-                    console.warn("Popup did not confirm open after direct call (not in cluster). Trying map.openPopup.");
-                    this.map.openPopup(marker.getPopup());
-                }
-            }
-        });
-
-        return marker;
+    .reset-btn,
+    .truck-toggle-btn,
+    .map-control-group-right select,
+    .map-control-group-right button {
+        width: 100%; /* Make control elements full width */
+        box-sizing: border-box;
     }
 
-    /**
-     * 팝업 내용을 생성합니다 (개별 마커 또는 클러스터 해제 시).
-     * @param {Array<Object>} items - 팝업에 표시할 데이터 항목 배열입니다.
-     * @returns {string} 팝업에 들어갈 HTML 문자열입니다.
-     */
-    createPopupContent(items) {
-        const safeItems = Array.isArray(items) ? items : [items];
-        let content = '';
-
-        if (safeItems.length === 0) {
-            return '<p>No valid data to display for this location.</p>';
-        }
-
-        const isMultiple = safeItems.length > 1;
-
-        if (isMultiple) {
-            content += `<div class="cluster-popup-header">
-                                <h4>${safeItems.length} Locations</h4>
-                                <p>Showing individual details:</p>
-                               </div>
-                               <div class="cluster-popup-content">`;
-        }
-
-        safeItems.forEach(item => {
-            if (!item || typeof item !== 'object' || typeof item.lat === 'undefined' || typeof item.lng === 'undefined') {
-                console.warn("Skipping invalid or incomplete item in popup content:", item);
-                return;
-            }
-
-            const level = item.congestion_level || 'Unknown';
-            const company = item.company || 'Unknown';
-            const location = item.location || 'Unknown Location';
-            const congestionScore = (typeof item.congestion_score === 'number' && !isNaN(item.congestion_score)) ? item.congestion_score.toFixed(1) : 'N/A';
-
-            content += `
-                <div class="location-info">
-                    <h5>${location}</h5>
-                    <p><strong>Company:</strong> ${company}</p>
-                    <p><strong>Congestion Level:</strong>
-                        <span style="color: ${this.getColor(level, true)}">
-                            ${level}
-                        </span>
-                    </p>
-                    <p><strong>Dwell Time:</strong> ${congestionScore} hours</p>
-                </div>
-                ${isMultiple && safeItems.indexOf(item) !== safeItems.length - 1 ? '<hr>' : ''}
-            `;
-        });
-
-        if (isMultiple) {
-            content += '</div>';
-        }
-
-        return content || '<p>No valid data to display for this location.</p>';
+    .reset-btn,
+    .truck-toggle-btn {
+        padding: 0 10px;
+        font-size: 12px;
+        height: 30px;
+        min-width: unset; /* Remove min-width constraint */
     }
 
-    /**
-     * 지도에 마지막 업데이트 시간을 표시하는 컨트롤을 추가합니다.
-     */
-    addLastUpdatedText() {
-        if (this.lastUpdatedControl) {
-            this.map.removeControl(this.lastUpdatedControl);
-        }
-
-        if (this.lastUpdated) {
-            const date = new Date(this.lastUpdated);
-            const formattedDate = date.toLocaleString('en-US', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-                hour: 'numeric',
-                minute: 'numeric',
-                hour12: false
-            });
-
-            const infoControl = L.control({ position: 'bottomleft' });
-
-            infoControl.onAdd = () => {
-                const div = L.DomUtil.create('div', 'last-updated-info');
-                div.innerHTML = `<strong>Last Updated:</strong> ${formattedDate}`;
-                return div;
-            };
-
-            infoControl.addTo(this.map);
-            this.lastUpdatedControl = infoControl;
-        }
+    .filter-control select,
+    .map-control-group-right select {
+        padding: 6px 8px;
+        font-size: 12px;
+        min-width: unset; /* Remove min-width constraint */
     }
 
-    /**
-     * 지도 우측 상단에 필터 드롭다운과 리셋 버튼 컨트롤을 추가합니다.
-     */
-    addRightControls() {
-        if (this.filterControlInstance) {
-            this.map.removeControl(this.filterControlInstance);
-        }
-
-        const control = L.control({ position: 'topright' });
-
-        control.onAdd = () => {
-            const div = L.DomUtil.create('div', 'map-control-group-right');
-
-            const validYards = this.currentData
-                .filter(item => item.Yard && item.Yard.trim() !== '')
-                .map(item => item.Yard);
-
-            const yards = [...new Set(validYards)].sort((a, b) => a.localeCompare(b));
-
-            const filterDropdownHtml = `
-                <select class="yard-filter">
-                    <option value="" disabled selected hidden>Select Yard</option>
-                    <option value="All">All Yards</option>
-                    ${yards.map(yard =>
-                        `<option value="${yard}">${yard}</option>`
-                    ).join('')}
-                </select>
-            `;
-            div.insertAdjacentHTML('beforeend', filterDropdownHtml);
-
-            const resetButtonHtml = `
-                <button class="rail-reset-btn reset-btn">Reset View</button>
-            `;
-            div.insertAdjacentHTML('beforeend', resetButtonHtml);
-
-            div.querySelector('.yard-filter').addEventListener('change', (e) => {
-                const yardName = e.target.value;
-                if (yardName === "All") {
-                    console.log("Filter: All Yards selected. Resetting view.");
-                    this.map.setView([37.8, -96], 4);
-                    this.map.closePopup();
-                    this.markerToOpenAfterMove = null;
-                } else if (yardName) {
-                    console.log(`Filter selected: ${yardName}`);
-                    const yardDataForFilter = this.currentData.filter(item => item.Yard === yardName);
-                    if (yardDataForFilter.length > 0) {
-                        let foundMarker = null;
-                        this.allMarkers.eachLayer(layer => {
-                            if (layer.options.itemData && layer.options.itemData.Yard === yardName) {
-                                foundMarker = layer;
-                                return;
-                            }
-                        });
-
-                        if (foundMarker) {
-                            console.log(`Found marker for filter: ${yardName}. Using zoomToShowLayer.`);
-                            this.map.closePopup(); // 다른 팝업 먼저 닫기
-                            this.allMarkers.zoomToShowLayer(foundMarker, () => {
-                                // zoomToShowLayer가 완료되면 팝업 열기
-                                foundMarker.openPopup();
-                                console.log(`Popup for ${yardName} opened after zoomToShowLayer.`);
-                                if (!foundMarker.getPopup().isOpen()) {
-                                    console.warn(`Popup for ${yardName} did not confirm open after direct call. Final retry via map.`);
-                                    this.map.openPopup(foundMarker.getPopup());
-                                }
-                            });
-                            this.markerToOpenAfterMove = null; // 성공적으로 처리했으므로 초기화
-                        } else {
-                            console.warn(`Marker object for yard '${yardName}' not immediately found. Falling back to fitBounds and polling.`);
-                            const bounds = L.latLngBounds(yardDataForFilter.map(item => [item.lat, item.lng]));
-                            this.map.fitBounds(bounds.pad(0.5), { maxZoom: this.allMarkers.options.disableClusteringAtZoom + 1 });
-                            this.markerToOpenAfterMove = yardName; // moveend 후 열기 위해 야드 이름 저장
-                        }
-                    } else {
-                        console.warn(`No data found for yard '${yardName}'.`);
-                    }
-                }
-            });
-
-            div.querySelector('.rail-reset-btn').addEventListener('click', () => {
-                console.log("Reset button clicked.");
-                this.map.setView([37.8, -96], 4);
-                this.map.closePopup();
-                this.markerToOpenAfterMove = null;
-                const yardFilter = div.querySelector('.yard-filter');
-                if (yardFilter) {
-                    yardFilter.value = '';
-                    yardFilter.selectedIndex = 0;
-                }
-            });
-
-            // 클릭/스크롤 전파 방지 (지도와 독립적으로 컨트롤 상호작용 가능하도록)
-            L.DomEvent.disableClickPropagation(div);
-            L.DomEvent.disableScrollPropagation(div);
-
-            this.filterControlInstance = control;
-            return div;
-        };
-
-        control.addTo(this.map);
+    /* Adjust position for top controls on mobile (below tabs) */
+    .leaflet-top.leaflet-right {
+        top: 50px !important; /* Adjusted for smaller tab height */
+        gap: 8px;
+    }
+    .leaflet-top.leaflet-left {
+        top: 50px !important;
     }
 
-    /**
-     * 지도에 혼잡도 레벨 범례를 추가합니다. (현재 주석 처리됨)
-     */
-    addLegend() {
-        const legend = L.control({ position: 'bottomright' });
-
-        legend.onAdd = function (map) {
-            const div = L.DomUtil.create('div', 'info legend');
-            const levels = ['Very High', 'High', 'Low', 'Very Low', 'Average'];
-            const labels = [];
-
-            for (let i = 0; i < levels.length; i++) {
-                const level = levels[i];
-                const color = this.getColor(level);
-
-                labels.push(
-                    `<i style="background:${color}"></i> ${level}`
-                );
-            }
-
-            div.innerHTML = '<h4>Congestion Level</h4>' + labels.join('<br>');
-            return div;
-        }.bind(this); // 'this' 바인딩 필수
-
-        legend.addTo(this.map);
+    .leaflet-bottom.leaflet-right {
+        bottom: 30px !important;
+        right: 5px !important;
     }
 
-    /**
-     * 야드 데이터의 중심 좌표를 계산합니다.
-     * @param {Array<Object>} yardData - 야드 데이터 배열입니다.
-     * @returns {Array<number>} [위도, 경도] 형태의 중심 좌표입니다.
-     */
-    getYardCenter(yardData) {
-        if (!yardData || yardData.length === 0) return [37.8, -96];
-
-        const lats = yardData.map(item => item.lat);
-        const lngs = yardData.map(item => item.lng);
-
-        const minLat = Math.min(...lats);
-        const maxLat = Math.max(...lats);
-        const minLng = Math.min(...lngs);
-        const maxLng = Math.max(...lngs);
-
-        return [
-            (minLat + maxLat) / 2,
-            (minLng + maxLng) / 2
-        ];
+    .leaflet-popup-content {
+        min-width: 180px !important;
+        padding: 12px !important;
+        font-size: 13px !important;
     }
 
-    /**
-     * 인디케이터 값에 따라 마커의 반경을 결정합니다.
-     * @param {number} indicator - 인디케이터 값입니다.
-     * @returns {number} 마커의 반경 (픽셀)입니다.
-     */
-    getRadiusByIndicator(indicator) {
-        if (indicator > 2) return 20;
-        if (indicator > 1) return 16;
-        if (indicator > -1) return 12;
-        if (indicator > -2) return 8;
-        return 5;
+    /* Truck toggle specific adjustments for mobile layout */
+    .truck-toggle-map-control {
+        width: calc(100% - 20px); /* Adjust for padding on map-control-container */
+        left: 10px; /* Position from left instead of center */
+        transform: none; /* Remove translateX */
+        flex-direction: column; /* Stack buttons vertically */
+        gap: 0;
     }
 
-    /**
-     * 혼잡도 레벨에 따른 색상을 반환합니다.
-     * @param {string} level - 혼잡도 레벨 문자열입니다.
-     * @param {boolean} [isText=false] - 텍스트 색상을 반환할지 여부입니다.
-     * @returns {string} CSS 색상 코드입니다.
-     */
-    getColor(level, isText = false) {
-        const circleColors = {
-            'Very High': '#d62828', // 매우 높음 (빨강)
-            'High': '#f88c2b',    // 높음 (주황)
-            'Low': '#5fa9f6',     // 낮음 (파랑)
-            'Very Low': '#004fc0',  // 매우 낮음 (진한 파랑)
-            'Average': '#bcbcbc',  // 보통 (회색)
-            'Unknown': '#bcbcbc'   // 알 수 없음 (회색)
-        };
-
-        const textColors = {
-            'Very High': '#6b1414',
-            'High': '#7c4616',
-            'Low': '#30557b',
-            'Very Low': '#002860',
-            'Average': '#5e5e5e',
-            'Unknown': '#5e5e5e'
-        };
-
-        return isText ? textColors[level] : circleColors[level];
+    .truck-toggle-btn {
+        border-radius: 0 !important; /* Remove individual button rounding for stacked appearance */
+        border: 1px solid #e0e0e0; /* Add borders back */
+        border-bottom: none; /* Remove bottom border for connected look */
     }
-
-    /**
-     * 지도에 에러 메시지를 일시적으로 표시합니다.
-     * @param {string} message - 표시할 에러 메시지입니다.
-     */
-    displayErrorMessage(message) {
-        if (this.errorControl) {
-            this.map.removeControl(this.errorControl);
-        }
-
-        const errorControl = L.control({ position: 'topleft' });
-        errorControl.onAdd = function() {
-            const div = L.DomUtil.create('div', 'error-message');
-            div.innerHTML = message;
-            return div;
-        };
-        errorControl.addTo(this.map);
-        this.errorControl = errorControl;
-
-        // 5초 후 메시지 자동 제거
-        setTimeout(() => {
-            if (this.map.hasControl(this.errorControl)) {
-                this.map.removeControl(this.errorControl);
-            }
-        }, 5000);
+    .truck-toggle-btn:last-child {
+        border-bottom: 1px solid #e0e0e0; /* Add bottom border for last button */
+    }
+    .truck-toggle-btn:first-child {
+        border-top-left-radius: 6px !important; /* Re-add top radius for first button */
+        border-top-right-radius: 6px !important;
+    }
+    .truck-toggle-btn:last-child {
+        border-bottom-left-radius: 6px !important; /* Re-add bottom radius for last button */
+        border-bottom-right-radius: 6px !important;
     }
 }
 
-// RailCongestionMap 클래스를 전역 스코프에 노출합니다.
-window.RailCongestionMap = RailCongestionMap;
+/* Very Small Screens (max-width: 480px) */
+@media (max-width: 480px) {
+    .transport-tab {
+        font-size: 11px;
+    }
+
+    .leaflet-top.leaflet-right {
+        top: 40px !important;
+    }
+    .leaflet-top.leaflet-left {
+        top: 40px !important;
+    }
+
+    .leaflet-bottom.leaflet-right {
+        bottom: 20px !important;
+    }
+
+    .last-updated-info {
+        font-size: 12px;
+        /* padding: 6px 8px; Removed padding as it's transparent */
+    }
+}
