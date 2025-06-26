@@ -1,11 +1,4 @@
-/**
- * TruckCongestionMap manages the truck traffic congestion map using Leaflet.
- */
 class TruckCongestionMap {
-    /**
-     * Constructor for TruckCongestionMap.
-     * @param {string} mapElementId - ID of the HTML element where the map will be rendered.
-     */
     constructor(mapElementId) {
         this.map = L.map(mapElementId).setView([37.8, -96], 4);
         this.stateLayer = null;
@@ -16,7 +9,7 @@ class TruckCongestionMap {
         this.controlDiv = null;
         this.errorControl = null;
 
-        // Change map tile layer to CartoDB Light All for consistent English place names
+        // 지도 타일 레이어를 CartoDB Light All로 변경하여 영어 지명 통일
         L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', {
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
             maxZoom: 18,
@@ -38,9 +31,6 @@ class TruckCongestionMap {
         this.init();
     }
 
-    /**
-     * Initializes the map by loading GeoJSON and truck data.
-     */
     async init() {
         try {
             const [geoJson, sheetData] = await Promise.all([
@@ -55,8 +45,8 @@ class TruckCongestionMap {
             this.metricData = sheetData;
 
             this.renderMap();
-            this.addToggleControls(); // INBOUND/OUTBOUND toggle buttons (top center)
-            this.addRightControls();  // Reset button and filter dropdown (top right)
+            this.addToggleControls(); // INBOUND/OUTBOUND 토글 버튼 (상단 중앙)
+            this.addRightControls();   // 리셋 버튼과 필터 드롭다운 (상단 우측)
             this.initialized = true;
         } catch (err) {
             console.error("Initialization failed:", err);
@@ -64,10 +54,6 @@ class TruckCongestionMap {
         }
     }
 
-    /**
-     * Fetches truck data from `data/us-truck.json`. Provides fallback data on failure.
-     * @returns {Object} Parsed truck data.
-     */
     async fetchSheetData() {
         try {
             const res = await fetch('data/us-truck.json');
@@ -82,9 +68,6 @@ class TruckCongestionMap {
         }
     }
 
-    /**
-     * Renders or re-renders the GeoJSON layer on the map.
-     */
     renderMap() {
         if (this.stateLayer) this.map.removeLayer(this.stateLayer);
 
@@ -94,134 +77,35 @@ class TruckCongestionMap {
         }).addTo(this.map);
     }
 
-    /**
-     * Determines the style (fill color, border) for each state polygon based on current mode and data.
-     * @param {Object} feature - GeoJSON feature object.
-     * @returns {Object} Leaflet style object.
-     */
     getStyle(feature) {
         const stateCode = feature.id;
         const data = this.metricData[stateCode] || {};
-        // Use the delay percentage for congestion level determination
-        const delayValue = this.currentMode === 'inbound'
-            ? data.inboundDelay
-            : data.outboundDelay;
-
-        const congestionLevel = this.getCongestionLevelByTruckValue(delayValue);
-        const fillColor = this.getColor(congestionLevel); // Use unified color scheme
-
-        // Determine border weight based on congestion level for visual emphasis
-        const weight = this.getRadiusByTruckValue(delayValue); // Using radius function to determine border weight
+        const colorValue = this.currentMode === 'inbound'
+            ? data.inboundColor
+            : data.outboundColor;
 
         return {
-            fillColor: fillColor,
-            weight: weight,
+            fillColor: this.getColor(colorValue),
+            weight: 1,
             opacity: 1,
-            color: 'white', // Default border color is white
+            color: 'white', // 기본 테두리 색상은 흰색
             fillOpacity: 0.7
         };
     }
 
-    /**
-     * Determines the congestion level string based on the truck data delay percentage.
-     * Maps the delay percentage to 9 distinct congestion levels as per user's request.
-     * @param {number} delayPercentage - The inboundDelay or outboundDelay value (percentage).
-     * @returns {string} Congestion level string.
-     */
-    getCongestionLevelByTruckValue(delayPercentage) {
-        if (delayPercentage == null || isNaN(delayPercentage)) return 'Unknown';
-
-        // Volume Decrease (Higher Congestion)
-        if (delayPercentage <= -15) return 'Extremely High Congestion';
-        if (delayPercentage > -15 && delayPercentage <= -11) return 'Very High Congestion';
-        if (delayPercentage > -11 && delayPercentage <= -6) return 'High Congestion';
-        if (delayPercentage > -6 && delayPercentage < 0) return 'Moderate Congestion';
-
-        // No Change (Neutral)
-        if (delayPercentage === 0) return 'No Change (Steady)';
-
-        // Volume Increase (Lower Congestion / Optimal Flow)
-        if (delayPercentage > 0 && delayPercentage <= 5) return 'Low Congestion';
-        if (delayPercentage > 5 && delayPercentage <= 10) return 'Very Low Congestion';
-        if (delayPercentage > 10 && delayPercentage <= 15) return 'Minimal Congestion';
-        if (delayPercentage > 15) return 'Optimal Flow (Highly Clear)';
-
-        return 'Unknown';
-    }
-
-    /**
-     * Returns the fill color based on the conceptual congestion level (9 levels).
-     * Uses a diverging Blue-Gray-Red scale. Blue signifies good flow (volume increase),
-     * Gray signifies no change, and Red signifies congestion (volume decrease).
-     * @param {string} level - Congestion level string.
-     * @returns {string} CSS color code.
-     */
-    getColor(level) {
-        const fillColors = {
-            'Extremely High Congestion': '#d73027', // Strong Red
-            'Very High Congestion': '#fc8d59',      // Red-Orange
-            'High Congestion': '#fdae61',           // Orange
-            'Moderate Congestion': '#fee08b',       // Yellow-Orange
-            'No Change (Steady)': '#9e9e9e',        // Gray (Consistent with Average in other maps)
-            'Low Congestion': '#90CAF9',            // Light Blue
-            'Very Low Congestion': '#64B5F6',       // Medium Blue
-            'Minimal Congestion': '#42A5F5',        // Blue
-            'Optimal Flow (Highly Clear)': '#2196F3', // Darker Blue
-            'Unknown': '#cccccc'                    // Default grey
+    getColor(value) {
+        const colors = {
+            '-3': '#d73027',
+            '-2': '#f46d43',
+            '-1': '#fdae61',
+            '0': '#ffffbf',
+            '1': '#a6d96a',
+            '2': '#66bd63',
+            '3': '#1a9850'
         };
-        return fillColors[level] || '#cccccc';
+        return colors[value] || '#cccccc';
     }
 
-    /**
-     * Returns a text color based on the conceptual congestion level for readability in tooltips.
-     * @param {string} level - Congestion level string.
-     * @returns {string} CSS color code for text.
-     */
-    getTextColorForLevel(level) {
-        // Text colors adjusted for contrast on new background colors.
-        const textColors = {
-            'Extremely High Congestion': '#7f0000',  // Darker Red
-            'Very High Congestion': '#b71c1c',       // Darker red
-            'High Congestion': '#e65100',            // Darker orange
-            'Moderate Congestion': '#616161',        // Darker gray (for yellow/orange backgrounds)
-            'No Change (Steady)': '#333333',         // Darker gray for gray background
-            'Low Congestion': '#1976D2',             // Darker blue
-            'Very Low Congestion': '#1565C0',        // Darker blue
-            'Minimal Congestion': '#0D47A1',         // Darker blue
-            'Optimal Flow (Highly Clear)': '#0A3B8B', // Even Darker Blue
-            'Unknown': '#5e5e5e'                      // Darker default gray
-        };
-        return textColors[level] || '#5e5e5e';
-    }
-
-    /**
-     * Determines the border weight (acting as radius equivalent for polygon)
-     * based on the truck data delay percentage. Higher congestion means thicker border.
-     * @param {number} delayPercentage - The inboundDelay or outboundDelay value (percentage).
-     * @returns {number} Border weight (in pixels).
-     */
-    getRadiusByTruckValue(delayPercentage) {
-        if (delayPercentage == null || isNaN(delayPercentage)) return 1; // Default thin border
-
-        // Border weights are inversely proportional to "goodness" of value (more negative % means thicker border)
-        if (delayPercentage <= -15) return 4; // Extremely High Congestion
-        if (delayPercentage > -15 && delayPercentage <= -11) return 3.5; // Very High Congestion
-        if (delayPercentage > -11 && delayPercentage <= -6) return 3;   // High Congestion
-        if (delayPercentage > -6 && delayPercentage < 0) return 2.5;   // Moderate Congestion
-        if (delayPercentage === 0) return 2;                           // No Change (Steady)
-        if (delayPercentage > 0 && delayPercentage <= 5) return 1.5;   // Low Congestion
-        if (delayPercentage > 5 && delayPercentage <= 10) return 1.2;  // Very Low Congestion
-        if (delayPercentage > 10 && delayPercentage <= 15) return 1;   // Minimal Congestion
-        if (delayPercentage > 15) return 0.8;                         // Optimal Flow (Highly Clear)
-        return 1; // Default
-    }
-
-
-    /**
-     * Binds mouse events (mouseover, mouseout, click) to each state layer.
-     * @param {Object} feature - GeoJSON feature object.
-     * @param {L.Layer} layer - Leaflet layer for the feature.
-     */
     bindEvents(feature, layer) {
         const stateCode = feature.id;
         const data = this.metricData[stateCode] || {};
@@ -231,55 +115,42 @@ class TruckCongestionMap {
                 const center = layer.getBounds().getCenter();
                 this.showTooltip(center, data);
                 layer.setStyle({
-                    weight: this.getRadiusByTruckValue(this.currentMode === 'inbound' ? data.inboundDelay : data.outboundDelay) + 1, // Make border slightly thicker on hover
-                    color: 'white', // White border color on hover
+                    weight: 2, // 호버 시 테두리 두께를 2로 변경
+                    color: 'white', // 호버 시에도 테두리 색상은 흰색 유지
                     dashArray: '',
                     fillOpacity: 0.9
                 });
             },
             mouseout: (e) => {
                 this.map.closePopup();
-                this.stateLayer.resetStyle(layer); // Revert to original style
+                this.stateLayer.resetStyle(layer); // 원래 스타일로 복원 (weight: 1, color: 'white')
             },
             click: () => this.zoomToState(feature)
         });
     }
 
-    /**
-     * Displays a tooltip popup for the given state data.
-     * @param {L.LatLng} latlng - Latitude and longitude for the popup position.
-     * @param {Object} data - State data to display in the tooltip.
-     */
     showTooltip(latlng, data) {
         if (!this.initialized) return;
 
-        const format = (v) => isNaN(Number(v)) ? 'N/A' : Number(v).toFixed(2); // Keep sign for display
+        const format = (v) => isNaN(Number(v)) ? '0.00' : Math.abs(Number(v)).toFixed(2);
         const isInbound = this.currentMode === 'inbound';
-        const delayPercentage = isInbound ? data.inboundDelay : data.outboundDelay;
+        const delay = isInbound ? data.inboundDelay : data.outboundDelay;
         const dwellValue = isInbound ? data.dwellInbound : data.dwellOutbound;
-        
-        const congestionLevel = this.getCongestionLevelByTruckValue(delayPercentage);
-        const levelColor = this.getTextColorForLevel(congestionLevel);
 
         const content = `
-            <h4>${data.name || 'Unknown State'}</h4>
-            <p><strong>Congestion Level (${this.currentMode === 'inbound' ? 'Inbound' : 'Outbound'}):</strong>
-                <span style="color: ${levelColor}; font-weight: bold;">
-                    ${congestionLevel}
-                </span>
-            </p>
+            <h4>${data.name || 'Unknown'}</h4>
             <div>
-                <strong>${isInbound ? 'Inbound Delay' : 'Outbound Delay'}:</strong>
-                <p style="color: ${delayPercentage <= 0 ? this.getTextColorForLevel('Extremely High Congestion') : this.getTextColorForLevel('Optimal Flow (Highly Clear)')};">
-                    ${delayPercentage >= 0 ? '↑' : '↓'} ${Math.abs(delayPercentage).toFixed(2)}%
-                    <span style="color: ${this.getTextColorForLevel('No Change (Steady)')};"> compared to 2-week avg</span>
+                <strong>Truck Movement</strong>
+                <p class="${delay >= 0 ? 'truck-positive' : 'truck-negative'}">
+                    ${delay >= 0 ? '↑' : '↓'} ${format(delay)}%
+                    <span class="truck-normal-text">${delay >= 0 ? 'above' : 'below'} 2-week avg</span>
                 </p>
             </div>
             <div>
-                <strong>${isInbound ? 'Dwell Inbound' : 'Dwell Outbound'}:</strong>
-                <p style="color: ${dwellValue >= 0 ? this.getTextColorForLevel('Extremely High Congestion') : this.getTextColorForLevel('Optimal Flow (Highly Clear)')};">
-                    ${dwellValue >= 0 ? '↑' : '↓'} ${Math.abs(dwellValue).toFixed(2)}%
-                    <span style="color: ${this.getTextColorForLevel('No Change (Steady)')};"> compared to 2-week avg</span>
+                <strong>Dwell Time</strong>
+                <p class="${dwellValue >= 0 ? 'truck-positive' : 'truck-negative'}">
+                    ${dwellValue >= 0 ? '↑' : '↓'} ${format(dwellValue)}%
+                    <span class="truck-normal-text">${dwellValue >= 0 ? 'above' : 'below'} 2-week avg</span>
                 </p>
             </div>
         `;
@@ -297,37 +168,32 @@ class TruckCongestionMap {
         .openOn(this.map);
     }
 
-    /**
-     * Zooms the map to the bounding box of a selected state.
-     * @param {Object} feature - GeoJSON feature object for the state.
-     */
     zoomToState(feature) {
         const bounds = L.geoJSON(feature).getBounds();
         const center = bounds.getCenter();
-        const fixedZoomLevel = 7; // Apply a consistent zoom level for all states
+        const fixedZoomLevel = 7; // 모든 주에 대해 동일한 줌 레벨을 적용합니다.
 
         this.map.setView(center, fixedZoomLevel);
     }
 
-    /**
-     * Adds INBOUND/OUTBOUND toggle buttons to the top center of the map.
-     */
+    // INBOUND/OUTBOUND 토글 버튼 컨트롤 (상단 중앙 배치)
     addToggleControls() {
+        // Leaflet 컨트롤 시스템 대신, 직접 지도 컨테이너에 div를 추가하여 중앙 정렬 CSS가 작동하도록 함
+        // 이 div가 유일한 박스/배경/그림자 래퍼가 됨
         const centeredToggleDiv = L.DomUtil.create('div', 'map-control-container truck-toggle-map-control');
-        this.map.getContainer().appendChild(centeredToggleDiv); // Append directly to map's DOM element for centering
+        this.map.getContainer().appendChild(centeredToggleDiv); // 지도의 DOM 요소에 직접 추가
 
-        this.controlDiv = centeredToggleDiv; // Set reference to this div
+        this.controlDiv = centeredToggleDiv; // 이 div를 참조하도록 설정
         this.renderToggleButtons();
 
-        // Prevent map events from propagating on the control
+        // 맵 이벤트 전파 방지
         L.DomEvent.disableClickPropagation(centeredToggleDiv);
         L.DomEvent.disableScrollPropagation(centeredToggleDiv);
     }
 
-    /**
-     * Renders the INBOUND/OUTBOUND toggle buttons and attaches event listeners.
-     */
     renderToggleButtons() {
+        // 불필요한 이중 래퍼 (truck-toggle-container, truck-toggle-wrapper)를 제거하고
+        // 버튼들을 직접 this.controlDiv (map-control-container) 안에 삽입
         this.controlDiv.innerHTML = `
             <button class="truck-toggle-btn ${this.currentMode === 'inbound' ? 'truck-active' : ''}" data-mode="inbound">INBOUND</button>
             <button class="truck-toggle-btn ${this.currentMode === 'outbound' ? 'truck-active' : ''}" data-mode="outbound">OUTBOUND</button>
@@ -336,23 +202,20 @@ class TruckCongestionMap {
         this.controlDiv.querySelectorAll('.truck-toggle-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 this.currentMode = btn.dataset.mode;
-                this.renderToggleButtons(); // Update toggle button state
-                this.stateLayer.setStyle(this.getStyle.bind(this)); // Re-style map based on new mode
-                this.map.closePopup(); // Close any open popup when mode changes
+                this.renderToggleButtons(); // 토글 버튼 상태 업데이트
+                this.stateLayer.setStyle(this.getStyle.bind(this));
             });
         });
     }
 
-    /**
-     * Adds reset button and state filter dropdown to the top right of the map.
-     */
+    // 리셋 버튼과 필터 드롭다운 컨트롤 (상단 우측에 나란히 배치)
     addRightControls() {
         const control = L.control({ position: 'topright' });
 
         control.onAdd = () => {
             const div = L.DomUtil.create('div', 'map-control-group-right');
 
-            // Add state filter dropdown
+            // 주 선택 필터 드롭다운 추가 (먼저 삽입)
             const states = this.geoJsonData.features
                 .map(f => ({
                     id: f.id,
@@ -368,20 +231,19 @@ class TruckCongestionMap {
                     ).join('')}
                 </select>
             `;
-            div.insertAdjacentHTML('beforeend', filterDropdownHtml); // Add dropdown first
+            div.insertAdjacentHTML('beforeend', filterDropdownHtml); // 드롭다운 먼저 추가
 
-            // Add reset button
+            // 리셋 버튼 추가 (나중에 삽입)
             const resetButtonHtml = `
                 <button class="truck-reset-btn reset-btn">Reset View</button>
             `;
-            div.insertAdjacentHTML('beforeend', resetButtonHtml); // Add reset button after dropdown
+            div.insertAdjacentHTML('beforeend', resetButtonHtml); // 리셋 버튼 추가
 
-            // Add event listeners (after elements are added to DOM)
+            // 이벤트 리스너 추가 (요소들이 DOM에 추가된 후 참조)
             div.querySelector('.truck-reset-btn').addEventListener('click', () => {
                 this.map.setView([37.8, -96], 4);
-                const stateFilter = div.querySelector('.state-filter');
-                if (stateFilter) stateFilter.value = ''; // Reset dropdown
-                this.map.closePopup(); // Close any open popup
+                const stateFilter = div.querySelector('.state-filter'); // 현재 div 내에서 찾음
+                if (stateFilter) stateFilter.value = '';
             });
 
             div.querySelector('.state-filter').addEventListener('change', (e) => {
@@ -395,7 +257,7 @@ class TruckCongestionMap {
                 if (state) {
                     const bounds = L.geoJSON(state).getBounds();
                     const center = bounds.getCenter();
-                    const fixedZoomLevel = 7; // Fixed zoom level for consistency
+                    const fixedZoomLevel = 7;
 
                     this.map.setView(center, fixedZoomLevel);
                 }
@@ -404,16 +266,12 @@ class TruckCongestionMap {
             L.DomEvent.disableClickPropagation(div);
             L.DomEvent.disableScrollPropagation(div);
 
-            this.filterControlInstance = control; // Now this becomes the grouped control
+            this.filterControlInstance = control; // 이제 전체 그룹핑 컨트롤이 됨
             return div;
         };
         control.addTo(this.map);
     }
 
-    /**
-     * Displays a temporary error message on the map.
-     * @param {string} message - The error message to display.
-     */
     showError(message) {
         if (this.errorControl) {
             this.map.removeControl(this.errorControl);
@@ -427,13 +285,6 @@ class TruckCongestionMap {
         };
         errorControl.addTo(this.map);
         this.errorControl = errorControl;
-
-        // Automatically remove message after 5 seconds
-        setTimeout(() => {
-            if (this.map.hasControl(this.errorControl)) {
-                this.map.removeControl(this.errorControl);
-            }
-        }, 5000);
     }
 }
 
