@@ -273,54 +273,51 @@ html, body {
     box-shadow: 0 0 0 2px rgba(0,101,126,0.2); /* 포커스 시 테두리 그림자는 유지 */
 }
 
-/* ==================== 트럭 토글 버튼 최종 스타일 ==================== */
+/* ========== 트럭 토글 버튼 완전 재작성 ========== */
 .truck-toggle-map-control {
-    /* 기본 스타일 */
-    background: transparent !important;
-    box-shadow: none !important;
     position: absolute;
+    top: 10px;
     left: 50%;
     transform: translateX(-50%);
     z-index: 1000;
     display: flex;
-    gap: 0;
+    background: transparent !important;
+    box-shadow: none !important;
     padding: 0 !important;
-    
-    /* PC 기본값 */
-    top: 10px !important;
-    height: 34px !important;
+    margin: 0 !important;
+    height: 34px;
+    line-height: 34px;
 }
 
 .truck-toggle-btn {
-    padding: 0 16px;
-    border: 1px solid #e0e0e0;
+    padding: 0 15px;
+    height: 100%;
     background: white;
-    cursor: pointer;
+    border: 1px solid #e0e0e0;
     font-family: 'Noto Sans KR', sans-serif;
-    font-weight: 500;
     font-size: 13px;
-    height: 100% !important;
+    font-weight: 500;
+    color: #333;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #333;
+    cursor: pointer;
+    transition: all 0.2s;
     box-sizing: border-box;
-    white-space: nowrap;
 }
 
-/* 모서리 처리 */
 .truck-toggle-btn:first-child {
-    border-top-left-radius: 6px;
-    border-bottom-left-radius: 6px;
+    border-radius: 6px 0 0 6px;
 }
 .truck-toggle-btn:last-child {
-    border-top-right-radius: 6px;
-    border-bottom-right-radius: 6px;
+    border-radius: 0 6px 6px 0;
+    border-left: none;
 }
 
-/* 버튼 간 경계선 */
-.truck-toggle-btn:not(:first-child) {
-    border-left: none;
+.truck-toggle-btn.truck-active {
+    background: #00657E;
+    color: white;
+    border-color: #00657E;
 }
 
 /* Active/Hover 상태 */
@@ -653,21 +650,22 @@ html, body {
         font-size: 11px;
     }
 
-    .leaflet-top.leaflet-right {
-        top: 0px !important;
-    }
     .leaflet-top.leaflet-left { /* Ensure hidden */
         display: none !important;
     }
     
-    .truck-toggle-map-control {
-        top: 0px !important; /* Aligned with other top controls for very small screens */
+    .truck-toggle-map-control,
+    .leaflet-top.leaflet-right {
+        top: 6px !important;
+        height: 30px;
+        line-height: 30px;
     }
-
+    
     .truck-toggle-btn {
-        min-width: 70px !important;
-        padding: 0 8px !important;
+        min-width: 70px;
+        padding: 0 8px;
     }
+}
    
     .leaflet-bottom.leaflet-right {
         bottom: 20px !important;
