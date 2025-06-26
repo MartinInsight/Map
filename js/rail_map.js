@@ -41,44 +41,7 @@ class RailCongestionMap {
                     default: return -1; // Fallback for unknown levels
                 }
             };
-            
-            // Function to get color based on congestion category
-            const getCongestionColor = (category) => {
-                switch (category) {
-                    case 'Very Low': return '#42A5F5'; // Blue
-                    case 'Low': return '#90CAF9';      // Light Blue
-                    case 'Average': return '#9E9E9E';   // Grey
-                    case 'High': return '#FFB300';     // Orange
-                    case 'Very High': return '#E53935';  // Red
-                    default: return '#757575'; // Default color (e.g., for unknown categories)
-                }
-            };
-            
-            // Example usage within your Leaflet map marker creation:
-            
-            // Assume 'data' is your parsed rail data array, and you're iterating through it
-            // For each data point, when creating a marker or updating its properties:
-            
-            // For marker styling:
-            const markerColor = getCongestionColor(dataItem.Category); // Use dataItem.Category from your rail data
-            const markerOptions = {
-                // ... other options
-                fillColor: markerColor,
-                color: 'white', // Border color
-                weight: 1.5,
-                opacity: 1,
-                fillOpacity: 0.9
-            };
-
-            // When creating the tooltip content:
-            const tooltipContent = `
-                <strong>Yard:</strong> ${dataItem.Yard}<br>
-                <strong>Location:</strong> ${dataItem.Location}<br>
-                <strong>Dwell Time:</strong> ${dataItem['Dwell Time']} hours<br>
-                <strong>Average:</strong> ${dataItem.Average} hours<br>
-                <strong>Congestion:</strong> <span style="color: ${getCongestionColor(dataItem.Category)}; font-weight: bold;">${dataItem.Category}</span>
-            `;
-            
+                        
             // Attach to marker:
             // marker.bindTooltip(tooltipContent, { permanent: false, direction: 'top' });
 
@@ -241,18 +204,19 @@ class RailCongestionMap {
 
             // 데이터 정제 및 파싱
             let processedData = rawData.map(item => ({
-                lat: parseFloat(item.lat || item.Latitude),
-                lng: parseFloat(item.lng || item.Longitude),
-                Yard: item.location || item.Yard || item.Location || 'Unknown',
-                location: item.location || item.Yard || item.Location || 'Unknown Location',
-                company: item.company || item.Railroad || 'Unknown',
-                congestion_score: parseFloat(item.congestion_score || item.DwellTime),
-                indicator: parseFloat(item.indicator || item.Indicator),
-                congestion_level: item.congestion_level || item.Category || 'Average',
-                date: item.date || item.DateMonth
+                lat: item.lat, // 파이썬에서 이미 float로 변환하여 제공
+                lng: item.lng, // 파이썬에서 이미 float로 변환하여 제공
+                Yard: item.location, // 파이썬에서 'location'으로 표준화됨
+                location: item.location, // 파이썬에서 'location'으로 표준화됨
+                company: item.company,
+                congestion_score: item.congestion_score, // 파이썬에서 이미 float로 변환하여 제공
+                indicator: item.indicator, // 파이썬에서 이미 float로 변환하여 제공
+                congestion_level: item.congestion_level, // 파이썬에서 'congestion_level'로 표준화됨
+                date: item.date
             })).filter(item =>
-                // 유효한 위도, 경도, 위치, 혼잡도 레벨을 가진 항목만 필터링
-                !isNaN(item.lat) && !isNaN(item.lng) && item.location && item.congestion_level
+                // 파이썬에서 이미 유효성 검사를 수행했지만, JS에서도 한 번 더 확인하는 것은 나쁘지 않습니다.
+                // 다만, 파이썬이 더 엄격하게 필터링하므로, 여기서는 기본 값만 확인해도 됩니다.
+                item.lat !== undefined && item.lng !== undefined && item.location && item.congestion_level
             );
 
             const coordinateMap = new Map();
