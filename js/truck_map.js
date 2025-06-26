@@ -256,7 +256,7 @@ class TruckCongestionMap {
         const format = (v) => isNaN(Number(v)) ? 'N/A' : Number(v).toFixed(2); // Keep sign for display
         const isInbound = this.currentMode === 'inbound';
         const delayPercentage = isInbound ? data.inboundDelay : data.outboundDelay;
-        const dwellValue = isInbound ? data.dwellInbound : data.outboundDwell;
+        const dwellValue = isInbound ? data.dwellInbound : data.dwellOutbound; // Corrected to data.dwellOutbound
         
         const congestionLevel = this.getCongestionLevelByTruckValue(delayPercentage);
         const levelColor = this.getTextColorForLevel(congestionLevel);
@@ -269,14 +269,14 @@ class TruckCongestionMap {
                 </span>
             </p>
             <div>
-                <strong>Volume Change:</strong>
+                <strong>${isInbound ? 'Inbound Delay' : 'Outbound Delay'}:</strong>
                 <p style="color: ${delayPercentage <= 0 ? this.getTextColorForLevel('Extremely High Congestion') : this.getTextColorForLevel('Optimal Flow (Highly Clear)')};">
                     ${delayPercentage >= 0 ? '↑' : '↓'} ${Math.abs(delayPercentage).toFixed(2)}%
                     <span style="color: ${this.getTextColorForLevel('No Change (Steady)')};"> compared to 2-week avg</span>
                 </p>
             </div>
             <div>
-                <strong>Dwell Time Change:</strong>
+                <strong>${isInbound ? 'Dwell Inbound' : 'Dwell Outbound'}:</strong>
                 <p style="color: ${dwellValue >= 0 ? this.getTextColorForLevel('Extremely High Congestion') : this.getTextColorForLevel('Optimal Flow (Highly Clear)')};">
                     ${dwellValue >= 0 ? '↑' : '↓'} ${Math.abs(dwellValue).toFixed(2)}%
                     <span style="color: ${this.getTextColorForLevel('No Change (Steady)')};"> compared to 2-week avg</span>
