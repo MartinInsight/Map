@@ -49,7 +49,7 @@ html, body {
 
 .leaflet-popup-tip {
     background-color: white !important;
-    box-shadow: 0 44px 15px rgba(0,0,0,0.2) !important;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2) !important;
 }
 
 /* Leaflet Tooltip general override (Removed conflicting positioning styles) */
@@ -64,52 +64,56 @@ html, body {
 /* Leaflet Zoom Control Styling */
 .leaflet-control-zoom {
     display: flex;
-    flex-direction: row; /* Changed to row for horizontal layout */
-    gap: 0; /* Remove gap between buttons, let borders handle separation */
-    width: 100%; /* Fill parent container's content width */
-    box-sizing: border-box; /* Include padding and border in width calculation */
-    /* Add background and shadow to this inner container */
-    background: white;
-    padding: 8px 12px;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+    flex-direction: column; /* Stack zoom buttons vertically */
 }
 
-/* Individual zoom button styling */
 .leaflet-control-zoom a {
-    width: calc(50% - 1px); /* Each button is half the width of the container, minus border */
-    min-width: unset; /* Allow it to shrink */
+    width: 34px !important;
     height: 34px !important;
-    line-height: 34px !important;
-    font-size: 13px !important;
-    border: 1px solid #e0e0e0 !important;
     background-color: white !important;
-    box-shadow: none !important; /* No individual button shadow */
-    transform: none !important; /* No transform */
-    transition: background-color 0.2s; /* Smooth hover */
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
+    border: 1px solid #e0e0e0 !important;
+    transition: all 0.2s;
+    background-image: none !important; /* Remove default Leaflet zoom icons */
+    text-indent: 0 !important;
+    text-align: center !important;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-weight: 500 !important;
+    font-size: 13px !important;
+    line-height: 34px !important; /* Center text vertically */
+    color: #333 !important;
 }
 
-/* Ensure hover/active states don't add shadow/transform */
-.leaflet-control-zoom a:hover,
-.leaflet-control-zoom a:active {
+/* Specific border-radius for top (+) button */
+.leaflet-control-zoom-in {
+    border-radius: 6px 6px 0 0 !important;
+    border-bottom: none !important; /* Connects with '-' button */
+}
+
+/* Specific border-radius for bottom (-) button */
+.leaflet-control-zoom-out {
+    border-radius: 0 0 6px 6px !important;
+    border-top: none !important; /* Connects with '+' button */
+}
+
+/* Removed hover effects for zoom buttons to prevent inconsistent shadows */
+.leaflet-control-zoom a:hover {
     background-color: #f5f5f5 !important;
-    box-shadow: none !important; /* Explicitly remove box-shadow */
+    box-shadow: none !important; /* Explicitly remove box-shadow on hover */
+    transform: none !important; /* Explicitly remove transform on hover */
+}
+
+/* Ensure no shadow or transform on active (click) state for zoom buttons */
+.leaflet-control-zoom a:active {
+    background-color: #f5f5f5 !important; /* Keep consistent with hover background change */
     transform: none !important; /* Explicitly remove transform */
+    box-shadow: none !important; /* Explicitly remove box-shadow */
 }
 
-/* Specific border-radius for - and + buttons (now horizontal) */
-.leaflet-control-zoom-out { /* Left button (-) */
-    border-radius: 6px 0 0 6px !important;
-    border-right: none !important; /* Connects with '+' button */
+/* Remove margin between zoom buttons to make them stick together */
+.leaflet-control-zoom-in + .leaflet-control-zoom-out {
+    margin-top: 0 !important;
 }
-.leaflet-control-zoom-in { /* Right button (+) */
-    border-radius: 0 6px 6px 0 !important;
-    border-left: none !important; /* Connects with '-' button */
-}
-
-/* Ensure the order is - then + by swapping them visually */
-.leaflet-control-zoom-in { order: 2; }
-.leaflet-control-zoom-out { order: 1; }
 
 
 /* =====================================
@@ -201,17 +205,10 @@ html, body {
     display: flex; /* Use flexbox for internal layout */
     align-items: center;
     gap: 10px; /* Space between elements */
-    width: 184px; /* Consistent width for control boxes (160px content + 2*12px padding) */
+    width: fit-content;
     box-sizing: border-box;
-    flex-direction: column; /* Force vertical stacking for Reset View and Select Box */
-}
-
-/* Re-order elements within map-control-group-right */
-.map-control-group-right .reset-btn {
-    order: 1; /* Reset View first */
-}
-.map-control-group-right .yard-filter {
-    order: 2; /* Select Box second */
+    /* Default for desktop: row layout */
+    flex-direction: row;
 }
 
 /* Reset Button Style */
@@ -229,8 +226,6 @@ html, body {
     white-space: nowrap;
     transition: all 0.2s;
     color: #333;
-    width: 100%; /* Make it fill parent width */
-    box-sizing: border-box;
 }
 
 .reset-btn:hover {
@@ -246,7 +241,7 @@ html, body {
     border: 1px solid #ddd;
     border-radius: 6px;
     font-size: 13px;
-    min-width: 160px; /* Base min-width for content */
+    min-width: 160px;
     font-family: 'Noto Sans KR', sans-serif;
     font-weight: 500;
     background-color: #f9f9f9;
@@ -259,8 +254,6 @@ html, body {
     appearance: none;
     -webkit-appearance: none;
     -moz-appearance: none;
-    width: 100%; /* Make it fill parent width */
-    box-sizing: border-box;
 }
 
 .filter-control select:focus,
@@ -273,17 +266,17 @@ html, body {
 /* Truck specific styles for the toggle buttons (if used by other maps) */
 .truck-toggle-map-control { /* Wrapper for truck toggle buttons */
     position: absolute;
-    top: 0px !important; /* Aligned with other top controls */
+    top: 0px !important; /* Adjusted top to be consistent with other top controls */
     left: 50%;
     transform: translateX(-50%);
     z-index: 1000;
     display: flex;
     gap: 0; /* Buttons are adjacent */
-    /* Restore background and box-shadow for a proper control box appearance */
-    background: white;
-    padding: 8px 12px;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+    /* Override Leaflet's default control styles for this specific control */
+    background: white !important; /* Restore background */
+    padding: 8px 12px !important; /* Restore padding */
+    border-radius: 8px !important; /* Restore border-radius */
+    box-shadow: 0 2px 10px rgba(0,0,0,0.15) !important; /* Restore box-shadow */
 }
 
 .truck-toggle-btn {
@@ -336,31 +329,24 @@ html, body {
 
 
 /* Control Position Adjustments */
-/* Top right for Reset and Filter controls (now also including Zoom) */
+/* Top right for Reset and Filter controls */
 .leaflet-top.leaflet-right {
     display: flex;
     flex-direction: column; /* Controls stack vertically */
     gap: 10px;
-    top: calc(50px + 10px) !important; /* Position below zoom buttons (50px zoom box height + 10px gap) */
+    top: 0px !important; /* Adjusted top for desktop */
     right: 10px !important;
     width: auto;
     height: auto;
 }
 
-/* Top left (for zoom buttons) - now moved to right */
+/* Top left (for zoom buttons) */
 .leaflet-top.leaflet-left {
-    top: 0px !important; /* Align to map top */
-    left: auto; /* Remove left positioning */
-    right: 10px !important; /* Move to right */
+    top: 0px !important; /* Adjusted top for desktop */
+    left: 10px !important;
     transform: none !important;
-    width: 184px; /* Consistent width for control box */
+    width: auto;
     height: auto;
-    /* Removed background, padding, border-radius, box-shadow from here.
-       These are now on .leaflet-control-zoom itself to fix the inner box issue. */
-    background: none; /* Explicitly remove */
-    padding: 0; /* Explicitly remove */
-    border-radius: 0; /* Explicitly remove */
-    box-shadow: none; /* Explicitly remove */
 }
 
 /* Bottom right (for legend - if uncommented) */
@@ -624,26 +610,12 @@ html, body {
 
     /* Adjust position for top controls on mobile (closer to top tab) */
     .leaflet-top.leaflet-right {
-        top: calc(42px + 8px) !important; /* Adjusted top for mobile: zoom box height + gap */
+        top: 0px !important; /* Adjusted top for mobile */
         gap: 8px;
     }
     .leaflet-top.leaflet-left {
         top: 0px !important; /* Adjusted top for mobile */
-        width: 100%; /* Take full width on mobile */
-        left: 0; /* Align to left on mobile */
-        right: auto; /* Remove right positioning */
-        /* Apply background, padding, border-radius, box-shadow here for mobile */
-        background: white;
-        padding: 6px 8px; /* Mobile padding for the control box */
-        border-radius: 8px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.15);
     }
-    /* Mobile zoom buttons (+- 30px height) */
-    .leaflet-control-zoom a {
-        height: 30px !important;
-        line-height: 30px !important;
-    }
-
 
     .leaflet-bottom.leaflet-right {
         bottom: 30px !important; /* Adjusted for mobile */
@@ -699,7 +671,7 @@ html, body {
     }
 
     .leaflet-top.leaflet-right {
-        top: calc(42px + 8px) !important; /* Further adjustment for very small screens */
+        top: 0px !important; /* Further adjustment for very small screens */
     }
     .leaflet-top.leaflet-left {
         top: 0px !important; /* Further adjustment for very small screens */
