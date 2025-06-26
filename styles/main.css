@@ -497,27 +497,6 @@ html, body {
    7. Information & Error Messages
    ===================================== */
 
-/* Last Updated 텍스트 스타일 (저작권 정보와 무관하게 독립적) */
-.last-updated-info {
-    position: fixed;
-    right: 10px; /* 우측 상단 컨트롤과 동일한 여백 */
-    bottom: 30px;
-    background-color: rgba(255, 255, 255, 0.9);
-    padding: 6px 10px;
-    border-radius: 5px;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
-    font-family: 'Noto Sans KR', sans-serif;
-    font-size: 14px;
-    color: #333;
-    font-weight: 600;
-    white-space: nowrap;
-    text-align: right;
-    max-width: calc(100% - 20px); /* 화면 너비에 맞춤 */
-    z-index: 1000;
-    pointer-events: none;
-    margin: 0 !important;
-}
-
 /* Error message control */
 .error-message {
     background-color: #ffe0e0; /* Light red */
@@ -539,7 +518,7 @@ html, body {
 /* Base style for custom DivIcons (used for individual markers) */
 .custom-div-icon {
     /* No specific styles here as the inner div handles visual properties.
-       This class can be used for debugging or additional outer wrappers. */
+        This class can be used for debugging or additional outer wrappers. */
 }
 
 /* Style for the actual circular marker inside custom-div-icon */
@@ -671,12 +650,5 @@ html, body {
 
     .leaflet-bottom.leaflet-right {
         bottom: 20px !important;
-    }
-
-    .last-updated-info {
-        right: 10px !important;
-        bottom: 35px !important; /* 모바일에서 더 올림 */
-        max-width: calc(100% - 20px); /* 화면 너비에 맞춤 */
-        font-size: 12px; /* 글자 크기 축소 */
     }
 }
