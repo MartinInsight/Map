@@ -99,8 +99,7 @@ html, body {
 /* Removed hover effects for zoom buttons to prevent inconsistent shadows */
 .leaflet-control-zoom a:hover {
     background-color: #f5f5f5 !important;
-    /* transform: translateY(-1px); */ /* Removed */
-    /* box-shadow: 0 3px 7px rgba(0,0,0,0.15) !important; */ /* Removed */
+    box-shadow: none !important; /* Explicitly remove box-shadow on hover */
 }
 
 /* Ensure no shadow or transform on active (click) state for zoom buttons */
@@ -266,18 +265,14 @@ html, body {
 /* Truck specific styles for the toggle buttons (if used by other maps) */
 .truck-toggle-map-control { /* Wrapper for truck toggle buttons */
     position: absolute;
-    top: 10px;
+    top: 5px !important; /* Adjusted top to be consistent with other top controls */
     left: 50%;
     transform: translateX(-50%);
     z-index: 1000;
     display: flex;
     gap: 0; /* Buttons are adjacent */
-    padding: 0; /* Padding is on .map-control-container */
-    /* Add common control container styles to this wrapper too */
-    background: white;
-    padding: 8px 12px;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+    padding: 0; /* No padding on this container */
+    /* REMOVED: background, padding, border-radius, box-shadow from here */
 }
 
 .truck-toggle-btn {
@@ -335,7 +330,7 @@ html, body {
     display: flex;
     flex-direction: column; /* Controls stack vertically */
     gap: 10px;
-    top: 10px !important;
+    top: 5px !important; /* Adjusted top for desktop */
     right: 10px !important;
     width: auto;
     height: auto;
@@ -343,7 +338,7 @@ html, body {
 
 /* Top left (for zoom buttons) */
 .leaflet-top.leaflet-left {
-    top: 10px !important;
+    top: 5px !important; /* Adjusted top for desktop */
     left: 10px !important;
     transform: none !important;
     width: auto;
@@ -611,11 +606,11 @@ html, body {
 
     /* Adjust position for top controls on mobile (closer to top tab) */
     .leaflet-top.leaflet-right {
-        top: 40px !important; /* Adjusted for smaller tab height and closer distance */
+        top: 5px !important; /* Adjusted top for mobile */
         gap: 8px;
     }
     .leaflet-top.leaflet-left {
-        top: 40px !important; /* Adjusted for smaller tab height and closer distance */
+        top: 5px !important; /* Adjusted top for mobile */
     }
 
     .leaflet-bottom.leaflet-right {
@@ -631,32 +626,23 @@ html, body {
 
     /* Truck toggle specific adjustments for mobile layout - Reverted to horizontal, apply common control container styles */
     .truck-toggle-map-control {
-        top: 40px; /* Aligned with other top controls */
-        /* Ensure display flex and flex-direction row are active */
+        top: 5px !important; /* Aligned with other top controls */
         display: flex;
         flex-direction: row;
-        /* Re-apply common control container styles */
-        background: white;
-        padding: 8px 12px;
-        border-radius: 8px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.15);
-        /* Ensure it remains centered horizontally */
         width: fit-content;
         left: 50%;
         transform: translateX(-50%);
     }
 
     .truck-toggle-btn {
-        /* Keep font size, height, padding, min-width adjustments for mobile */
         font-size: 12px;
         height: 30px;
         min-width: unset;
         padding: 0 10px;
         /* Revert border-radius and border to desktop logic (handled by general rules) */
-        border-radius: 0; /* Remove mobile overrides from previous attempts */
-        border: 1px solid #e0e0e0; /* Explicitly set border for mobile if needed */
+        /* Specific overrides for truck-toggle-btn that were removed for mobile stacking are now re-evaluated */
+        border-radius: 0; /* Ensures consistent rounding, allowing first/last child to apply */
     }
-    /* Specific overrides for truck-toggle-btn that were removed for mobile stacking are now re-evaluated */
     .truck-toggle-btn:first-child {
         border-top-left-radius: 6px;
         border-bottom-left-radius: 6px;
@@ -681,14 +667,14 @@ html, body {
     }
 
     .leaflet-top.leaflet-right {
-        top: 30px !important; /* Further adjustment for very small screens */
+        top: 5px !important; /* Further adjustment for very small screens */
     }
     .leaflet-top.leaflet-left {
-        top: 30px !important; /* Further adjustment for very small screens */
+        top: 5px !important; /* Further adjustment for very small screens */
     }
     
     .truck-toggle-map-control {
-        top: 30px; /* Aligned with other top controls for very small screens */
+        top: 5px !important; /* Aligned with other top controls for very small screens */
     }
 
     .leaflet-bottom.leaflet-right {
