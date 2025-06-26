@@ -53,7 +53,8 @@ def fetch_rail_data():
                     'location': location.strip(),
                     'lat': lat,
                     'lng': lng,
-                    'congestion_score': safe_convert(row.get('Dwell Time')),
+                    'dwell_time': safe_convert(row.get('Dwell Time')),
+                    'Average': safe_convert(row.get('Average')),
                     'indicator': safe_convert(row.get('Indicator')),
                     'congestion_level': row.get('Category', 'Unknown')
                 }
