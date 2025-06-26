@@ -520,15 +520,34 @@ class RailCongestionMap {
     /**
      * 지도 우측 상단에 필터 드롭다운과 리셋 버튼 컨트롤을 추가합니다.
      */
-    addRightControls() {
-        if (this.filterControlInstance) {
-            this.map.removeControl(this.filterControlInstance);
-        }
-
-        const control = L.control({ position: 'topright' });
-
-        control.onAdd = () => {
-            const div = L.DomUtil.create('div', 'map-control-group-right');
+        addRightControls() {
+            if (this.filterControlInstance) {
+                this.map.removeControl(this.filterControlInstance);
+            }
+        
+            const control = L.control({ position: 'topright' });
+        
+            control.onAdd = () => {
+                const div = L.DomUtil.create('div', 'map-control-group-right');
+                
+                // 줌 컨트롤 추가
+                const zoomControl = L.DomUtil.create('div', 'leaflet-control-zoom');
+                zoomControl.innerHTML = `
+                    <a class="leaflet-control-zoom-in" href="#" title="Zoom in">+</a>
+                    <a class="leaflet-control-zoom-out" href="#" title="Zoom out">-</a>
+                `;
+                div.appendChild(zoomControl);
+                
+                // 줌 버튼 이벤트 핸들러
+                zoomControl.querySelector('.leaflet-control-zoom-in').addEventListener('click', (e) => {
+                    e.preventDefault();
+                    this.map.zoomIn();
+                });
+                
+                zoomControl.querySelector('.leaflet-control-zoom-out').addEventListener('click', (e) => {
+                    e.preventDefault();
+                    this.map.zoomOut();
+                });
 
             const validYards = this.currentData
                 .filter(item => item.Yard && item.Yard.trim() !== '')
