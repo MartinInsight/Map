@@ -675,7 +675,7 @@ html, body {
 
     .last-updated-info {
         right: 10px !important;
-        bottom: 25px !important; /* 모바일에서 더 올림 */
+        bottom: 30px !important; /* 모바일에서 더 올림 */
         max-width: calc(100% - 20px); /* 화면 너비에 맞춤 */
         font-size: 12px; /* 글자 크기 축소 */
     }
