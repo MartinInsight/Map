@@ -187,7 +187,7 @@ html, body {
 /* Leaflet Zoom Control Styling */
 .leaflet-control-zoom {
     display: flex;
-    flex-direction: row;
+    flex-direction: row-reverse; /* 변경: 순서 반전 (- +) */
     width: 100%;
     height: 34px;
     background: transparent !important;
@@ -199,6 +199,7 @@ html, body {
 }
 
 .leaflet-control-zoom a {
+    text-decoration: none !important;
     width: 50% !important;
     height: 34px !important;
     background-color: white !important;
@@ -422,7 +423,7 @@ html, body {
     margin-top: 0;
     margin-bottom: 8px;
     font-size: 18px;
-    color: #007bff; /* Primary color for location name */
+    color: #003A52;
     border-bottom: 1px solid #eee;
     padding-bottom: 5px;
 }
@@ -494,18 +495,33 @@ html, body {
 
 /* Last Updated Info Control - Now with a background box */
 .last-updated-info {
+    /* 기존 스타일 유지 */
     font-family: 'Noto Sans KR', sans-serif;
     font-size: 14px;
-    background-color: rgba(255, 255, 255, 0.9); /* Opaque white box */
-    padding: 6px 10px; /* Padding for the box */
+    background-color: rgba(255, 255, 255, 0.9);
+    padding: 6px 10px;
     border-radius: 5px;
     box-shadow: 0 1px 4px rgba(0,0,0,0.1);
-    color: #333; /* Darker text on white background */
+    color: #333;
     font-weight: 600;
     white-space: nowrap;
     line-height: 1.2;
-    pointer-events: none; /* Make text non-interactive to not block map clicks */
-    z-index: 1001; /* Ensure it is above other elements in the same position */
+    pointer-events: none;
+    z-index: 1001;
+    
+    /* 추가: 우측 정렬 및 너비 조정 */
+    position: absolute;
+    right: 10px;
+    text-align: right;
+    max-width: calc(160px - 20px); /* 컨트롤 박스 너비에 맞춤 */
+}
+
+/* 모바일 대응 추가 */
+@media (max-width: 768px) {
+    .last-updated-info {
+        right: 10px !important;
+        max-width: calc(100% - 20px);
+    }
 }
 
 /* Error message control */
