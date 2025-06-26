@@ -272,10 +272,10 @@ html, body {
     z-index: 1000;
     display: flex;
     gap: 0; /* Buttons are adjacent */
-    padding: 0; /* No padding on this container */
-    background: none !important; /* Explicitly remove background */
-    border-radius: 0 !important; /* Explicitly remove border-radius */
-    box-shadow: none !important; /* Explicitly remove box-shadow */
+    padding: 8px 12px; /* Restore padding to contain buttons properly */
+    background: white; /* Restore background */
+    border-radius: 8px; /* Restore border-radius */
+    box-shadow: 0 2px 10px rgba(0,0,0,0.15); /* Restore box-shadow */
 }
 
 .truck-toggle-btn {
