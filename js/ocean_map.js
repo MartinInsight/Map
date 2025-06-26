@@ -418,7 +418,7 @@ class OceanCongestionMap {
             const level = this.getCongestionLevelByDelay(item.current_delay_days);
             const portName = item.port || 'Unknown Port';
             const country = item.country || 'Unknown Country';
-            // Removed 'Current Delay' as requested by the user.
+            const currentDelay = (typeof item.current_delay === 'number' && !isNaN(item.current_delay)) ? item.current_delay.toFixed(1) : 'N/A';
             const currentDelayDays = (typeof item.current_delay_days === 'number' && !isNaN(item.current_delay_days)) ? item.current_delay_days.toFixed(1) : 'N/A';
             const weeklyMedianDelay = (typeof item.weekly_median_delay === 'number' && !isNaN(item.weekly_median_delay)) ? item.weekly_median_delay.toFixed(1) : 'N/A';
             const monthlyMaxDelay = (typeof item.monthly_max_delay === 'number' && !isNaN(item.monthly_max_delay)) ? item.monthly_max_delay.toFixed(1) : 'N/A';
@@ -434,6 +434,7 @@ class OceanCongestionMap {
                                     ${level}
                                 </span>
                             </p>
+                            <p><strong>Current Delay:</strong> ${currentDelay} hours</p>
                             <p><strong>Current Delay Days:</strong> ${currentDelayDays} days</p>
                             <p><strong>Port Code:</strong> ${portCode}</p>
                             <p><strong>Weekly Median Delay:</strong> ${weeklyMedianDelay} days</p>
@@ -657,18 +658,12 @@ class OceanCongestionMap {
      */
     getCongestionLevelByDelay(delayDays) {
         if (delayDays == null || isNaN(delayDays)) return 'Unknown';
-        // Changed based on user feedback:
-        // 0 days: Very Low
-        // 1-2 days: Low
-        // 3-5 days: Average
-        // 6-9 days: High
-        // 10+ days: Very High
+        // Thresholds aligned with Rail/Air CongestionMap's logic, adapted for delay days
         if (delayDays >= 10) return 'Very High';
-        if (delayDays >= 6) return 'High';
-        if (delayDays >= 3) return 'Average';
-        if (delayDays >= 1) return 'Low';
-        if (delayDays === 0) return 'Very Low';
-        return 'Unknown'; // Fallback for unexpected values
+        if (delayDays >= 5) return 'High';
+        if (delayDays >= 2) return 'Average';
+        if (delayDays >= 0.5) return 'Low'; // Small delay
+        return 'Very Low'; // No or minimal delay
     }
 
     /**
