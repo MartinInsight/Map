@@ -193,8 +193,9 @@ class RailCongestionMap {
                 company: item.company |
 | item.Railroad |
 | 'Unknown',
+                // [3] item.congestion_score가 없으면 item을 사용합니다.
                 congestion_score: parseFloat(item.congestion_score |
-| item),
+| item), 
                 indicator: parseFloat(item.indicator |
 | item.Indicator),
                 congestion_level: item.congestion_level |
@@ -211,16 +212,16 @@ class RailCongestionMap {
             processedData.forEach(item => {
                 const coordKey = `${item.lat},${item.lng}`;
                 if (!coordinateMap.has(coordKey)) {
-                    coordinateMap.set(coordKey,);
+                    coordinateMap.set(coordKey,); // 배열 초기화
                 }
                 coordinateMap.get(coordKey).push(item);
             });
 
-            const jitteredData =;
+            const jitteredData =; // 배열 초기화
             coordinateMap.forEach(itemsAtCoord => {
                 if (itemsAtCoord.length > 1) {
-                    const baseLat = itemsAtCoord.lat;
-                    const baseLng = itemsAtCoord.lng;
+                    const baseLat = itemsAtCoord.lat; // 배열의 첫 번째 요소에 접근
+                    const baseLng = itemsAtCoord.lng; // 배열의 첫 번째 요소에 접근
                     
                     const offsetScale = 0.1;
 
@@ -234,14 +235,14 @@ class RailCongestionMap {
                         jitteredData.push(item);
                     });
                 } else {
-                    jitteredData.push(itemsAtCoord);
+                    jitteredData.push(itemsAtCoord); // 배열의 첫 번째 요소에 접근
                 }
             });
 
             this.currentData = jitteredData;
 
             if (this.currentData.length > 0) {
-                this.lastUpdated = this.currentData.date;
+                this.lastUpdated = this.currentData.date; // 배열의 첫 번째 요소에 접근
             }
 
             this.renderMarkers();
@@ -257,7 +258,8 @@ class RailCongestionMap {
     
     renderMarkers(data = this.currentData) {
         if (!data |
-| data.length === 0) {
+| data.length === 0) { // |
+| 연산자 수정
             console.warn("No data provided to renderMarkers or data is empty. Clearing map layers.");
             this.allMarkers.clearLayers();
             if (this.map.hasLayer(this.allMarkers)) {
@@ -304,9 +306,9 @@ class RailCongestionMap {
                     maxHeight: 300,
                     maxWidth: 300
                 })
-              .setLatLng(a.latlng)
-              .setContent(popupContent)
-              .openOn(this.map);
+               .setLatLng(a.latlng)
+               .setContent(popupContent)
+               .openOn(this.map);
             });
 
             this.allMarkers.off('clustermouseout');
@@ -318,7 +320,8 @@ class RailCongestionMap {
 
     createSingleMarker(item) {
         const level = item.congestion_level |
-| 'Average';
+| 'Average'; // |
+| 연산자 수정
         const color = this.getColor(level);
         const radius = this.getRadiusByIndicator(item.indicator);
 
@@ -430,17 +433,21 @@ class RailCongestionMap {
             if (!item |
 | typeof item!== 'object' |
 | typeof item.lat === 'undefined' |
-| typeof item.lng === 'undefined') {
+| typeof item.lng === 'undefined') { // |
+| 연산자 수정
                 console.warn("Skipping invalid or incomplete item in popup content:", item);
                 return;
             }
         
             const level = item.congestion_level |
-| 'Unknown';
+| 'Unknown'; // |
+| 연산자 수정
             const company = item.company |
-| 'Unknown';
+| 'Unknown'; // |
+| 연산자 수정
             const location = item.location |
-| 'Unknown Location';
+| 'Unknown Location'; // |
+| 연산자 수정
             const congestionScore = (typeof item.congestion_score === 'number' &&!isNaN(item.congestion_score))? item.congestion_score.toFixed(1) : 'N/A';
         
             content += `
@@ -463,7 +470,8 @@ class RailCongestionMap {
         }
         
         return content |
-| '<p>No valid data to display for this location.</p>';
+| '<p>No valid data to display for this location.</p>'; // |
+| 연산자 수정
     }
 
     addLastUpdatedText() {
@@ -506,10 +514,10 @@ class RailCongestionMap {
             const div = L.DomUtil.create('div', 'map-control-group-right');
 
             const validYards = this.currentData
-              .filter(item => item.Yard && item.Yard.trim()!== '')
-              .map(item => item.Yard);
+               .filter(item => item.Yard && item.Yard.trim()!== '')
+               .map(item => item.Yard);
 
-            const yards =.sort((a, b) => a.localeCompare(b));
+            const yards =.sort((a, b) => a.localeCompare(b)); // 배열 초기화 및 Set 사용
 
             const filterDropdownHtml = `
                 <select class="yard-filter">
@@ -600,7 +608,7 @@ class RailCongestionMap {
         legend.onAdd = function (map) {
             const div = L.DomUtil.create('div', 'info legend');
             const levels = ['Very High', 'High', 'Low', 'Very Low', 'Average'];
-            const labels =;
+            const labels =; // 배열 초기화
 
             for (let i = 0; i < levels.length; i++) {
                 const level = levels[i];
@@ -620,7 +628,8 @@ class RailCongestionMap {
 
     getYardCenter(yardData) {
         if (!yardData |
-| yardData.length === 0) return [37.8, -96];
+| yardData.length === 0) return [37.8, -96]; // |
+| 연산자 수정
 
         const lats = yardData.map(item => item.lat);
         const lngs = yardData.map(item => item.lng);
