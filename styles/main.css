@@ -499,9 +499,9 @@ html, body {
 
 /* Last Updated 텍스트 스타일 (저작권 정보와 무관하게 독립적) */
 .last-updated-info {
-    position: fixed; /* 고정 위치 */
-    right: 10px; /* 우측 여백 = 컨트롤 박스와 동일 */
-    bottom: 30px; /* 저작권 정보 바로 위 (기본값: 20px) */
+    position: fixed;
+    right: 10px; /* 우측 상단 컨트롤과 동일한 여백 */
+    bottom: 30px;
     background-color: rgba(255, 255, 255, 0.9);
     padding: 6px 10px;
     border-radius: 5px;
@@ -512,10 +512,10 @@ html, body {
     font-weight: 600;
     white-space: nowrap;
     text-align: right;
-    max-width: 160px; /* 컨트롤 박스와 동일 너비 */
-    z-index: 1000; /* 지도 요소 위에 고정 표시 */
-    pointer-events: none; /* 클릭 방지 */
-    margin: 0 !important; /* 기본 마진 제거 */
+    max-width: calc(100% - 20px); /* 화면 너비에 맞춤 */
+    z-index: 1000;
+    pointer-events: none;
+    margin: 0 !important;
 }
 
 /* Error message control */
