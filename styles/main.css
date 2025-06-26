@@ -96,10 +96,11 @@ html, body {
     border-top: none !important; /* Connects with '+' button */
 }
 
+/* Removed hover effects for zoom buttons to prevent inconsistent shadows */
 .leaflet-control-zoom a:hover {
     background-color: #f5f5f5 !important;
-    transform: translateY(-1px);
-    box-shadow: 0 3px 7px rgba(0,0,0,0.15) !important;
+    /* transform: translateY(-1px); */ /* Removed */
+    /* box-shadow: 0 3px 7px rgba(0,0,0,0.15) !important; */ /* Removed */
 }
 
 /* Remove margin between zoom buttons to make them stick together */
@@ -348,15 +349,15 @@ html, body {
     height: auto;
 }
 
-/* Bottom left (for last updated info) */
+/* Bottom left (for last updated info) - Now last-updated-info is in bottom-right, this can be simplified */
 .leaflet-bottom.leaflet-left {
     bottom: 10px !important;
     left: 10px !important;
     width: auto;
     height: auto;
     margin-bottom: 0;
-    z-index: 9999 !important; /* Ensure it's on top */
-    pointer-events: none; /* Clicks pass through to map */
+    /* z-index: 9999 !important; /* No longer specifically for last-updated-info */
+    /* pointer-events: none; /* No longer specifically for last-updated-info */
 }
 
 
@@ -383,17 +384,6 @@ html, body {
 .leaflet-popup-content strong {
     color: #444;
     font-weight: 500;
-}
-
-/* Custom marker tooltip styling (for bindTooltip) */
-.custom-marker-tooltip {
-    background-color: rgba(0, 0, 0, 0.7);
-    color: white;
-    border: none;
-    border-radius: 5px;
-    padding: 5px 8px;
-    font-size: 12px;
-    white-space: nowrap; /* Tooltip content on single line */
 }
 
 /* Single marker popup styling (detailed information) */
@@ -485,35 +475,30 @@ html, body {
    7. Information & Error Messages
    ===================================== */
 
-/* Last Updated Info Control */
+/* Last Updated Info Control - Now with a background box */
 .last-updated-info {
     font-family: 'Noto Sans KR', sans-serif;
     font-size: 14px;
-    background-color: transparent; /* Background is map */
-    padding: 0;
-    border-radius: 0;
-    box-shadow: none;
-    border: none;
-    color: black;
+    background-color: rgba(255, 255, 255, 0.9); /* Opaque white box */
+    padding: 6px 10px; /* Padding for the box */
+    border-radius: 5px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    color: #333; /* Darker text on white background */
     font-weight: 600;
-    /* Subtle white outline for readability on varying map backgrounds */
-    text-shadow:
-        -0.5px -0.5px 0 #fff,
-         0.5px -0.5px 0 #fff,
-        -0.5px  0.5px 0 #fff,
-         0.5px  0.5px 0 #fff;
     white-space: nowrap;
     line-height: 1.2;
+    /* text-shadow removed as it's no longer needed on a solid background */
     pointer-events: none; /* Make text non-interactive to not block map clicks */
+    z-index: 1001; /* Ensure it is above other elements in the same position */
 }
 
 /* Error message control */
 .error-message {
-    background-color: #fdd; /* Light red */
-    color: #c00; /* Darker red text */
+    background-color: #ffe0e0; /* Light red */
+    color: #d63031; /* Darker red text */
     padding: 10px 15px;
     border-radius: 5px;
-    border: 1px solid #c00;
+    border: 1px solid #d63031;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
     font-weight: bold;
     font-size: 14px;
@@ -614,18 +599,18 @@ html, body {
         min-width: unset; /* Remove min-width constraint */
     }
 
-    /* Adjust position for top controls on mobile (below tabs) */
+    /* Adjust position for top controls on mobile (closer to top tab) */
     .leaflet-top.leaflet-right {
-        top: 50px !important; /* Adjusted for smaller tab height */
+        top: 45px !important; /* Adjusted for smaller tab height and closer distance */
         gap: 8px;
     }
     .leaflet-top.leaflet-left {
-        top: 50px !important;
+        top: 45px !important; /* Adjusted for smaller tab height and closer distance */
     }
 
     .leaflet-bottom.leaflet-right {
-        bottom: 30px !important;
-        right: 5px !important;
+        bottom: 30px !important; /* Adjusted for mobile */
+        right: 5px !important; /* Adjusted for mobile */
     }
 
     .leaflet-popup-content {
@@ -668,10 +653,10 @@ html, body {
     }
 
     .leaflet-top.leaflet-right {
-        top: 40px !important;
+        top: 35px !important; /* Further adjustment for very small screens */
     }
     .leaflet-top.leaflet-left {
-        top: 40px !important;
+        top: 35px !important; /* Further adjustment for very small screens */
     }
 
     .leaflet-bottom.leaflet-right {
@@ -680,6 +665,5 @@ html, body {
 
     .last-updated-info {
         font-size: 12px;
-        /* padding: 6px 8px; Removed padding as it's transparent */
     }
 }
