@@ -151,22 +151,22 @@ class TruckCongestionMap {
 
     /**
      * Returns the fill color based on the conceptual congestion level (9 levels).
-     * Uses a diverging Red-Yellow-Green (RdYlGn) scale for consistency with other maps,
-     * where red signifies congestion (volume decrease) and green signifies clear flow (volume increase).
+     * Uses a diverging Blue-Gray-Red scale. Blue signifies good flow (volume increase),
+     * Gray signifies no change, and Red signifies congestion (volume decrease).
      * @param {string} level - Congestion level string.
      * @returns {string} CSS color code.
      */
     getColor(level) {
         const fillColors = {
-            'Extremely High Congestion': '#a50026', // Darkest Red for significant decrease
-            'Very High Congestion': '#d73027',      // Red
-            'High Congestion': '#f46d43',           // Orange-Red
-            'Moderate Congestion': '#fdae61',       // Orange (approaching no change)
-            'No Change (Steady)': '#fee08b',        // Yellow (neutral)
-            'Low Congestion': '#d9ef8b',            // Light Green-Yellow (slight increase)
-            'Very Low Congestion': '#a6d96a',       // Light Green
-            'Minimal Congestion': '#66bd63',        // Green
-            'Optimal Flow (Highly Clear)': '#1a9850', // Darkest Green for significant increase
+            'Extremely High Congestion': '#d73027', // Strong Red
+            'Very High Congestion': '#fc8d59',      // Red-Orange
+            'High Congestion': '#fdae61',           // Orange
+            'Moderate Congestion': '#fee08b',       // Yellow-Orange
+            'No Change (Steady)': '#9e9e9e',        // Gray (Consistent with Average in other maps)
+            'Low Congestion': '#90CAF9',            // Light Blue
+            'Very Low Congestion': '#64B5F6',       // Medium Blue
+            'Minimal Congestion': '#42A5F5',        // Blue
+            'Optimal Flow (Highly Clear)': '#2196F3', // Darker Blue
             'Unknown': '#cccccc'                    // Default grey
         };
         return fillColors[level] || '#cccccc';
@@ -178,17 +178,17 @@ class TruckCongestionMap {
      * @returns {string} CSS color code for text.
      */
     getTextColorForLevel(level) {
-        // Consistent text colors for better contrast across all maps
+        // Text colors adjusted for contrast on new background colors.
         const textColors = {
             'Extremely High Congestion': '#7f0000',  // Darker Red
             'Very High Congestion': '#b71c1c',       // Darker red
             'High Congestion': '#e65100',            // Darker orange
-            'Moderate Congestion': '#616161',        // Darker gray (for orange/yellow backgrounds)
-            'No Change (Steady)': '#616161',         // Darker gray for yellow
-            'Low Congestion': '#2196F3',             // Darker light blue (shifted towards blue for better contrast on greens)
-            'Very Low Congestion': '#1976D2',        // Darker blue
-            'Minimal Congestion': '#006837',         // Darker Green
-            'Optimal Flow (Highly Clear)': '#006837', // Darker Green
+            'Moderate Congestion': '#616161',        // Darker gray (for yellow/orange backgrounds)
+            'No Change (Steady)': '#333333',         // Darker gray for gray background
+            'Low Congestion': '#1976D2',             // Darker blue
+            'Very Low Congestion': '#1565C0',        // Darker blue
+            'Minimal Congestion': '#0D47A1',         // Darker blue
+            'Optimal Flow (Highly Clear)': '#0A3B8B', // Even Darker Blue
             'Unknown': '#5e5e5e'                      // Darker default gray
         };
         return textColors[level] || '#5e5e5e';
@@ -256,7 +256,7 @@ class TruckCongestionMap {
         const format = (v) => isNaN(Number(v)) ? 'N/A' : Number(v).toFixed(2); // Keep sign for display
         const isInbound = this.currentMode === 'inbound';
         const delayPercentage = isInbound ? data.inboundDelay : data.outboundDelay;
-        const dwellValue = isInbound ? data.dwellInbound : data.dwellOutbound; // Corrected to data.dwellOutbound
+        const dwellValue = isInbound ? data.dwellInbound : data.dwellOutbound;
         
         const congestionLevel = this.getCongestionLevelByTruckValue(delayPercentage);
         const levelColor = this.getTextColorForLevel(congestionLevel);
