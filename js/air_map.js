@@ -613,7 +613,6 @@ class AirCongestionMap {
     getRadiusByA14(a14) {
         if (a14 == null || isNaN(a14)) return 6; // Default size for unknown/null
         // Radii are inversely proportional to A14 (lower A14 = larger marker)
-        // Updated based on user feedback: 3-tier original with 5-tier mapping
         if (a14 < 60) return 14; // Very High Congestion
         if (a14 < 70) return 12; // High Congestion
         if (a14 < 80) return 10; // Average Congestion
@@ -628,7 +627,6 @@ class AirCongestionMap {
      */
     getCongestionLevelByA14(a14) {
         if (a14 == null || isNaN(a14)) return 'Unknown';
-        // Updated based on user feedback: 3-tier original with 5-tier mapping
         if (a14 < 60) return 'Very High'; // < 60%
         if (a14 < 70) return 'High';      // 60-69%
         if (a14 < 80) return 'Average';   // 70-79%
@@ -647,7 +645,7 @@ class AirCongestionMap {
         const colors = {
             'Very High': '#E53935',  // Red
             'High': '#FFB300',       // Orange
-            'Average': '#9E9E9E',    // Gray (reverted from yellow for consistency in 5-tier context)
+            'Average': '#9E9E9E',    // Gray
             'Low': '#90CAF9',        // Light Blue
             'Very Low': '#42A5F5',   // Blue
             'Unknown': '#cccccc'     // Default gray for unknown
@@ -672,7 +670,6 @@ class AirCongestionMap {
         };
         return textColors[level] || '#5e5e5e';
     }
-
 
     /**
      * Displays a temporary error message on the map.
