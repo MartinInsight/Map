@@ -67,14 +67,15 @@ html, body {
     flex-direction: row-reverse; /* 변경: +가 오른쪽에, -가 왼쪽에 오도록 순서 반전 */
     width: 100%; /* 부모 컨테이너 너비를 채움 */
     height: 34px; /* 버튼 높이 고정 */
+    /* background-color, box-shadow, border는 이제 상위 .leaflet-top.leaflet-right에서 관리 */
 }
 
 .leaflet-control-zoom a {
     width: 50% !important; /* 각 버튼이 전체 너비의 절반을 차지 */
     height: 34px !important;
-    background-color: white !important;
+    background-color: white !important; /* 개별 버튼 배경 유지 */
     box-shadow: none !important; /* 그림자 제거 */
-    border: 1px solid #e0e0e0 !important;
+    border: 1px solid #e0e0e0 !important; /* 개별 버튼 테두리 유지 */
     transition: all 0.2s;
     background-image: none !important; /* 기본 Leaflet 줌 아이콘 제거 */
     text-indent: 0 !important;
@@ -201,10 +202,11 @@ html, body {
 /* Common styling for control boxes (Reset button, Filter box, Toggle buttons container) */
 /* .map-control-container는 현재 사용되지 않으며, .map-control-group-right가 우측 상단 컨트롤을 포함 */
 .map-control-group-right {
-    background: white;
-    padding: 8px 12px;
-    border-radius: 8px;
-    box-shadow: none; /* 컨테이너 그림자 제거 */
+    /* 이 컨테이너의 배경, 패딩, 테두리, 그림자는 이제 상위 .leaflet-top.leaflet-right에서 관리 */
+    background: none; /* 배경 제거 */
+    padding: 0; /* 내부 패딩 제거 */
+    border-radius: 0; /* 테두리 반경 제거 */
+    box-shadow: none; /* 그림자 제거 */
     display: flex;
     flex-direction: column; /* Reset과 Select를 수직으로 쌓음 */
     align-items: stretch; /* 자식 요소들을 너비에 맞춰 확장 */
@@ -217,7 +219,7 @@ html, body {
 .reset-btn {
     width: 100%; /* 부모(.map-control-group-right)의 너비를 채움 */
     padding: 0 15px;
-    background: white;
+    background: white; /* 개별 버튼 배경 유지 */
     border: 1px solid #e0e0e0;
     border-radius: 6px;
     cursor: pointer;
@@ -247,7 +249,7 @@ html, body {
     font-size: 13px;
     font-family: 'Noto Sans KR', sans-serif;
     font-weight: 500;
-    background-color: #f9f9f9;
+    background-color: #f9f9f9; /* 개별 셀렉트 배경 유지 */
     transition: all 0.2s;
     color: #333;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='%23003A52'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
@@ -335,11 +337,15 @@ html, body {
 .leaflet-top.leaflet-right {
     display: flex;
     flex-direction: column; /* Controls stack vertically */
-    gap: 8px; /* 줌 블록, 리셋/셀렉트 블록 간의 간격 조정 */
+    gap: 8px; /* 모든 컨트롤 블록(줌, 리셋, 셀렉트) 사이의 간격 */
     top: 10px !important; /* 데스크톱 상단 위치 조정 */
     right: 10px !important;
     width: 160px; /* 데스크톱에서 모든 컨트롤의 고정 너비 */
     height: auto;
+    background: white; /* 전체 컨트롤 블록의 통합 배경 */
+    padding: 8px 12px; /* 전체 컨트롤 블록의 통합 패딩 */
+    border-radius: 8px;
+    box-shadow: none; /* 전체 컨테이너 그림자 제거 */
 }
 
 /* Top left (originally for zoom buttons) - now hidden/reset */
@@ -610,12 +616,13 @@ html, body {
         max-width: 160px; /* PC 크기보다 넓어지지 않도록 고정 */
         right: 10px !important;
         margin-left: auto; /* 우측 정렬 */
+        padding: 6px 8px; /* 모바일에서 전체 컨트롤 블록의 패딩 조정 */
     }
 
     .map-control-container,
     .map-control-group-right {
         width: 100%; /* 부모(.leaflet-top.leaflet-right) 너비에 맞춰 확장 */
-        padding: 6px 8px; /* 모바일에서 내부 패딩 조정 */
+        padding: 0; /* 내부 패딩 제거 */
         gap: 6px; /* 모바일에서 리셋/셀렉트 버튼 간의 내부 간격 조정 */
     }
 
