@@ -1,15 +1,114 @@
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600&display=swap');
 
-/* Basic Styles */
+/* =====================================
+   1. Base Styles & Typography
+   ===================================== */
 html, body {
     height: 100%;
     margin: 0;
     padding: 0;
-    overflow: hidden;
+    overflow: hidden; /* Prevent body scroll, map handles its own scroll */
     font-family: 'Noto Sans KR', sans-serif;
+    color: #333; /* Default text color */
 }
 
-/* Tab Menu Styles */
+/* =====================================
+   2. Global Leaflet Overrides
+   ===================================== */
+/* Leaflet default control box style override (remove default background/padding/shadow) */
+.leaflet-control {
+    background: none !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+/* Adjusted Leaflet Popups' structural styles */
+.leaflet-popup {
+    pointer-events: none; /* Allows clicks to pass through to map when popup is not active */
+}
+
+.leaflet-popup-content-wrapper {
+    background-color: white !important;
+    border-radius: 8px !important;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2) !important;
+    padding: 0 !important; /* Managed by .leaflet-popup-content */
+    overflow: hidden;
+    font-family: 'Noto Sans KR', sans-serif !important;
+    min-width: 220px !important;
+}
+
+.leaflet-popup-content {
+    margin: 0 !important;
+    padding: 16px !important; /* Actual padding for popup content */
+}
+
+.leaflet-popup-tip-container {
+    margin-top: -1px !important; /* Adjust tip position */
+}
+
+.leaflet-popup-tip {
+    background-color: white !important;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2) !important;
+}
+
+/* Leaflet Tooltip general override (adjust default positioning slightly) */
+.leaflet-tooltip {
+    transform: translate(-50%, 0) !important;
+    left: 50% !important;
+    margin-top: 15px !important;
+}
+
+/* Leaflet Zoom Control Styling */
+.leaflet-control-zoom {
+    display: flex;
+    flex-direction: column; /* Stack zoom buttons vertically */
+}
+
+.leaflet-control-zoom a {
+    width: 34px !important;
+    height: 34px !important;
+    background-color: white !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
+    border: 1px solid #e0e0e0 !important;
+    transition: all 0.2s;
+    background-image: none !important; /* Remove default Leaflet zoom icons */
+    text-indent: 0 !important;
+    text-align: center !important;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-weight: 500 !important;
+    font-size: 13px !important;
+    line-height: 34px !important; /* Center text vertically */
+    color: #333 !important;
+}
+
+/* Specific border-radius for top (+) button */
+.leaflet-control-zoom-in {
+    border-radius: 6px 6px 0 0 !important;
+    border-bottom: none !important; /* Connects with '-' button */
+}
+
+/* Specific border-radius for bottom (-) button */
+.leaflet-control-zoom-out {
+    border-radius: 0 0 6px 6px !important;
+    border-top: none !important; /* Connects with '+' button */
+}
+
+.leaflet-control-zoom a:hover {
+    background-color: #f5f5f5 !important;
+    transform: translateY(-1px);
+    box-shadow: 0 3px 7px rgba(0,0,0,0.15) !important;
+}
+
+/* Remove margin between zoom buttons to make them stick together */
+.leaflet-control-zoom-in + .leaflet-control-zoom-out {
+    margin-top: 0 !important;
+}
+
+
+/* =====================================
+   3. Tab Menu Styles
+   ===================================== */
 .transport-tab-container {
     position: fixed;
     top: 0;
@@ -48,14 +147,14 @@ html, body {
     left: 0;
     width: 100%;
     height: 3px;
-    background-color: #00657E;
+    background-color: #00657E; /* Accent color for active tab indicator */
     opacity: 0;
     transition: opacity 0.3s ease;
 }
 
 .transport-tab.active {
     font-weight: 600;
-    color: #003A52;
+    color: #003A52; /* Darker accent for active text */
 }
 
 .transport-tab.active::after {
@@ -63,43 +162,43 @@ html, body {
 }
 
 .transport-tab:not(.active):hover::after {
-    opacity: 0.5;
+    opacity: 0.5; /* Subtle hover effect for inactive tabs */
 }
 
-/* Map Container */
+/* =====================================
+   4. Map Container Styles
+   ===================================== */
 .transport-map {
     position: fixed;
-    top: 5%;
+    top: 5%; /* Below the tab menu */
     left: 0;
     width: 100%;
-    height: 95%;
-    display: none;
+    height: 95%; /* Remaining height */
+    display: none; /* Hidden by default, activated by JS */
 }
 
 .transport-map.active {
-    display: block;
+    display: block; /* Show active map */
 }
 
-/* Leaflet default control style override */
-.leaflet-control {
-    background: none !important;
-    padding: 0 !important;
-    border: none !important;
-    box-shadow: none !important;
-}
+/* =====================================
+   5. Control Styles (Common & Specific)
+   ===================================== */
 
-/* Common Control Styles for containers (e.g., Reset button, Filter box, and the outer toggle container) */
+/* Common styling for control boxes (Reset button, Filter box, Toggle buttons container) */
 .map-control-container,
-.map-control-group-right { /* Unified styling for control boxes */
+.map-control-group-right {
     background: white;
     padding: 8px 12px;
     border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.15); /* Main container shadow */
-    display: inline-flex;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+    display: flex; /* Use flexbox for internal layout */
     align-items: center;
-    gap: 10px;
+    gap: 10px; /* Space between elements */
     width: fit-content;
     box-sizing: border-box;
+    /* Default for desktop: row layout */
+    flex-direction: row;
 }
 
 /* Reset Button Style */
@@ -141,7 +240,7 @@ html, body {
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='%23003A52'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right 10px center;
-    padding-right: 30px;
+    padding-right: 30px; /* Space for custom arrow */
     appearance: none;
     -webkit-appearance: none;
     -moz-appearance: none;
@@ -154,7 +253,18 @@ html, body {
     box-shadow: 0 0 0 2px rgba(0,101,126,0.2);
 }
 
-/* Truck specific styles for the toggle buttons */
+/* Truck specific styles for the toggle buttons (if used by other maps) */
+.truck-toggle-map-control { /* Wrapper for truck toggle buttons */
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    display: flex;
+    gap: 0; /* Buttons are adjacent */
+    padding: 0; /* Pading is on .map-control-container */
+}
+
 .truck-toggle-btn {
     padding: 0 16px;
     border: none;
@@ -171,38 +281,88 @@ html, body {
     justify-content: center;
     color: #333;
     box-sizing: border-box;
+    /* Borders for separating buttons within the group */
+    border: 1px solid #e0e0e0;
 }
 
 .truck-toggle-btn:first-child {
     border-top-left-radius: 6px;
     border-bottom-left-radius: 6px;
-    border-right: 1px solid #e0e0e0;
 }
 
 .truck-toggle-btn:last-child {
     border-top-right-radius: 6px;
     border-bottom-right-radius: 6px;
+    border-left: none; /* No double border with previous button */
 }
+
+/* Ensure intermediate buttons also have correct borders if more than 2 */
+.truck-toggle-btn:not(:first-child):not(:last-child) {
+    border-left: none;
+}
+
 
 .truck-toggle-btn.truck-active {
     background: #00657E;
     color: white;
     font-weight: 600;
-    border-color: transparent !important;
+    border-color: transparent !important; /* Active button has no border */
 }
 
 .truck-toggle-btn:not(.truck-active):hover {
     background: #f0f0f0;
 }
-.truck-toggle-btn:not(.truck-active):first-child {
-    border-right: 1px solid #e0e0e0;
+
+
+/* Control Position Adjustments */
+/* Top right for Reset and Filter controls */
+.leaflet-top.leaflet-right {
+    display: flex;
+    flex-direction: column; /* Controls stack vertically */
+    gap: 10px;
+    top: 10px !important;
+    right: 10px !important;
+    width: auto;
+    height: auto;
 }
-.truck-toggle-btn:not(.truck-active):first-child:hover {
-    border-right-color: #dcdcdc;
+
+/* Top left (for zoom buttons) */
+.leaflet-top.leaflet-left {
+    top: 10px !important;
+    left: 10px !important;
+    transform: none !important;
+    width: auto;
+    height: auto;
+}
+
+/* Bottom right (for legend - if uncommented) */
+.leaflet-bottom.leaflet-right {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    bottom: 10px !important;
+    right: 10px !important;
+    width: auto;
+    height: auto;
+}
+
+/* Bottom left (for last updated info) */
+.leaflet-bottom.leaflet-left {
+    bottom: 10px !important;
+    left: 10px !important;
+    width: auto;
+    height: auto;
+    margin-bottom: 0;
+    z-index: 9999 !important; /* Ensure it's on top */
+    pointer-events: none; /* Clicks pass through to map */
 }
 
 
-/* Common Tooltip Inner Styles (applied to Leaflet's internal popup elements) */
+/* =====================================
+   6. Popup & Tooltip Styles
+   ===================================== */
+
+/* Common Popup Content Styles */
 .leaflet-popup-content h4 {
     margin: 0 0 12px 0;
     font-size: 16px;
@@ -223,58 +383,7 @@ html, body {
     font-weight: 500;
 }
 
-/* Truck specific text colors in tooltip */
-.truck-positive {
-    color: #27ae60;
-    font-weight: 600;
-}
-
-.truck-negative {
-    color: #e74c3c;
-    font-weight: 600;
-}
-
-.truck-normal-text {
-    font-weight: 400;
-    color: #555;
-}
-
-/* Leaflet Popup Structural Styles */
-.leaflet-popup {
-    pointer-events: none;
-}
-
-.leaflet-popup-content-wrapper {
-    background-color: white !important;
-    border-radius: 8px !important;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2) !important;
-    padding: 0 !important;
-    overflow: hidden;
-    font-family: 'Noto Sans KR', sans-serif !important;
-    min-width: 220px !important;
-}
-
-.leaflet-popup-content {
-    margin: 0 !important;
-    padding: 16px !important;
-}
-
-.leaflet-popup-tip-container {
-    margin-top: -1px !important;
-}
-
-.leaflet-popup-tip {
-    background-color: white !important;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2) !important;
-}
-
-.leaflet-tooltip {
-    transform: translate(-50%, 0) !important;
-    left: 50% !important;
-    margin-top: 15px !important;
-}
-
-/* Custom marker tooltip styling */
+/* Custom marker tooltip styling (for bindTooltip) */
 .custom-marker-tooltip {
     background-color: rgba(0, 0, 0, 0.7);
     color: white;
@@ -282,45 +391,20 @@ html, body {
     border-radius: 5px;
     padding: 5px 8px;
     font-size: 12px;
-    white-space: nowrap; /* 툴팁 내용이 한 줄에 표시되도록 */
+    white-space: nowrap; /* Tooltip content on single line */
 }
 
-/* Cluster hover popup styling */
-.cluster-hover-popup .leaflet-popup-content-wrapper {
-    background: #f8f8f8;
-    color: #333;
-    border-radius: 5px;
-    padding: 10px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-}
-
-.cluster-hover-popup .leaflet-popup-tip {
-    background: #f8f8f8;
-}
-
-.cluster-hover-popup h4 {
-    margin-top: 0;
-    margin-bottom: 5px;
-    font-size: 16px;
-    color: #333;
-}
-
-.cluster-hover-popup p {
-    margin-bottom: 0;
-    font-size: 13px;
-    color: #555;
-}
-
-/* Single marker popup styling */
+/* Single marker popup styling (detailed information) */
 .single-marker-popup .leaflet-popup-content-wrapper {
     background: white;
     color: #333;
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    padding: 15px;
-    font-family: Arial, sans-serif;
+    /* padding handled by .leaflet-popup-content */
+    font-family: 'Noto Sans KR', sans-serif; /* Consistent font */
 }
 
+/* The tip shares the background of the wrapper */
 .single-marker-popup .leaflet-popup-tip {
     background: white;
 }
@@ -351,223 +435,27 @@ html, body {
     margin: 10px 0;
 }
 
-/* Last Updated Control */
-.last-updated-info {
-    background: rgba(255, 255, 255, 0.9);
-    padding: 8px 12px;
-    border-radius: 5px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    font-size: 13px;
-    color: #333;
-    font-family: Arial, sans-serif;
+/* Truck specific text colors in popup content (if used for truck map) */
+.truck-positive {
+    color: #27ae60; /* Green for positive indicators */
+    font-weight: 600;
 }
 
-/* Error message control */
-.error-message {
-    background-color: #ffcccc; /* Light red */
-    color: #cc0000; /* Dark red text */
-    padding: 10px 15px;
-    border-radius: 5px;
-    border: 1px solid #cc0000;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-    font-weight: bold;
-    font-size: 14px;
-    text-align: center;
-    z-index: 9999; /* Ensure it's on top */
+.truck-negative {
+    color: #e74c3c; /* Red for negative indicators */
+    font-weight: 600;
 }
 
-/* Custom styles for right controls (dropdown, button) */
-.map-control-group-right {
-    background-color: rgba(255, 255, 255, 0.9);
-    padding: 10px;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    display: flex;
-    flex-direction: column; /* 세로로 정렬 */
-    gap: 8px; /* 요소들 사이 간격 */
+.truck-normal-text {
+    font-weight: 400;
+    color: #555;
 }
 
-.map-control-group-right select,
-.map-control-group-right button {
-    width: 100%; /* 너비 100%로 설정 */
-    padding: 8px 12px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    font-size: 14px;
-    cursor: pointer;
-    box-sizing: border-box; /* 패딩, 보더 포함하여 너비 계산 */
-}
-
-.map-control-group-right select {
-    background-color: #f9f9f9;
-    appearance: none; /* 기본 select 스타일 제거 */
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    background-image: url('data:image/svg+xml;utf8,<svg fill="%23444" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/><path d="M0 0h24v24H0z" fill="none"/></svg>');
-    background-repeat: no-repeat;
-    background-position: right 8px center;
-    background-size: 20px;
-}
-
-.map-control-group-right button {
-    background-color: #007bff;
-    color: white;
-    transition: background-color 0.2s ease;
-}
-
-.map-control-group-right button:hover {
-    background-color: #0056b3;
-}
-
-/* Control Position Adjustments */
-/* Top right for Reset and Filter controls */
-.leaflet-top.leaflet-right {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    top: 10px !important;
-    right: 10px !important;
-    width: auto;
-    height: auto;
-}
-
-/* Top left (for zoom buttons - default position) */
-.leaflet-top.leaflet-left {
-    top: 10px !important;
-    left: 10px !important;
-    transform: none !important;
-    width: auto;
-    height: auto;
-}
-
-/* Specific styling to center the truck toggle control div within the map viewport */
-.truck-toggle-map-control {
-    position: absolute;
-    top: 10px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 1000;
-    display: flex;
-    gap: 0;
-    padding: 0;
-}
-
-/* Leaflet Zoom Control Styling */
-.leaflet-control-zoom-in,
-.leaflet-control-zoom-out {
-    font-family: 'Noto Sans KR', sans-serif;
-    font-weight: 500 !important;
-    font-size: 13px !important;
-    color: #333 !important;
-    line-height: 34px !important;
-}
-
-/* Adjust zoom control button specific styling */
-.leaflet-control-zoom a {
-    width: 34px !important;
-    height: 34px !important;
-    background-color: white !important;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
-    border: 1px solid #e0e0e0 !important;
-    transition: all 0.2s;
-    background-image: none !important;
-    text-indent: 0 !important;
-    text-align: center !important;
-}
-
-/* Specific border-radius for top (+) button */
-.leaflet-control-zoom-in {
-    border-radius: 6px 6px 0 0 !important; /* 상단 모서리 라운드, 하단 모서리 직각 (원래 66px 이었던 부분 6px로 수정) */
-    border-bottom: none !important; /* 하단 테두리 제거하여 - 버튼과 연결 */
-}
-
-/* Specific border-radius for bottom (-) button */
-.leaflet-control-zoom-out {
-    border-radius: 0 0 6px 6px !important;
-    border-top: none !important;
-}
-
-.leaflet-control-zoom a:hover {
-    background-color: #f5f5f5 !important;
-    transform: translateY(-1px);
-    box-shadow: 0 3px 7px rgba(0,0,0,0.15) !important;
-}
-
-/* Remove margin between zoom buttons to make them stick together */
-.leaflet-control-zoom-in + .leaflet-control-zoom-out {
-    margin-top: 0 !important;
-}
-
-.leaflet-control-zoom {
-    display: flex;
-    flex-direction: column;
-}
-
-
-.leaflet-bottom.leaflet-right {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    bottom: 10px !important; /* 이전 40px -> 10px로 조정 */
-    right: 10px !important;
-    width: auto;
-    height: auto;
-}
-
-/* Adjusted for last-updated-info to be explicitly positioned */
-.leaflet-bottom.leaflet-left {
-    bottom: 10px !important;
-    left: 10px !important;
-    width: auto;
-    height: auto;
-    margin-bottom: 0;
-    z-index: 9999 !important;
-    pointer-events: none;
-}
-
-/* 클러스터 마커 스타일 (DivIcon 사용으로 변경되었으므로 기존 circle marker 스타일은 제거) */
-/* L.divIcon에 의해 생성된 마커 아이콘의 내부 HTML에 적용되는 스타일 */
-.custom-div-icon {
-    /* 이 클래스는 L.divIcon의 className에 지정됩니다. */
-    /* 개별 마커의 그림자나 기타 외부 효과를 여기에 추가할 수 있습니다. */
-}
-
-.custom-div-icon div {
-    /* createSingleMarker의 iconHtml에 인라인으로 적용된 스타일과 유사하게 */
-    /* background-color, width, height, border-radius 등은 JS에서 동적으로 설정됩니다. */
-    /* 여기에 추가적인 border, box-shadow 등을 정의하여 마커 모양을 완성합니다. */
-    border: 1.5px solid white; /* 마커 테두리 */
-    box-shadow: 0 0 3px rgba(0,0,0,0.5); /* 마커 그림자 */
-    box-sizing: border-box; /* 패딩과 보더가 크기에 포함되도록 */
-    display: flex; /* 내부 컨텐츠(없지만)를 중앙에 정렬하기 위함 */
-    align-items: center;
-    justify-content: center;
-}
-
-
-/* 클러스터 아이콘 스타일 */
-.marker-cluster-custom {
-    /* L.markerClusterGroup의 iconCreateFunction에서 정의된 스타일 */
-    background-color: transparent; /* 배경색은 내부 div에서 관리 */
-}
-
-.marker-cluster-custom div {
-    border-radius: 50%;
-    color: white;
-    font-weight: bold;
-    text-align: center;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 0 3px rgba(0,0,0,0.5); /* 클러스터 아이콘 그림자 */
-    /* iconCreateFunction의 size에 따라 width, height, line-height가 inline 스타일로 적용됩니다. */
-}
-
-/* 클러스터 팝업 스타일 */
+/* Cluster popup header (when multiple items are shown in a popup after spiderfy) */
 .cluster-popup-header {
     margin-bottom: 10px;
-    border-bottom: 1px solid #eee; /* 구분선 추가 */
-    padding-bottom: 5px; /* 구분선과 내용 사이 간격 */
+    border-bottom: 1px solid #eee; /* Separator for header */
+    padding-bottom: 5px;
 }
 
 .cluster-popup-header h4, .cluster-popup-header p {
@@ -576,9 +464,9 @@ html, body {
 }
 
 .cluster-popup-content {
-    max-height: 250px;
+    max-height: 250px; /* Max height for scrollable content */
     overflow-y: auto;
-    padding-right: 5px; /* 스크롤바 공간 확보 */
+    padding-right: 5px; /* Space for scrollbar */
 }
 
 .location-info {
@@ -590,44 +478,91 @@ html, body {
     color: #333;
 }
 
-/* Last Updated Info */
+
+/* =====================================
+   7. Information & Error Messages
+   ===================================== */
+
+/* Last Updated Info Control */
 .last-updated-info {
     font-family: 'Noto Sans KR', sans-serif;
     font-size: 14px;
-    background-color: transparent;
+    background-color: transparent; /* Background is map */
     padding: 0;
     border-radius: 0;
     box-shadow: none;
     border: none;
     color: black;
     font-weight: 600;
-    /* 요청에 따라 흰색 테두리 효과를 위한 text-shadow 추가 */
-    text-shadow: 
-        -1px -1px 0 #fff,  
-         1px -1px 0 #fff,
-        -1px  1px 0 #fff,
-         1px  1px 0 #fff,
-        -2px -2px 0 #fff,
-         2px -2px 0 #fff,
-        -2px  2px 0 #fff,
-         2px  2px 0 #fff; /* 적당한 두께의 테두리 효과 */
+    /* Subtle white outline for readability on varying map backgrounds */
+    text-shadow:
+        -0.5px -0.5px 0 #fff,
+         0.5px -0.5px 0 #fff,
+        -0.5px  0.5px 0 #fff,
+         0.5px  0.5px 0 #fff;
     white-space: nowrap;
     line-height: 1.2;
+    pointer-events: none; /* Make text non-interactive to not block map clicks */
 }
 
-/* Error Message */
+/* Error message control */
 .error-message {
-    font-family: 'Noto Sans KR', sans-serif;
+    background-color: #fdd; /* Light red */
+    color: #c00; /* Darker red text */
+    padding: 10px 15px;
+    border-radius: 5px;
+    border: 1px solid #c00;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    font-weight: bold;
     font-size: 14px;
-    color: #d63031;
-    padding: 12px 16px;
-    border: 1px solid #ff7675;
-    background-color: #ffeaa7;
-    border-radius: 6px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    text-align: center;
+    z-index: 9999; /* Ensure it's on top */
+    font-family: 'Noto Sans KR', sans-serif;
 }
 
-/* Responsive Design - Mobile */
+/* =====================================
+   8. Custom Marker Icons
+   ===================================== */
+/* Base style for custom DivIcons (used for individual markers) */
+.custom-div-icon {
+    /* No specific styles here as the inner div handles visual properties.
+       This class can be used for debugging or additional outer wrappers. */
+}
+
+/* Style for the actual circular marker inside custom-div-icon */
+.custom-div-icon div {
+    border: 1.5px solid white; /* White border for the circle */
+    box-shadow: 0 0 3px rgba(0,0,0,0.5); /* Subtle shadow for depth */
+    box-sizing: border-box; /* Include padding and border in element's total width and height */
+    display: flex; /* Use flexbox to center any content if added later */
+    align-items: center;
+    justify-content: center;
+    /* background-color, width, height, border-radius are set inline by JS */
+}
+
+/* Style for marker cluster icons */
+.marker-cluster-custom {
+    background-color: transparent; /* Background is handled by the inner div */
+}
+
+.marker-cluster-custom div {
+    border-radius: 50%; /* Make it circular */
+    color: white;
+    font-weight: bold;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 3px rgba(0,0,0,0.5); /* Shadow for cluster icon */
+    /* width, height, line-height, background-color are set inline by JS */
+}
+
+
+/* =====================================
+   9. Responsive Design (Media Queries)
+   ===================================== */
+
+/* Mobile devices (max-width: 768px) */
 @media (max-width: 768px) {
     .transport-tab-container {
         height: 7%;
@@ -644,15 +579,22 @@ html, body {
         height: 93%;
     }
 
-    .map-control-container {
-        padding: 0;
-        gap: 0;
-    }
+    /* Controls: Stack vertically on mobile */
+    .map-control-container,
     .map-control-group-right {
         padding: 6px 8px;
         gap: 6px;
-        flex-direction: column;
-        align-items: flex-start;
+        flex-direction: column; /* Stack items vertically */
+        align-items: stretch; /* Stretch items to fill container width */
+        width: 100%; /* Take full width within its flex container */
+    }
+
+    .reset-btn,
+    .truck-toggle-btn,
+    .map-control-group-right select,
+    .map-control-group-right button {
+        width: 100%; /* Make control elements full width */
+        box-sizing: border-box;
     }
 
     .reset-btn,
@@ -660,25 +602,19 @@ html, body {
         padding: 0 10px;
         font-size: 12px;
         height: 30px;
-        min-width: 70px;
-    }
-
-    .filter-control {
-        padding: 8px 10px;
-        flex-direction: column;
-        max-width: 90vw;
+        min-width: unset; /* Remove min-width constraint */
     }
 
     .filter-control select,
     .map-control-group-right select {
         padding: 6px 8px;
         font-size: 12px;
-        min-width: 130px;
+        min-width: unset; /* Remove min-width constraint */
     }
 
-    /* Adjust position for top controls on mobile */
+    /* Adjust position for top controls on mobile (below tabs) */
     .leaflet-top.leaflet-right {
-        top: 50px !important;
+        top: 50px !important; /* Adjusted for smaller tab height */
         gap: 8px;
     }
     .leaflet-top.leaflet-left {
@@ -696,19 +632,34 @@ html, body {
         font-size: 13px !important;
     }
 
-    .truck-toggle-wrapper {
-        flex-direction: column;
-        width: 100%;
+    /* Truck toggle specific adjustments for mobile layout */
+    .truck-toggle-map-control {
+        width: calc(100% - 20px); /* Adjust for padding on map-control-container */
+        left: 10px; /* Position from left instead of center */
+        transform: none; /* Remove translateX */
+        flex-direction: column; /* Stack buttons vertically */
+        gap: 0;
     }
 
     .truck-toggle-btn {
-        width: 100%;
-        min-width: unset;
-        padding: 0 8px;
+        border-radius: 0 !important; /* Remove individual button rounding for stacked appearance */
+        border: 1px solid #e0e0e0; /* Add borders back */
+        border-bottom: none; /* Remove bottom border for connected look */
+    }
+    .truck-toggle-btn:last-child {
+        border-bottom: 1px solid #e0e0e0; /* Add bottom border for last button */
+    }
+    .truck-toggle-btn:first-child {
+        border-top-left-radius: 6px !important; /* Re-add top radius for first button */
+        border-top-right-radius: 6px !important;
+    }
+    .truck-toggle-btn:last-child {
+        border-bottom-left-radius: 6px !important; /* Re-add bottom radius for last button */
+        border-bottom-right-radius: 6px !important;
     }
 }
 
-/* Responsive Design - Very Small Screens */
+/* Very Small Screens (max-width: 480px) */
 @media (max-width: 480px) {
     .transport-tab {
         font-size: 11px;
@@ -725,12 +676,8 @@ html, body {
         bottom: 20px !important;
     }
 
-    .filter-control {
-        padding: 6px;
-    }
-
     .last-updated-info {
         font-size: 12px;
-        padding: 6px 8px;
+        /* padding: 6px 8px; Removed padding as it's transparent */
     }
 }
