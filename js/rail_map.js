@@ -16,7 +16,7 @@ class RailCongestionMap {
         // - maxClusterRadius: 클러스터링될 최대 픽셀 거리 (40px로 축소하여 더 빠르게 분리되도록)
         // - disableClusteringAtZoom: 이 줌 레벨부터 클러스터링 비활성화 (개별 마커 표시)
         // - spiderfyOnMaxZoom: 최대 줌에서 스파이더파이 (겹치는 마커 분산)
-        // - spiderfyDistanceMultiplier: 스파이더파이 시 마커 간 거리 조절
+        // - spiderfyDistanceMultiplier: 스파erfy 시 마커 간 거리 조절
         // - iconCreateFunction: 클러스터 아이콘을 커스터마이즈하는 함수
         this.allMarkers = L.markerClusterGroup({
             maxClusterRadius: 40,
@@ -97,9 +97,6 @@ class RailCongestionMap {
 
         // 데이터 로드 시작
         this.loadData();
-
-        // 필터 컨트롤 및 기타 우측 컨트롤 추가
-        this.addRightControls();
 
         // 팝업 열림 이벤트 핸들러
         this.map.on('popupopen', (e) => {
@@ -268,7 +265,7 @@ class RailCongestionMap {
             }
 
             this.renderMarkers(); // 마커 렌더링
-            // this.addRightControls(); // moved to constructor
+            this.addRightControls(); // 필터 컨트롤 및 기타 우측 컨트롤 추가 (데이터 로드 후 호출)
             this.addLastUpdatedText(); // 마지막 업데이트 텍스트 추가
             // this.addLegend(); // 주석 해제하여 범례 추가 가능
 
