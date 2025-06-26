@@ -22,6 +22,8 @@ class RailCongestionMap {
             disableClusteringAtZoom: 9,
             spiderfyOnMaxZoom: true,
             spiderfyDistanceMultiplier: 2,
+            showCoverageOnHover: false,
+            showCoverageOnClick: false,
 
             iconCreateFunction: (cluster) => {
                 const childMarkers = cluster.getAllChildMarkers();
@@ -502,7 +504,7 @@ class RailCongestionMap {
                 hour12: false
             });
 
-            const infoControl = L.control({ position: 'bottomleft' });
+            const infoControl = L.control({ position: 'bottomright' });
 
             infoControl.onAdd = () => {
                 const div = L.DomUtil.create('div', 'last-updated-info');
