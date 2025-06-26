@@ -434,31 +434,25 @@ class AirCongestionMap {
             const departed = item.departed || 'N/A';
             const completed = item.completed || 'N/A';
             const cancelled = item.cancelled || 'N/A';
-            const d15 = item.d15 || 'N/A';
-            const a14 = item.a14 || 'N/A';
-            const d0Percent = item.d0_percent || 'N/A';
-            const completionFactor = item.completion_factor || 'N/A';
 
+            const levelColor = this.getTextColorForLevel(level);
 
             content += `
                         <div class="location-info">
-                            <h5>${airportName}</h5>
+                            <h5>${municipality}</h5>
+                            <p><strong>Airport Code:</strong> ${airportName}</p>
                             <p><strong>Location:</strong> ${municipality}, ${regionCode}</p>
                             <p><strong>Congestion Level:</strong>
-                                <span style="color: ${this.getColor(level, true)}">
+                                <span style="color: ${levelColor};">
                                     ${level}
                                 </span>
                                 (based on 14 Min or Less Arrival Rate)
                             </p>
-                            <p><strong>14 Min or Less Arrival Rate (A14):</strong> ${a14}%</p>
                             <p><strong>Average TXO:</strong> ${avgTxo} min</p>
                             <p><strong>Scheduled Flights:</strong> ${scheduled}</p>
                             <p><strong>Completed Flights:</strong> ${completed}</p>
                             <p><strong>Departed Flights:</strong> ${departed}</p>
                             <p><strong>Cancelled Flights:</strong> ${cancelled}</p>
-                            <p><strong>15+ Min Delay Rate:</strong> ${d15}%</p>
-                            <p><strong>On-Time Departure Rate:</strong> ${d0Percent}%</p>
-                            <p><strong>Completion Factor:</strong> ${completionFactor}%</p>
                         </div>
                         ${isMultiple && safeItems.indexOf(item) !== safeItems.length - 1 ? '<hr>' : ''}
                     `;
@@ -620,11 +614,11 @@ class AirCongestionMap {
         if (a14 == null || isNaN(a14)) return 6; // Default size for unknown/null
         // Radii are inversely proportional to A14 (lower A14 = larger marker)
         // Updated based on user feedback: 3-tier original with 5-tier mapping
-        if (a14 < 60) return 14; // Very High Congestion (0-59%)
-        if (a14 < 70) return 12; // High Congestion (60-69%)
-        if (a14 < 80) return 10; // Average Congestion (70-79%)
-        if (a14 < 90) return 8; // Low Congestion (80-89%)
-        return 6; // Very Low Congestion (90-100%)
+        if (a14 < 60) return 14; // Very High Congestion
+        if (a14 < 70) return 12; // High Congestion
+        if (a14 < 80) return 10; // Average Congestion
+        if (a14 < 90) return 8; // Low Congestion
+        return 6; // Very Low Congestion (A14 >= 90)
     }
 
     /**
@@ -646,33 +640,39 @@ class AirCongestionMap {
     /**
      * Returns color based on congestion level for circles or text.
      * @param {string} level - Congestion level string.
-     * @param {boolean} [isText=false] - Whether to return text color.
      * @returns {string} CSS color code.
      */
-    getColor(level, isText = false) {
-        // Colors matched to RailCongestionMap's scheme:
-        // Very Low: Blue, Low: Light Blue, Average: Gray, High: Orange, Very High: Red
-        const circleColors = {
+    getColor(level) {
+        // Colors consistent with Ocean and Rail maps (5-tier system)
+        const colors = {
             'Very High': '#E53935',  // Red
             'High': '#FFB300',       // Orange
-            'Average': '#9E9E9E',    // Gray
+            'Average': '#9E9E9E',    // Gray (reverted from yellow for consistency in 5-tier context)
             'Low': '#90CAF9',        // Light Blue
             'Very Low': '#42A5F5',   // Blue
             'Unknown': '#cccccc'     // Default gray for unknown
         };
+        return colors[level] || '#cccccc';
+    }
 
-        // Text colors for better contrast
+    /**
+     * Returns a text color based on the congestion level for better contrast.
+     * @param {string} level - Congestion level string.
+     * @returns {string} CSS color code for text.
+     */
+    getTextColorForLevel(level) {
+        // Consistent text colors for better contrast across all maps
         const textColors = {
             'Very High': '#b71c1c',  // Darker red
             'High': '#e65100',       // Darker orange
-            'Average': '#616161',    // Darker gray
+            'Average': '#616161',    // Darker gray (for gray background)
             'Low': '#2196F3',        // Darker light blue
             'Very Low': '#1976D2',   // Darker blue
             'Unknown': '#5e5e5e'     // Darker default gray
         };
-
-        return isText ? textColors[level] : circleColors[level];
+        return textColors[level] || '#5e5e5e';
     }
+
 
     /**
      * Displays a temporary error message on the map.
