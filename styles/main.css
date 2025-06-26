@@ -68,8 +68,11 @@ html, body {
     gap: 0; /* Remove gap between buttons, let borders handle separation */
     width: 100%; /* Fill parent container's content width */
     box-sizing: border-box; /* Include padding and border in width calculation */
-    /* REMOVED: background, padding, border-radius, box-shadow from here.
-       These are now on the parent .leaflet-top.leaflet-left */
+    /* Add background and shadow to this inner container */
+    background: white;
+    padding: 8px 12px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.15);
 }
 
 /* Individual zoom button styling */
@@ -264,4 +267,453 @@ html, body {
 .map-control-group-right select:focus {
     outline: none;
     border-color: #00657E;
-    box-shadow: 0 0 0 2px rgba(
+    box-shadow: 0 0 0 2px rgba(0,101,126,0.2);
+}
+
+/* Truck specific styles for the toggle buttons (if used by other maps) */
+.truck-toggle-map-control { /* Wrapper for truck toggle buttons */
+    position: absolute;
+    top: 0px !important; /* Aligned with other top controls */
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    display: flex;
+    gap: 0; /* Buttons are adjacent */
+    /* Restore background and box-shadow for a proper control box appearance */
+    background: white;
+    padding: 8px 12px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+}
+
+.truck-toggle-btn {
+    padding: 0 16px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-weight: 500;
+    font-size: 13px;
+    transition: all 0.3s;
+    min-width: 85px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #333;
+    box-sizing: border-box;
+    /* Borders for separating buttons within the group */
+    border: 1px solid #e0e0e0;
+}
+
+.truck-toggle-btn:first-child {
+    border-top-left-radius: 6px;
+    border-bottom-left-radius: 6px;
+}
+
+.truck-toggle-btn:last-child {
+    border-top-right-radius: 6px;
+    border-bottom-right-radius: 6px;
+    border-left: none; /* No double border with previous button */
+}
+
+/* Ensure intermediate buttons also have correct borders if more than 2 */
+.truck-toggle-btn:not(:first-child):not(:last-child) {
+    border-left: none;
+}
+
+
+.truck-toggle-btn.truck-active {
+    background: #00657E;
+    color: white;
+    font-weight: 600;
+    border-color: transparent !important; /* Active button has no border */
+}
+
+.truck-toggle-btn:not(.truck-active):hover {
+    background: #f0f0f0;
+}
+
+
+/* Control Position Adjustments */
+/* Top right for Reset and Filter controls (now also including Zoom) */
+.leaflet-top.leaflet-right {
+    display: flex;
+    flex-direction: column; /* Controls stack vertically */
+    gap: 10px;
+    top: calc(50px + 10px) !important; /* Position below zoom buttons (50px zoom box height + 10px gap) */
+    right: 10px !important;
+    width: auto;
+    height: auto;
+}
+
+/* Top left (for zoom buttons) - now moved to right */
+.leaflet-top.leaflet-left {
+    top: 0px !important; /* Align to map top */
+    left: auto; /* Remove left positioning */
+    right: 10px !important; /* Move to right */
+    transform: none !important;
+    width: 184px; /* Consistent width for control box */
+    height: auto;
+    /* Removed background, padding, border-radius, box-shadow from here.
+       These are now on .leaflet-control-zoom itself to fix the inner box issue. */
+    background: none; /* Explicitly remove */
+    padding: 0; /* Explicitly remove */
+    border-radius: 0; /* Explicitly remove */
+    box-shadow: none; /* Explicitly remove */
+}
+
+/* Bottom right (for legend - if uncommented) */
+.leaflet-bottom.leaflet-right {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    bottom: 10px !important;
+    right: 10px !important;
+    width: auto;
+    height: auto;
+}
+
+/* Bottom left (for last updated info) - Now last-updated-info is in bottom-right, this can be simplified */
+.leaflet-bottom.leaflet-left {
+    bottom: 10px !important;
+    left: 10px !important;
+    width: auto;
+    height: auto;
+    margin-bottom: 0;
+    /* z-index: 9999 !important; /* No longer specifically for last-updated-info */
+    /* pointer-events: none; /* No longer specifically for last-updated-info */
+}
+
+
+/* =====================================
+   6. Popup & Tooltip Styles
+   ==================================== */
+
+/* Common Popup Content Styles */
+.leaflet-popup-content h4 {
+    margin: 0 0 12px 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #222;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 8px;
+}
+
+.leaflet-popup-content p {
+    margin: 10px 0;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.leaflet-popup-content strong {
+    color: #444;
+    font-weight: 500;
+}
+
+/* Single marker popup styling (detailed information) */
+.single-marker-popup .leaflet-popup-content-wrapper {
+    background: white;
+    color: #333;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    /* padding handled by .leaflet-popup-content */
+    font-family: 'Noto Sans KR', sans-serif; /* Consistent font */
+}
+
+/* The tip shares the background of the wrapper */
+.single-marker-popup .leaflet-popup-tip {
+    background: white;
+}
+
+.single-marker-popup .location-info h5 {
+    margin-top: 0;
+    margin-bottom: 8px;
+    font-size: 18px;
+    color: #007bff; /* Primary color for location name */
+    border-bottom: 1px solid #eee;
+    padding-bottom: 5px;
+}
+
+.single-marker-popup .location-info p {
+    margin-bottom: 5px;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.single-marker-popup .location-info strong {
+    color: #555;
+}
+
+/* Optional: Styling for hr separator in multi-item popups */
+.single-marker-popup .location-info hr {
+    border: 0;
+    border-top: 1px dashed #ddd;
+    margin: 10px 0;
+}
+
+/* Truck specific text colors in popup content (if used for truck map) */
+.truck-positive {
+    color: #27ae60; /* Green for positive indicators */
+    font-weight: 600;
+}
+
+.truck-negative {
+    color: #e74c3c; /* Red for negative indicators */
+    font-weight: 600;
+}
+
+.truck-normal-text {
+    font-weight: 400;
+    color: #555;
+}
+
+/* Cluster popup header (when multiple items are shown in a popup after spiderfy) */
+.cluster-popup-header {
+    margin-bottom: 10px;
+    border-bottom: 1px solid #eee; /* Separator for header */
+    padding-bottom: 5px;
+}
+
+.cluster-popup-header h4, .cluster-popup-header p {
+    margin: 0;
+    padding: 0;
+}
+
+.cluster-popup-content {
+    max-height: 250px; /* Max height for scrollable content */
+    overflow-y: auto;
+    padding-right: 5px; /* Space for scrollbar */
+}
+
+.location-info {
+    margin: 10px 0;
+}
+
+.location-info h5 {
+    margin-bottom: 5px;
+    color: #333;
+}
+
+
+/* =====================================
+   7. Information & Error Messages
+   ===================================== */
+
+/* Last Updated Info Control - Now with a background box */
+.last-updated-info {
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 14px;
+    background-color: rgba(255, 255, 255, 0.9); /* Opaque white box */
+    padding: 6px 10px; /* Padding for the box */
+    border-radius: 5px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    color: #333; /* Darker text on white background */
+    font-weight: 600;
+    white-space: nowrap;
+    line-height: 1.2;
+    /* text-shadow removed as it's no longer needed on a solid background */
+    pointer-events: none; /* Make text non-interactive to not block map clicks */
+    z-index: 1001; /* Ensure it is above other elements in the same position */
+}
+
+/* Error message control */
+.error-message {
+    background-color: #ffe0e0; /* Light red */
+    color: #d63031; /* Darker red text */
+    padding: 10px 15px;
+    border-radius: 5px;
+    border: 1px solid #d63031;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    font-weight: bold;
+    font-size: 14px;
+    text-align: center;
+    z-index: 9999; /* Ensure it's on top */
+    font-family: 'Noto Sans KR', sans-serif;
+}
+
+/* =====================================
+   8. Custom Marker Icons
+   ===================================== */
+/* Base style for custom DivIcons (used for individual markers) */
+.custom-div-icon {
+    /* No specific styles here as the inner div handles visual properties.
+       This class can be used for debugging or additional outer wrappers. */
+}
+
+/* Style for the actual circular marker inside custom-div-icon */
+.custom-div-icon div {
+    border: 1.5px solid white; /* White border for the circle */
+    box-shadow: 0 0 3px rgba(0,0,0,0.5); /* Subtle shadow for depth */
+    box-sizing: border-box; /* Include padding and border in element's total width and height */
+    display: flex; /* Use flexbox to center any content if added later */
+    align-items: center;
+    justify-content: center;
+    /* background-color, width, height, border-radius are set inline by JS */
+}
+
+/* Style for marker cluster icons */
+.marker-cluster-custom {
+    background-color: transparent; /* Background is handled by the inner div */
+}
+
+.marker-cluster-custom div {
+    border-radius: 50%; /* Make it circular */
+    color: white;
+    font-weight: bold;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 3px rgba(0,0,0,0.5); /* Shadow for cluster icon */
+    /* width, height, line-height, background-color are set inline by JS */
+}
+
+
+/* =====================================
+   9. Responsive Design (Media Queries)
+   ===================================== */
+
+/* Mobile devices (max-width: 768px) */
+@media (max-width: 768px) {
+    .transport-tab-container {
+        height: 7%;
+        min-height: 36px;
+    }
+
+    .transport-tab {
+        font-size: 12px;
+        padding: 0 3px;
+    }
+
+    .transport-map {
+        top: 7%;
+        height: 93%;
+    }
+
+    /* Controls: Stack vertically on mobile */
+    .map-control-container,
+    .map-control-group-right {
+        padding: 6px 8px;
+        gap: 6px;
+        flex-direction: column; /* Stack items vertically */
+        align-items: stretch; /* Stretch items to fill container width */
+        width: 100%; /* Take full width within its flex container */
+    }
+
+    .reset-btn,
+    .map-control-group-right select,
+    .map-control-group-right button {
+        width: 100%; /* Make control elements full width */
+        box-sizing: border-box;
+    }
+
+    .reset-btn {
+        padding: 0 10px;
+        font-size: 12px;
+        height: 30px;
+        min-width: unset; /* Remove min-width constraint */
+    }
+
+    .filter-control select,
+    .map-control-group-right select {
+        padding: 6px 8px;
+        font-size: 12px;
+        min-width: unset; /* Remove min-width constraint */
+    }
+
+    /* Adjust position for top controls on mobile (closer to top tab) */
+    .leaflet-top.leaflet-right {
+        top: calc(42px + 8px) !important; /* Adjusted top for mobile: zoom box height + gap */
+        gap: 8px;
+    }
+    .leaflet-top.leaflet-left {
+        top: 0px !important; /* Adjusted top for mobile */
+        width: 100%; /* Take full width on mobile */
+        left: 0; /* Align to left on mobile */
+        right: auto; /* Remove right positioning */
+        /* Apply background, padding, border-radius, box-shadow here for mobile */
+        background: white;
+        padding: 6px 8px; /* Mobile padding for the control box */
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+    }
+    /* Mobile zoom buttons (+- 30px height) */
+    .leaflet-control-zoom a {
+        height: 30px !important;
+        line-height: 30px !important;
+    }
+
+
+    .leaflet-bottom.leaflet-right {
+        bottom: 30px !important; /* Adjusted for mobile */
+        right: 5px !important; /* Adjusted for mobile */
+    }
+
+    .leaflet-popup-content {
+        min-width: 180px !important;
+        padding: 12px !important;
+        font-size: 13px !important;
+    }
+
+    /* Truck toggle specific adjustments for mobile layout - Reverted to horizontal, apply common control container styles */
+    .truck-toggle-map-control {
+        top: 0px !important; /* Aligned with other top controls */
+        display: flex;
+        flex-direction: row;
+        width: fit-content;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+
+    .truck-toggle-btn {
+        font-size: 12px;
+        height: 30px;
+        min-width: unset;
+        padding: 0 10px;
+        /* Revert border-radius and border to desktop logic (handled by general rules) */
+        /* Specific overrides for truck-toggle-btn that were removed for mobile stacking are now re-evaluated */
+        border-radius: 0; /* Ensures consistent rounding, allowing first/last child to apply */
+    }
+    .truck-toggle-btn:first-child {
+        border-top-left-radius: 6px;
+        border-bottom-left-radius: 6px;
+        border-right: none; /* Connects with next button */
+    }
+    .truck-toggle-btn:last-child {
+        border-top-right-radius: 6px;
+        border-bottom-right-radius: 6px;
+        border-left: none; /* No double border with previous button */
+    }
+    /* Ensure intermediate buttons also have correct borders if more than 2 */
+    .truck-toggle-btn:not(:first-child):not(:last-child) {
+        border-left: none;
+        border-right: none;
+    }
+}
+
+/* Very Small Screens (max-width: 480px) */
+@media (max-width: 480px) {
+    .transport-tab {
+        font-size: 11px;
+    }
+
+    .leaflet-top.leaflet-right {
+        top: calc(42px + 8px) !important; /* Further adjustment for very small screens */
+    }
+    .leaflet-top.leaflet-left {
+        top: 0px !important; /* Further adjustment for very small screens */
+    }
+    
+    .truck-toggle-map-control {
+        top: 0px !important; /* Aligned with other top controls for very small screens */
+    }
+
+    .leaflet-bottom.leaflet-right {
+        bottom: 20px !important;
+    }
+
+    .last-updated-info {
+        font-size: 12px;
+    }
+}
