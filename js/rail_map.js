@@ -1,28 +1,45 @@
+/**
+ * RailCongestionMap 클래스는 철도 혼잡도 데이터를 지도에 시각화하고 상호작용 기능을 제공합니다.
+ * Leaflet.js와 Leaflet.markercluster 플러그인을 활용합니다.
+ */
 class RailCongestionMap {
+    /**
+     * RailCongestionMap의 생성자입니다.
+     * @param {string} mapElementId - 지도를 렌더링할 HTML 요소의 ID입니다.
+     */
     constructor(mapElementId) {
+        // Leaflet 지도 초기화: 기본 시점과 줌 레벨 설정 (미국 중심)
         this.map = L.map(mapElementId).setView([37.8, -96], 4);
-        
+
+        // 마커 클러스터 그룹 초기화
+        // - maxClusterRadius: 클러스터링될 최대 픽셀 거리 (40px로 축소하여 더 빠르게 분리되도록)
+        // - disableClusteringAtZoom: 이 줌 레벨부터 클러스터링 비활성화 (개별 마커 표시)
+        // - spiderfyOnMaxZoom: 최대 줌에서 스파이더파이 (겹치는 마커 분산)
+        // - spiderfyDistanceMultiplier: 스파이더파이 시 마커 간 거리 조절
+        // - iconCreateFunction: 클러스터 아이콘을 커스터마이즈하는 함수
         this.allMarkers = L.markerClusterGroup({
             maxClusterRadius: 40,
             disableClusteringAtZoom: 9,
             spiderfyOnMaxZoom: true,
             spiderfyDistanceMultiplier: 2,
-            
+
             iconCreateFunction: (cluster) => {
                 const childMarkers = cluster.getAllChildMarkers();
                 let highestCongestionLevelValue = -1;
-                let dominantColor = this.getColor('Average');
+                let dominantColor = this.getColor('Average'); // 기본값: 평균 색상
 
+                // 혼잡도 레벨을 숫자로 매핑하여 비교 가능하게 함
                 const congestionLevelToValue = (level) => {
                     switch (level) {
                         case 'Very High': return 4;
                         case 'High': return 3;
                         case 'Low': return 2;
                         case 'Very Low': return 1;
-                        default: return 0;
+                        default: return 0; // 'Average' 또는 'Unknown' 등
                     }
                 };
 
+                // 클러스터 내의 마커 중 가장 높은 혼잡도 레벨의 색상 선택
                 childMarkers.forEach(marker => {
                     const itemData = marker.options.itemData;
                     if (itemData && itemData.congestion_level) {
@@ -35,37 +52,43 @@ class RailCongestionMap {
                 });
 
                 const childCount = cluster.getChildCount();
+                // 클러스터 크기를 자식 마커 수에 따라 동적으로 조절
                 const size = 30 + Math.min(childCount * 0.5, 30);
-                
+
+                // 커스텀 클러스터 아이콘 생성 (원형, 배경색은 가장 높은 혼잡도에 따라)
                 return new L.DivIcon({
                     html: `<div style="background-color: ${dominantColor}; width: ${size}px; height: ${size}px; line-height: ${size}px; border-radius: 50%; color: white; font-weight: bold; text-align: center; display: flex; align-items: center; justify-content: center;"><span>${childCount}</span></div>`,
-                    className: 'marker-cluster-custom',
+                    className: 'marker-cluster-custom', // CSS 스타일링을 위한 클래스
                     iconSize: new L.Point(size, size)
                 });
             }
         });
-        this.currentData = null;
-        this.lastUpdated = null;
-        this.filterControlInstance = null;
-        this.errorControl = null;
-        this.lastUpdatedControl = null;
-        this.markerToOpenAfterMove = null;
-        this.lastOpenedMarker = null;
-        // this.isMarkerClickHandled = false; // 이 플래그는 제거하거나 다른 방식으로 관리하는 것이 좋습니다.
 
+        this.currentData = null; // 현재 로드된 데이터
+        this.lastUpdated = null; // 마지막 업데이트 날짜
+        this.filterControlInstance = null; // 필터 컨트롤 인스턴스
+        this.errorControl = null; // 에러 메시지 컨트롤
+        this.lastUpdatedControl = null; // 마지막 업데이트 정보 컨트롤
+        this.markerToOpenAfterMove = null; // 지도 이동 후 팝업을 열 마커 이름
+        this.lastOpenedMarker = null; // 마지막으로 열린 팝업의 마커 참조
+
+        // 지도 타일 레이어 추가 (CARTO Light All)
         L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', {
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
             maxZoom: 18,
             minZoom: 3
         }).addTo(this.map);
 
+        // 지도 경계 설정 (전 세계 범위)
         this.map.setMaxBounds([
             [-85, -180], // 남서쪽 경계
             [85, 180]    // 북동쪽 경계
         ]);
 
+        // 데이터 로드 시작
         this.loadData();
 
+        // 팝업 열림 이벤트 핸들러
         this.map.on('popupopen', (e) => {
             if (e.popup && e.popup._source && e.popup._source instanceof L.Marker) {
                 this.lastOpenedMarker = e.popup._source;
@@ -73,6 +96,7 @@ class RailCongestionMap {
             }
         });
 
+        // 팝업 닫힘 이벤트 핸들러
         this.map.on('popupclose', (e) => {
             console.log(`Popup for ${e.popup._source ? e.popup._source.options.itemData.Yard : 'unknown'} closed.`);
             if (this.lastOpenedMarker === e.popup._source) {
@@ -82,7 +106,6 @@ class RailCongestionMap {
 
         // 맵 클릭 이벤트 핸들러 조정
         this.map.on('click', (e) => {
-            // 마커 클릭 이벤트가 맵 클릭 이벤트보다 먼저 처리되므로,
             // 마커 팝업이 열려있거나 열릴 예정인 경우 맵 클릭은 무시
             if (this.lastOpenedMarker && this.lastOpenedMarker.getPopup().isOpen()) {
                 console.log('Map click: A marker popup is already open. Ignoring.');
@@ -98,7 +121,7 @@ class RailCongestionMap {
             this.lastOpenedMarker = null;
         });
 
-
+        // 지도 이동 종료 이벤트 핸들러
         this.map.on('moveend', () => {
             if (this.markerToOpenAfterMove) {
                 console.log('Map animation ended, attempting to open queued popup with polling.');
@@ -109,11 +132,13 @@ class RailCongestionMap {
         });
     }
 
+    /**
+     * 특정 야드 이름에 해당하는 마커를 찾고, 폴링을 통해 마커가 준비되면 팝업을 엽니다.
+     * @param {string} yardName - 팝업을 열 야드의 이름입니다.
+     */
     pollForMarkerAndOpenPopup(yardName) {
         let targetMarker = null;
-        // 클러스터 그룹 내에서 마커를 찾을 때, 클러스터링 때문에 바로 보이지 않을 수 있으므로
-        // `getVisibleParent`를 사용하여 실제 마커 또는 클러스터 마커를 찾아야 할 수도 있습니다.
-        // 여기서는 `eachLayer`를 통해 클러스터링된 경우에도 개별 마커를 찾아봅니다.
+        // 클러스터 그룹 내에서 마커를 찾습니다.
         this.allMarkers.eachLayer(layer => {
             if (layer.options.itemData && layer.options.itemData.Yard === yardName) {
                 targetMarker = layer;
@@ -123,7 +148,6 @@ class RailCongestionMap {
 
         if (!targetMarker) {
             console.warn(`pollForMarkerAndOpenPopup: Marker for yard '${yardName}' not found in current layers (might be in a cluster).`);
-            // 마커가 아직 클러스터 내에 있거나 DOM에 추가되지 않았을 수 있으므로 재시도 로직 필요
             return;
         }
 
@@ -133,20 +157,19 @@ class RailCongestionMap {
             return;
         }
 
-        // 기존 팝업 닫기
+        // 기존 팝업 닫기 (새로운 팝업을 열기 전에 항상 닫음)
         this.map.closePopup();
 
         let attempts = 0;
-        const maxAttempts = 30; // 충분한 시도 횟수
+        const maxAttempts = 30; // 최대 시도 횟수
         const retryInterval = 100; // 100ms 간격으로 재시도
 
         const checkAndOpen = () => {
             // 마커의 _icon이 DOM에 추가되었고, 맵에 속해 있는지 확인
             if (targetMarker._icon && targetMarker._map) {
                 console.log(`Poll success for ${targetMarker.options.itemData.Yard} (Attempt ${attempts + 1}). Opening popup.`);
-                // 마커에 직접 openPopup 호출 시도
-                targetMarker.openPopup(); 
-                
+                targetMarker.openPopup(); // 마커에 직접 openPopup 호출 시도
+
                 // 팝업이 실제로 열렸는지 확인
                 if (targetMarker.getPopup().isOpen()) {
                     console.log(`Popup for ${targetMarker.options.itemData.Yard} successfully confirmed open.`);
@@ -163,16 +186,20 @@ class RailCongestionMap {
                 console.error(`Failed to open popup for ${targetMarker.options.itemData.Yard} after max polling attempts.`);
             }
         };
-        
+
         setTimeout(checkAndOpen, 50); // 약간의 지연 후 첫 시도
     }
 
+    /**
+     * 데이터를 불러와 처리하고 지도에 마커를 렌더링합니다.
+     */
     async loadData() {
         try {
             const response = await fetch('data/us-rail.json');
             if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
             const rawData = await response.json();
 
+            // 데이터 정제 및 파싱
             let processedData = rawData.map(item => ({
                 lat: parseFloat(item.lat || item.Latitude),
                 lng: parseFloat(item.lng || item.Longitude),
@@ -184,11 +211,13 @@ class RailCongestionMap {
                 congestion_level: item.congestion_level || item.Category || 'Average',
                 date: item.date || item.DateMonth
             })).filter(item =>
-               !isNaN(item.lat) && !isNaN(item.lng) && item.location && item.congestion_level
+                // 유효한 위도, 경도, 위치, 혼잡도 레벨을 가진 항목만 필터링
+                !isNaN(item.lat) && !isNaN(item.lng) && item.location && item.congestion_level
             );
 
             const coordinateMap = new Map();
 
+            // 중복 좌표 처리: 같은 위치에 여러 데이터가 있을 경우 지도에 겹쳐 표시되지 않도록 약간의 지터링 적용
             processedData.forEach(item => {
                 const coordKey = `${item.lat},${item.lng}`;
                 if (!coordinateMap.has(coordKey)) {
@@ -202,12 +231,12 @@ class RailCongestionMap {
                 if (itemsAtCoord.length > 1) {
                     const baseLat = itemsAtCoord[0].lat;
                     const baseLng = itemsAtCoord[0].lng;
-                    
-                    const offsetScale = 0.0005; // 0.1은 너무 클 수 있습니다. 더 작은 값으로 조정
+
+                    const offsetScale = 0.0005; // 지터링 오프셋 스케일
 
                     itemsAtCoord.forEach((item, index) => {
                         const angle = (index / itemsAtCoord.length) * 2 * Math.PI;
-                        // Jittering을 위도, 경도 모두에 적용
+                        // Jittering을 위도, 경도 모두에 적용하여 원 형태로 분산
                         const jitterLat = baseLat + (Math.cos(angle) * offsetScale * Math.random());
                         const jitterLng = baseLng + (Math.sin(angle) * offsetScale * Math.random());
 
@@ -226,9 +255,9 @@ class RailCongestionMap {
                 this.lastUpdated = this.currentData[0].date;
             }
 
-            this.renderMarkers();
-            this.addRightControls();
-            this.addLastUpdatedText();
+            this.renderMarkers(); // 마커 렌더링
+            this.addRightControls(); // 우측 컨트롤(필터, 리셋) 추가
+            this.addLastUpdatedText(); // 마지막 업데이트 텍스트 추가
             // this.addLegend(); // 주석 해제하여 범례 추가 가능
 
         } catch (error) {
@@ -236,7 +265,11 @@ class RailCongestionMap {
             this.displayErrorMessage("Failed to load rail data. Please try again later.");
         }
     }
-    
+
+    /**
+     * 지도에 마커를 렌더링하거나 업데이트합니다.
+     * @param {Array<Object>} [data=this.currentData] - 렌더링할 데이터 배열입니다.
+     */
     renderMarkers(data = this.currentData) {
         if (!data || data.length === 0) {
             console.warn("No data provided to renderMarkers or data is empty. Clearing map layers.");
@@ -247,65 +280,65 @@ class RailCongestionMap {
             return;
         }
 
-        this.allMarkers.clearLayers();
+        this.allMarkers.clearLayers(); // 기존 마커 모두 제거
 
         data.forEach(item => {
             const marker = this.createSingleMarker(item);
-            this.allMarkers.addLayer(marker);
+            this.allMarkers.addLayer(marker); // 클러스터 그룹에 마커 추가
         });
 
         if (!this.map.hasLayer(this.allMarkers)) {
-            this.map.addLayer(this.allMarkers);
+            this.map.addLayer(this.allMarkers); // 클러스터 그룹을 지도에 추가
         }
-        
-        // 클러스터 클릭 이벤트 재정의
+
+        // 클러스터 클릭 이벤트 재정의 (줌인)
         this.allMarkers.off('clusterclick');
         this.allMarkers.on('clusterclick', (a) => {
             console.log("Cluster clicked, zooming to bounds.");
             a.layer.zoomToBounds();
         });
 
-        // 클러스터 마우스오버/아웃 팝업 (데스크톱 전용)
-        if (!L.Browser.mobile) {
-            this.allMarkers.off('clustermouseover');
-            this.allMarkers.on('clustermouseover', (a) => {
-                const clusterItems = a.layer.getAllChildMarkers().map(m => m.options.itemData);
-                const childCount = clusterItems.length;
-
-                // 팝업 내용
-                const popupContent = `
-                    <div class="cluster-hover-info">
-                        <h4>${childCount} Locations Clustered</h4>
-                        <p>Click or zoom in to see individual details.</p>
-                    </div>
-                `;
-
-                // 팝업 생성 및 열기
-                L.popup({
-                    closeButton: false,
-                    autoClose: true,
-                    closeOnClick: false,
-                    maxHeight: 300,
-                    maxWidth: 300,
-                    className: 'cluster-hover-popup' // 커스텀 클래스 추가
-                })
-               .setLatLng(a.latlng)
-               .setContent(popupContent)
-               .openOn(this.map);
-            });
-
-            this.allMarkers.off('clustermouseout');
-            this.allMarkers.on('clustermouseout', () => {
-                this.map.closePopup();
-            });
-        }
+        // -----------------------------------------------------------
+        // 클러스터 마우스오버/아웃 팝업 (툴팁 문제 해결을 위해 제거)
+        // 이 부분은 기존에 호버시 엉뚱한 팝업을 띄우던 로직입니다.
+        // 요구사항에 맞춰 이 로직을 제거하여, 개별 마커 툴팁이 작동하도록 합니다.
+        // -----------------------------------------------------------
+        // if (!L.Browser.mobile) {
+        //     this.allMarkers.off('clustermouseover');
+        //     this.allMarkers.on('clustermouseover', (a) => {
+        //         const clusterItems = a.layer.getAllChildMarkers().map(m => m.options.itemData);
+        //         const childCount = clusterItems.length;
+        //         const popupContent = `<div class="cluster-hover-info"><h4>${childCount} Locations Clustered</h4><p>Click or zoom in to see individual details.</p></div>`;
+        //         L.popup({
+        //             closeButton: false,
+        //             autoClose: true,
+        //             closeOnClick: false,
+        //             maxHeight: 300,
+        //             maxWidth: 300,
+        //             className: 'cluster-hover-popup'
+        //         })
+        //         .setLatLng(a.latlng)
+        //         .setContent(popupContent)
+        //         .openOn(this.map);
+        //     });
+        //     this.allMarkers.off('clustermouseout');
+        //     this.allMarkers.on('clustermouseout', () => {
+        //         this.map.closePopup();
+        //     });
+        // }
     }
 
+    /**
+     * 개별 마커를 생성합니다.
+     * @param {Object} item - 마커를 생성할 데이터 객체입니다.
+     * @returns {L.Marker} 생성된 Leaflet 마커 객체입니다.
+     */
     createSingleMarker(item) {
         const level = item.congestion_level || 'Average';
         const color = this.getColor(level);
         const radius = this.getRadiusByIndicator(item.indicator);
 
+        // 마커 아이콘 HTML 생성 (원형, 혼잡도에 따른 색상)
         const iconHtml = `
             <div style="
                 background-color: ${color};
@@ -335,19 +368,20 @@ class RailCongestionMap {
         const popupOptions = {
             closeButton: true,
             autoClose: false, // 마커 클릭시 닫히지 않고, 맵 배경 클릭시만 닫히도록 변경
-            closeOnClick: false, // 맵 배경 클릭 시 닫히도록 변경
+            closeOnClick: false, // 맵 배경 클릭 시 닫히도록 변경 (맵 클릭 이벤트에서 처리)
             maxHeight: 300,
             maxWidth: 300,
             className: 'single-marker-popup' // 개별 마커 팝업 클래스 추가
         };
 
         // 개별 마커의 팝업은 해당 마커의 데이터만 사용합니다.
-        marker.bindPopup(this.createPopupContent([item]), popupOptions); 
-        
+        marker.bindPopup(this.createPopupContent([item]), popupOptions);
+
         // 개별 마커 툴팁 (마우스 오버 시)
+        // 이 툴팁이 사용자께서 원하시는 "호버시 툴팁"입니다.
         if (!L.Browser.mobile) {
             marker.bindTooltip(`Yard: ${item.Yard}<br>Level: ${item.congestion_level}`, {
-                permanent: false,
+                permanent: false, // 마우스 아웃 시 사라짐
                 direction: 'top',
                 offset: L.point(0, -radius),
                 className: 'custom-marker-tooltip'
@@ -366,6 +400,7 @@ class RailCongestionMap {
             this.lastOpenedMarker = e.target; // 현재 열린 마커를 저장
         });
 
+        // 팝업 닫힐 때 lastOpenedMarker 초기화
         marker.on('popupclose', (e) => {
             console.log(`Popup for ${item.Yard} just closed.`);
             if (this.lastOpenedMarker === e.target) {
@@ -375,16 +410,12 @@ class RailCongestionMap {
 
         // 마커 클릭 시 동작 정의
         marker.on('click', (e) => {
-            // this.isMarkerClickHandled = true; // 더 이상 필요 없음
             console.log(`Clicked/Tapped marker: ${item.Yard}. Current popup state: ${marker.getPopup().isOpen()}`);
-            
-            // 다른 팝업이 열려있다면 닫기
-            this.map.closePopup();
-            
-            // 클릭된 마커가 팝업을 열도록 시도
+
+            this.map.closePopup(); // 다른 팝업 먼저 닫기
+
             // `zoomToShowLayer`는 마커가 클러스터에 숨어있을 때 유용합니다.
-            // 이미 맵에 표시되어 있다면 즉시 팝업을 열 수 있습니다.
-            if (this.allMarkers.hasLayer(marker)) { // 마커가 클러스터 그룹에 속해 있다면
+            if (this.allMarkers.hasLayer(marker)) { // 마커가 클러스터 그룹에 속해 있다면 (클러스터링될 수 있다면)
                 this.allMarkers.zoomToShowLayer(marker, () => {
                     // zoomToShowLayer 완료 후 팝업 열기
                     marker.openPopup();
@@ -408,39 +439,40 @@ class RailCongestionMap {
         return marker;
     }
 
-    // 팝업 내용 생성 함수 (클러스터 또는 개별 마커 모두 사용)
+    /**
+     * 팝업 내용을 생성합니다 (개별 마커 또는 클러스터 해제 시).
+     * @param {Array<Object>} items - 팝업에 표시할 데이터 항목 배열입니다.
+     * @returns {string} 팝업에 들어갈 HTML 문자열입니다.
+     */
     createPopupContent(items) {
         const safeItems = Array.isArray(items) ? items : [items];
         let content = '';
-        
+
         if (safeItems.length === 0) {
             return '<p>No valid data to display for this location.</p>';
         }
 
-        // 단일 마커 팝업일 경우, 헤더 없이 바로 내용 시작
-        // 여러 마커(클러스터 해제 시) 팝업일 경우, 헤더 추가
         const isMultiple = safeItems.length > 1;
 
         if (isMultiple) {
             content += `<div class="cluster-popup-header">
-                            <h4>${safeItems.length} Locations</h4>
-                            <p>Showing individual details:</p>
-                           </div>
-                           <div class="cluster-popup-content">`;
+                                <h4>${safeItems.length} Locations</h4>
+                                <p>Showing individual details:</p>
+                               </div>
+                               <div class="cluster-popup-content">`;
         }
-        
+
         safeItems.forEach(item => {
-            // 데이터 유효성 다시 확인
             if (!item || typeof item !== 'object' || typeof item.lat === 'undefined' || typeof item.lng === 'undefined') {
                 console.warn("Skipping invalid or incomplete item in popup content:", item);
                 return;
             }
-        
+
             const level = item.congestion_level || 'Unknown';
             const company = item.company || 'Unknown';
             const location = item.location || 'Unknown Location';
             const congestionScore = (typeof item.congestion_score === 'number' && !isNaN(item.congestion_score)) ? item.congestion_score.toFixed(1) : 'N/A';
-        
+
             content += `
                 <div class="location-info">
                     <h5>${location}</h5>
@@ -455,14 +487,17 @@ class RailCongestionMap {
                 ${isMultiple && safeItems.indexOf(item) !== safeItems.length - 1 ? '<hr>' : ''}
             `;
         });
-        
+
         if (isMultiple) {
             content += '</div>';
         }
-        
+
         return content || '<p>No valid data to display for this location.</p>';
     }
 
+    /**
+     * 지도에 마지막 업데이트 시간을 표시하는 컨트롤을 추가합니다.
+     */
     addLastUpdatedText() {
         if (this.lastUpdatedControl) {
             this.map.removeControl(this.lastUpdatedControl);
@@ -492,6 +527,9 @@ class RailCongestionMap {
         }
     }
 
+    /**
+     * 지도 우측 상단에 필터 드롭다운과 리셋 버튼 컨트롤을 추가합니다.
+     */
     addRightControls() {
         if (this.filterControlInstance) {
             this.map.removeControl(this.filterControlInstance);
@@ -551,7 +589,6 @@ class RailCongestionMap {
                                 foundMarker.openPopup();
                                 console.log(`Popup for ${yardName} opened after zoomToShowLayer.`);
                                 if (!foundMarker.getPopup().isOpen()) {
-                                    // 확실하게 열기 위해 map.openPopup 시도
                                     console.warn(`Popup for ${yardName} did not confirm open after direct call. Final retry via map.`);
                                     this.map.openPopup(foundMarker.getPopup());
                                 }
@@ -581,6 +618,7 @@ class RailCongestionMap {
                 }
             });
 
+            // 클릭/스크롤 전파 방지 (지도와 독립적으로 컨트롤 상호작용 가능하도록)
             L.DomEvent.disableClickPropagation(div);
             L.DomEvent.disableScrollPropagation(div);
 
@@ -591,6 +629,9 @@ class RailCongestionMap {
         control.addTo(this.map);
     }
 
+    /**
+     * 지도에 혼잡도 레벨 범례를 추가합니다. (현재 주석 처리됨)
+     */
     addLegend() {
         const legend = L.control({ position: 'bottomright' });
 
@@ -610,11 +651,16 @@ class RailCongestionMap {
 
             div.innerHTML = '<h4>Congestion Level</h4>' + labels.join('<br>');
             return div;
-        }.bind(this);
+        }.bind(this); // 'this' 바인딩 필수
 
         legend.addTo(this.map);
     }
 
+    /**
+     * 야드 데이터의 중심 좌표를 계산합니다.
+     * @param {Array<Object>} yardData - 야드 데이터 배열입니다.
+     * @returns {Array<number>} [위도, 경도] 형태의 중심 좌표입니다.
+     */
     getYardCenter(yardData) {
         if (!yardData || yardData.length === 0) return [37.8, -96];
 
@@ -632,6 +678,11 @@ class RailCongestionMap {
         ];
     }
 
+    /**
+     * 인디케이터 값에 따라 마커의 반경을 결정합니다.
+     * @param {number} indicator - 인디케이터 값입니다.
+     * @returns {number} 마커의 반경 (픽셀)입니다.
+     */
     getRadiusByIndicator(indicator) {
         if (indicator > 2) return 20;
         if (indicator > 1) return 16;
@@ -640,14 +691,20 @@ class RailCongestionMap {
         return 5;
     }
 
+    /**
+     * 혼잡도 레벨에 따른 색상을 반환합니다.
+     * @param {string} level - 혼잡도 레벨 문자열입니다.
+     * @param {boolean} [isText=false] - 텍스트 색상을 반환할지 여부입니다.
+     * @returns {string} CSS 색상 코드입니다.
+     */
     getColor(level, isText = false) {
         const circleColors = {
-            'Very High': '#d62828',
-            'High': '#f88c2b',
-            'Low': '#5fa9f6',
-            'Very Low': '#004fc0',
-            'Average': '#bcbcbc',
-            'Unknown': '#bcbcbc'
+            'Very High': '#d62828', // 매우 높음 (빨강)
+            'High': '#f88c2b',    // 높음 (주황)
+            'Low': '#5fa9f6',     // 낮음 (파랑)
+            'Very Low': '#004fc0',  // 매우 낮음 (진한 파랑)
+            'Average': '#bcbcbc',  // 보통 (회색)
+            'Unknown': '#bcbcbc'   // 알 수 없음 (회색)
         };
 
         const textColors = {
@@ -662,6 +719,10 @@ class RailCongestionMap {
         return isText ? textColors[level] : circleColors[level];
     }
 
+    /**
+     * 지도에 에러 메시지를 일시적으로 표시합니다.
+     * @param {string} message - 표시할 에러 메시지입니다.
+     */
     displayErrorMessage(message) {
         if (this.errorControl) {
             this.map.removeControl(this.errorControl);
@@ -676,6 +737,7 @@ class RailCongestionMap {
         errorControl.addTo(this.map);
         this.errorControl = errorControl;
 
+        // 5초 후 메시지 자동 제거
         setTimeout(() => {
             if (this.map.hasControl(this.errorControl)) {
                 this.map.removeControl(this.errorControl);
