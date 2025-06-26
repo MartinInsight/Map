@@ -272,7 +272,9 @@ html, body {
     display: flex;
     gap: 0; /* Buttons are adjacent */
     padding: 0; /* No padding on this container */
-    /* REMOVED: background, padding, border-radius, box-shadow from here */
+    background: none; /* Explicitly remove background */
+    border-radius: 0; /* Explicitly remove border-radius */
+    box-shadow: none; /* Explicitly remove box-shadow */
 }
 
 .truck-toggle-btn {
