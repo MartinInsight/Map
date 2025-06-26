@@ -26,17 +26,17 @@ class AirCongestionMap {
 
             iconCreateFunction: (cluster) => {
                 const childMarkers = cluster.getAllChildMarkers();
-                let highestTXOValue = -1; // Represents the "worst" congestion
+                let lowestA14Value = 101; // Represents the "worst" congestion (lower A14 means worse)
                 let dominantLevel = 'Average'; // Default to Average level for clusters
                 let dominantColor = this.getColor(dominantLevel); // Default to Average color
 
-                // Determine the highest congestion level (highest TXO) within the cluster
+                // Determine the highest congestion level (lowest A14) within the cluster
                 childMarkers.forEach(marker => {
                     const itemData = marker.options.itemData;
-                    if (itemData && typeof itemData.average_txo === 'number' && !isNaN(itemData.average_txo)) {
-                        if (itemData.average_txo > highestTXOValue) {
-                            highestTXOValue = itemData.average_txo;
-                            dominantLevel = this.getCongestionLevelByTXO(itemData.average_txo);
+                    if (itemData && typeof itemData.a14 === 'number' && !isNaN(itemData.a14)) {
+                        if (itemData.a14 < lowestA14Value) { // Lower A14 indicates higher congestion
+                            lowestA14Value = itemData.a14;
+                            dominantLevel = this.getCongestionLevelByA14(itemData.a14);
                             dominantColor = this.getColor(dominantLevel);
                         }
                     }
@@ -198,6 +198,11 @@ class AirCongestionMap {
                 average_txo: parseFloat(item.average_txo), // Parse TXO to float
                 scheduled: item.scheduled,
                 departed: item.departed,
+                completed: item.Completed, // Add Completed
+                cancelled: item.Cancelled, // Add Cancelled
+                d15: item.D15, // Add D15
+                a14: parseFloat(item.A14), // Add A14, ensure it's parsed as float
+                d0_percent: item['D0 Percent'], // Add D0 Percent
                 completion_factor: item.completion_factor,
                 last_updated: item.last_updated // Keep this for potential future use or debugging, but not for UI display as per Rail version
             })).filter(item =>
@@ -289,9 +294,10 @@ class AirCongestionMap {
      * @returns {L.Marker} The created Leaflet marker object.
      */
     createSingleMarker(item) {
-        const level = this.getCongestionLevelByTXO(item.average_txo);
+        // Use A14 for determining congestion level and color/radius
+        const level = this.getCongestionLevelByA14(item.a14);
         const color = this.getColor(level);
-        const radius = this.getRadiusByTXO(item.average_txo);
+        const radius = this.getRadiusByA14(item.a14);
 
         // Create marker icon HTML (circular, color based on congestion)
         const iconHtml = `
@@ -419,13 +425,18 @@ class AirCongestionMap {
                 return;
             }
 
-            const level = this.getCongestionLevelByTXO(item.average_txo);
+            const level = this.getCongestionLevelByA14(item.a14); // Now based on A14
             const airportName = item.Airport || 'Unknown Airport';
             const municipality = item.municipality || 'Unknown City';
             const regionCode = item.iso_region ? item.iso_region.split('-').pop() : 'N/A';
             const avgTxo = (typeof item.average_txo === 'number' && !isNaN(item.average_txo)) ? item.average_txo.toFixed(2) : 'N/A';
             const scheduled = item.scheduled || 'N/A';
             const departed = item.departed || 'N/A';
+            const completed = item.completed || 'N/A';
+            const cancelled = item.cancelled || 'N/A';
+            const d15 = item.d15 || 'N/A';
+            const a14 = item.a14 || 'N/A';
+            const d0Percent = item.d0_percent || 'N/A';
             const completionFactor = item.completion_factor || 'N/A';
 
 
@@ -437,10 +448,16 @@ class AirCongestionMap {
                                 <span style="color: ${this.getColor(level, true)}">
                                     ${level}
                                 </span>
+                                (based on 14 Min or Less Arrival Rate)
                             </p>
-                            <p><strong>Average Taxi-Out:</strong> ${avgTxo} min</p>
+                            <p><strong>14 Min or Less Arrival Rate (A14):</strong> ${a14}%</p>
+                            <p><strong>Average TXO:</strong> ${avgTxo} min</p>
                             <p><strong>Scheduled Flights:</strong> ${scheduled}</p>
+                            <p><strong>Completed Flights:</strong> ${completed}</p>
                             <p><strong>Departed Flights:</strong> ${departed}</p>
+                            <p><strong>Cancelled Flights:</strong> ${cancelled}</p>
+                            <p><strong>15+ Min Delay Rate:</strong> ${d15}%</p>
+                            <p><strong>On-Time Departure Rate:</strong> ${d0Percent}%</p>
                             <p><strong>Completion Factor:</strong> ${completionFactor}%</p>
                         </div>
                         ${isMultiple && safeItems.indexOf(item) !== safeItems.length - 1 ? '<hr>' : ''}
@@ -594,32 +611,36 @@ class AirCongestionMap {
     }
 
     /**
-     * Determines the marker radius based on the average Taxi-Out (TXO) value.
-     * @param {number} txo - Average TXO value (in minutes).
+     * Determines the marker radius based on the A14 value.
+     * Lower A14 means higher congestion, thus larger radius.
+     * @param {number} a14 - A14 value (percentage).
      * @returns {number} Marker radius (in pixels).
      */
-    getRadiusByTXO(txo) {
-        if (txo == null || isNaN(txo)) return 6; // Default size for unknown/null
-        if (txo >= 25) return 14;
-        if (txo >= 20) return 12;
-        if (txo >= 15) return 10;
-        if (txo >= 10) return 8;
-        return 6;
+    getRadiusByA14(a14) {
+        if (a14 == null || isNaN(a14)) return 6; // Default size for unknown/null
+        // Radii are inversely proportional to A14 (lower A14 = larger marker)
+        // Updated based on user feedback: 3-tier original with 5-tier mapping
+        if (a14 < 60) return 14; // Very High Congestion (0-59%)
+        if (a14 < 70) return 12; // High Congestion (60-69%)
+        if (a14 < 80) return 10; // Average Congestion (70-79%)
+        if (a14 < 90) return 8; // Low Congestion (80-89%)
+        return 6; // Very Low Congestion (90-100%)
     }
 
     /**
-     * Determines the congestion level string based on TXO value.
-     * @param {number} txo - Average TXO value (in minutes).
+     * Determines the congestion level string based on A14 value.
+     * @param {number} a14 - A14 value (percentage).
      * @returns {string} Congestion level string.
      */
-    getCongestionLevelByTXO(txo) {
-        if (txo == null || isNaN(txo)) return 'Unknown';
-        // Thresholds aligned with RailCongestionMap's logic
-        if (txo >= 25) return 'Very High';
-        if (txo >= 20) return 'High';
-        if (txo >= 15) return 'Average';
-        if (txo >= 10) return 'Low';
-        return 'Very Low';
+    getCongestionLevelByA14(a14) {
+        if (a14 == null || isNaN(a14)) return 'Unknown';
+        // Updated based on user feedback: 3-tier original with 5-tier mapping
+        if (a14 < 60) return 'Very High'; // < 60%
+        if (a14 < 70) return 'High';      // 60-69%
+        if (a14 < 80) return 'Average';   // 70-79%
+        if (a14 < 90) return 'Low';       // 80-89%
+        if (a14 >= 90) return 'Very Low'; // 90-100%
+        return 'Unknown'; // Fallback for unexpected values
     }
 
     /**
@@ -682,8 +703,3 @@ class AirCongestionMap {
 
 // Expose AirCongestionMap class to the global scope
 window.AirCongestionMap = AirCongestionMap;
-
-// Initialize the map when the DOM is ready (moved to HTML script block if needed, or external loader)
-// document.addEventListener('DOMContentLoaded', () => {
-//     new AirCongestionMap('map');
-// });
