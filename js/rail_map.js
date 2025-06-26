@@ -30,16 +30,57 @@ class RailCongestionMap {
                 let highestCongestionLevelValue = -1;
                 let dominantColor = this.getColor('Average'); // 기본값: 평균 색상
 
-                // 혼잡도 레벨을 숫자로 매핑하여 비교 가능하게 함
-                const congestionLevelToValue = (level) => {
-                    switch (level) {
-                        case 'Very High': return 4;
-                        case 'High': return 3;
-                        case 'Low': return 2;
-                        case 'Very Low': return 1;
-                        default: return 0; // 'Average' 또는 'Unknown' 등
-                    }
-                };
+            // Function to map congestion levels to a numerical value for internal logic/sorting
+            const congestionLevelToValue = (level) => {
+                switch (level) {
+                    case 'Very High': return 4;
+                    case 'High': return 3;
+                    case 'Average': return 2; // Added Average with a distinct value
+                    case 'Low': return 1;
+                    case 'Very Low': return 0;
+                    default: return -1; // Fallback for unknown levels
+                }
+            };
+            
+            // Function to get color based on congestion category
+            const getCongestionColor = (category) => {
+                switch (category) {
+                    case 'Very Low': return '#42A5F5'; // Blue
+                    case 'Low': return '#90CAF9';      // Light Blue
+                    case 'Average': return '#9E9E9E';   // Grey
+                    case 'High': return '#FFB300';     // Orange
+                    case 'Very High': return '#E53935';  // Red
+                    default: return '#757575'; // Default color (e.g., for unknown categories)
+                }
+            };
+            
+            // Example usage within your Leaflet map marker creation:
+            
+            // Assume 'data' is your parsed rail data array, and you're iterating through it
+            // For each data point, when creating a marker or updating its properties:
+            
+            // For marker styling:
+            const markerColor = getCongestionColor(dataItem.Category); // Use dataItem.Category from your rail data
+            const markerOptions = {
+                // ... other options
+                fillColor: markerColor,
+                color: 'white', // Border color
+                weight: 1.5,
+                opacity: 1,
+                fillOpacity: 0.9
+            };
+
+            // When creating the tooltip content:
+            const tooltipContent = `
+                <strong>Yard:</strong> ${dataItem.Yard}<br>
+                <strong>Location:</strong> ${dataItem.Location}<br>
+                <strong>Dwell Time:</strong> ${dataItem['Dwell Time']} hours<br>
+                <strong>Average:</strong> ${dataItem.Average} hours<br>
+                <strong>Congestion:</strong> <span style="color: ${getCongestionColor(dataItem.Category)}; font-weight: bold;">${dataItem.Category}</span>
+            `;
+            
+            // Attach to marker:
+            // marker.bindTooltip(tooltipContent, { permanent: false, direction: 'top' });
 
                 // 클러스터 내의 마커 중 가장 높은 혼잡도 레벨의 색상 선택
                 childMarkers.forEach(marker => {
