@@ -52,42 +52,51 @@ html, body {
     box-shadow: 0 4px 15px rgba(0,0,0,0.2) !important;
 }
 
+/* Leaflet Tooltip general override (Removed conflicting positioning styles) */
+/*
+.leaflet-tooltip {
+    transform: translate(-50%, 0) !important;
+    left: 50% !important;
+    margin-top: 15px !important;
+}
+*/
+
 /* Leaflet Zoom Control Styling */
 .leaflet-control-zoom {
     display: flex;
-    flex-direction: row; /* Changed from column to row for horizontal buttons */
-    width: 100%; /* Make it take full width of its container (leaflet-top.leaflet-right) */
-    height: 34px; /* Ensure consistent height for the row of buttons */
+    flex-direction: row-reverse; /* 변경: +가 오른쪽에, -가 왼쪽에 오도록 순서 반전 */
+    width: 100%; /* 부모 컨테이너 너비를 채움 */
+    height: 34px; /* 버튼 높이 고정 */
 }
 
 .leaflet-control-zoom a {
-    width: 50% !important; /* Make each button half the width of the container */
+    width: 50% !important; /* 각 버튼이 전체 너비의 절반을 차지 */
     height: 34px !important;
     background-color: white !important;
     box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
     border: 1px solid #e0e0e0 !important;
     transition: all 0.2s;
-    background-image: none !important; /* Remove default Leaflet zoom icons */
+    background-image: none !important; /* 기본 Leaflet 줌 아이콘 제거 */
     text-indent: 0 !important;
     text-align: center !important;
     font-family: 'Noto Sans KR', sans-serif;
     font-weight: 500 !important;
     font-size: 13px !important;
-    line-height: 34px !important; /* Center text vertically */
+    line-height: 34px !important; /* 텍스트 수직 중앙 정렬 */
     color: #333 !important;
-    box-sizing: border-box; /* Include padding and border in element's total width and height */
+    box-sizing: border-box;
 }
 
-/* Specific border-radius for left (-) button (zoom-in) */
-.leaflet-control-zoom-in {
-    border-radius: 6px 0 0 6px !important; /* Top-left, bottom-left rounded */
-    border-right: none !important; /* Remove right border to connect with '+' button */
+/* Specific border-radius for left (-) button (zoom-out, since flex-direction: row-reverse) */
+.leaflet-control-zoom-out { /* 기존 zoom-in에서 변경 */
+    border-radius: 6px 0 0 6px !important; /* 좌측 상단/하단 둥글게 */
+    border-right: none !important; /* 우측 테두리 제거하여 '+' 버튼과 연결 */
 }
 
-/* Specific border-radius for right (+) button (zoom-out) */
-.leaflet-control-zoom-out {
-    border-radius: 0 6px 6px 0 !important; /* Top-right, bottom-right rounded */
-    border-top: 1px solid #e0e0e0 !important; /* Keep original border-top for consistency */
+/* Specific border-radius for right (+) button (zoom-in, since flex-direction: row-reverse) */
+.leaflet-control-zoom-in { /* 기존 zoom-out에서 변경 */
+    border-radius: 0 6px 6px 0 !important; /* 우측 상단/하단 둥글게 */
+    border-left: 1px solid #e0e0e0 !important; /* '-' 버튼과의 경계선 추가 */
 }
 
 /* Removed hover effects for zoom buttons to prevent inconsistent shadows */
@@ -106,8 +115,7 @@ html, body {
 
 /* Remove margin between zoom buttons for horizontal layout */
 .leaflet-control-zoom-in + .leaflet-control-zoom-out {
-    margin-top: 0 !important;
-    border-left: 1px solid #e0e0e0 !important; /* Add a border to separate the two buttons */
+    margin-top: 0 !important; /* 원래 세로 스택용 마진 제거 */
 }
 
 
@@ -191,24 +199,23 @@ html, body {
    ===================================== */
 
 /* Common styling for control boxes (Reset button, Filter box, Toggle buttons container) */
-.map-control-container,
+/* .map-control-container는 현재 사용되지 않으며, .map-control-group-right가 우측 상단 컨트롤을 포함 */
 .map-control-group-right {
     background: white;
     padding: 8px 12px;
     border-radius: 8px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.15);
     display: flex;
-    /* Use flex-direction: column for vertical stacking of its children */
-    flex-direction: column; /* Changed from row to column for stacking Select and Reset */
-    align-items: stretch; /* Stretch children to fill the width */
-    gap: 10px; /* Space between elements */
-    width: 160px; /* Fixed width for consistency across all top-right controls */
+    flex-direction: column; /* Reset과 Select를 수직으로 쌓음 */
+    align-items: stretch; /* 자식 요소들을 너비에 맞춰 확장 */
+    gap: 10px; /* Reset 버튼과 Select 드롭다운 사이의 간격 */
+    width: 100%; /* 부모(.leaflet-top.leaflet-right)의 너비를 채움 */
     box-sizing: border-box;
 }
 
 /* Reset Button Style */
 .reset-btn {
-    width: 100%; /* Take full width of its parent (.map-control-group-right) */
+    width: 100%; /* 부모(.map-control-group-right)의 너비를 채움 */
     padding: 0 15px;
     background: white;
     border: 1px solid #e0e0e0;
@@ -233,12 +240,11 @@ html, body {
 /* Filter Control Select Style */
 .filter-control select,
 .map-control-group-right select {
-    width: 100%; /* Take full width of its parent (.map-control-group-right) */
+    width: 100%; /* 부모(.map-control-group-right)의 너비를 채움 */
     padding: 8px 12px;
     border: 1px solid #ddd;
     border-radius: 6px;
     font-size: 13px;
-    /* min-width removed as width is now 100% of fixed parent */
     font-family: 'Noto Sans KR', sans-serif;
     font-weight: 500;
     background-color: #f9f9f9;
@@ -247,7 +253,7 @@ html, body {
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='%23003A52'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right 10px center;
-    padding-right: 30px; /* Space for custom arrow */
+    padding-right: 30px; /* Custom arrow 공간 확보 */
     appearance: none;
     -webkit-appearance: none;
     -moz-appearance: none;
@@ -269,7 +275,6 @@ html, body {
     z-index: 1000;
     display: flex;
     gap: 0; /* Buttons are adjacent */
-    /* Override Leaflet's default control styles for this specific control */
     background: white !important; /* Restore background */
     padding: 8px 12px !important; /* Restore padding */
     border-radius: 8px !important; /* Restore border-radius */
@@ -292,7 +297,6 @@ html, body {
     justify-content: center;
     color: #333;
     box-sizing: border-box;
-    /* Borders for separating buttons within the group */
     border: 1px solid #e0e0e0;
 }
 
@@ -330,16 +334,16 @@ html, body {
 .leaflet-top.leaflet-right {
     display: flex;
     flex-direction: column; /* Controls stack vertically */
-    gap: 10px;
-    top: 10px !important; /* Adjusted top for desktop */
+    gap: 10px; /* 줌 블록, 리셋/셀렉트 블록 간의 간격 */
+    top: 10px !important; /* 데스크톱 상단 위치 조정 */
     right: 10px !important;
-    width: 160px; /* Fixed width for all controls in this column */
+    width: 160px; /* 데스크톱에서 모든 컨트롤의 고정 너비 */
     height: auto;
 }
 
 /* Top left (originally for zoom buttons) - now hidden/reset */
 .leaflet-top.leaflet-left {
-    display: none !important; /* Hide this container as zoom moved to top-right */
+    display: none !important; /* 줌 컨트롤이 우측 상단으로 이동했으므로 이 컨테이너 숨김 */
     top: auto !important; /* Reset */
     left: auto !important; /* Reset */
     transform: none !important; /* Reset */
@@ -401,7 +405,6 @@ html, body {
     color: #333;
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    /* padding handled by .leaflet-popup-content */
     font-family: 'Noto Sans KR', sans-serif; /* Consistent font */
 }
 
@@ -496,7 +499,6 @@ html, body {
     font-weight: 600;
     white-space: nowrap;
     line-height: 1.2;
-    /* text-shadow removed as it's no longer needed on a solid background */
     pointer-events: none; /* Make text non-interactive to not block map clicks */
     z-index: 1001; /* Ensure it is above other elements in the same position */
 }
@@ -600,48 +602,37 @@ html, body {
     }
 
     /* Controls: Adjust for mobile */
+    .leaflet-top.leaflet-right {
+        top: 0px !important; /* 모바일 상단 위치 조정 */
+        gap: 8px; /* 모바일에서 컨트롤 블록 간의 간격 */
+        width: calc(100% - 20px); /* 화면 너비에 맞춰 10px 좌우 패딩/마진 확보 */
+        max-width: 160px; /* PC 크기보다 넓어지지 않도록 고정 */
+        right: 10px !important;
+        margin-left: auto; /* 우측 정렬 */
+    }
+
     .map-control-container,
     .map-control-group-right {
-        width: 100%; /* Stretch to full width of parent container */
-        flex-direction: column; /* Always stack vertically on mobile */
-        align-items: stretch;
-        padding: 6px 8px;
-        gap: 6px;
+        width: 100%; /* 부모(.leaflet-top.leaflet-right) 너비에 맞춰 확장 */
+        padding: 6px 8px; /* 모바일에서 내부 패딩 조정 */
+        gap: 6px; /* 모바일에서 리셋/셀렉트 버튼 간의 내부 간격 조정 */
     }
 
     .reset-btn,
-    .map-control-group-right select,
-    .map-control-group-right button {
-        width: 100%; /* Ensure children take full width */
-        box-sizing: border-box;
-    }
-
-    /* Adjust position for top controls on mobile (closer to top tab) */
-    .leaflet-top.leaflet-right {
-        top: 0px !important; /* Adjusted top for mobile */
-        gap: 8px;
-        width: calc(100% - 20px); /* Adjust width to fit screen with padding/margin */
-        right: 10px !important;
-    }
-    .leaflet-top.leaflet-left { /* Ensure hidden */
-        display: none !important;
-        top: auto !important;
-        left: auto !important;
+    .map-control-group-right select {
+        height: 30px; /* 모바일에서 버튼/셀렉트 높이 조정 */
+        font-size: 12px; /* 모바일에서 폰트 크기 조정 */
+        padding: 0 10px; /* 모바일에서 패딩 조정 */
     }
 
     /* Zoom buttons on mobile */
     .leaflet-control-zoom {
-        flex-direction: row; /* Keep row for mobile */
-        width: 100%;
-        height: 30px; /* Adjust height for mobile buttons */
+        height: 30px; /* 모바일에서 줌 버튼 높이 조정 */
     }
-
     .leaflet-control-zoom a {
         height: 30px !important;
         font-size: 12px !important;
     }
-
-    /* ... rest of mobile styles ... */
 }
 
 /* Very Small Screens (max-width: 480px) */
