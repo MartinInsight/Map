@@ -487,13 +487,11 @@ class RailCongestionMap {
 
         if (this.lastUpdated) {
             const date = new Date(this.lastUpdated);
+            // 날짜만 표시되도록 toLocaleString 옵션 변경
             const formattedDate = date.toLocaleString('en-US', {
                 year: 'numeric',
                 month: 'long',
-                day: 'numeric',
-                hour: 'numeric',
-                minute: 'numeric',
-                hour12: false
+                day: 'numeric'
             });
 
             const infoControl = L.control({ position: 'bottomright' });
