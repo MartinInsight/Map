@@ -363,7 +363,7 @@ html, body {
 
 /* =====================================
    6. Popup & Tooltip Styles
-   ===================================== */
+   ==================================== */
 
 /* Common Popup Content Styles */
 .leaflet-popup-content h4 {
@@ -577,15 +577,13 @@ html, body {
     }
 
     .reset-btn,
-    .truck-toggle-btn,
     .map-control-group-right select,
     .map-control-group-right button {
         width: 100%; /* Make control elements full width */
         box-sizing: border-box;
     }
 
-    .reset-btn,
-    .truck-toggle-btn {
+    .reset-btn {
         padding: 0 10px;
         font-size: 12px;
         height: 30px;
@@ -619,30 +617,35 @@ html, body {
         font-size: 13px !important;
     }
 
-    /* Truck toggle specific adjustments for mobile layout */
+    /* Truck toggle specific adjustments for mobile layout - REVERTED */
     .truck-toggle-map-control {
-        width: calc(100% - 20px); /* Adjust for padding on map-control-container */
-        left: 10px; /* Position from left instead of center */
-        transform: none; /* Remove translateX */
-        flex-direction: column; /* Stack buttons vertically */
-        gap: 0;
+        /* Revert to desktop styles, remove mobile overrides */
+        /* width: calc(100% - 20px); */
+        /* left: 10px; */
+        /* transform: none; */
+        /* flex-direction: column; */
+        /* gap: 0; */
     }
 
     .truck-toggle-btn {
-        border-radius: 0 !important; /* Remove individual button rounding for stacked appearance */
-        border: 1px solid #e0e0e0; /* Add borders back */
-        border-bottom: none; /* Remove bottom border for connected look */
+        /* Revert to desktop styles, remove mobile overrides */
+        /* border-radius: 0 !important; */
+        /* border: 1px solid #e0e0e0; */
+        /* border-bottom: none; */
+        font-size: 12px; /* Keep font size adjustment for mobile */
+        height: 30px; /* Keep height adjustment for mobile */
+        min-width: unset; /* Keep min-width adjustment for mobile */
+        padding: 0 10px; /* Keep padding adjustment for mobile */
     }
-    .truck-toggle-btn:last-child {
-        border-bottom: 1px solid #e0e0e0; /* Add bottom border for last button */
-    }
+    /* Specific overrides for truck-toggle-btn that were removed for mobile stacking are now removed */
     .truck-toggle-btn:first-child {
-        border-top-left-radius: 6px !important; /* Re-add top radius for first button */
-        border-top-right-radius: 6px !important;
+        /* border-top-left-radius: 6px !important; */
+        /* border-top-right-radius: 6px !important; */
     }
     .truck-toggle-btn:last-child {
-        border-bottom-left-radius: 6px !important; /* Re-add bottom radius for last button */
-        border-bottom-right-radius: 6px !important;
+        /* border-bottom: 1px solid #e0e0e0; */
+        /* border-bottom-left-radius: 6px !important; */
+        /* border-bottom-right-radius: 6px !important; */
     }
 }
 
