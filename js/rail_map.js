@@ -355,20 +355,14 @@ class RailCongestionMap {
         // 개별 마커의 팝업을 해당 마커의 데이터로 바인딩합니다.
         marker.bindPopup(this.createPopupContent([item]), popupOptions);
 
-        // 마커 호버 시 팝업을 띄우고, 마우스 아웃 시 닫습니다.
-        if (!L.Browser.mobile) { // 모바일에서는 호버 이벤트를 사용하지 않음
-            marker.on('mouseover', (e) => {
-                // 이미 열려 있는 팝업이 있다면 닫고, 현재 마커의 팝업을 엽니다.
-                this.map.closePopup(); 
-                e.target.openPopup();
-            });
-
-            marker.on('mouseout', (e) => {
-                // 팝업이 실제로 열려있고, 마우스가 마커 밖으로 나갔을 때 팝업을 닫습니다.
-                // 팝업 안으로 마우스가 이동했을 때는 닫히지 않도록 Leaflet이 자동으로 처리합니다.
-                if (e.target.getPopup().isOpen()) {
-                    e.target.closePopup();
-                }
+        // 이전 논의에서 제거되었던 L.tooltip을 활성화합니다.
+        // 이것이 고객님께서 말씀하신 "호버 툴팁" 기능입니다.
+        if (!L.Browser.mobile) { // 모바일에서는 툴팁을 사용하지 않습니다.
+            marker.bindTooltip(`Yard: ${item.Yard}<br>Level: ${item.congestion_level}`, {
+                permanent: false,
+                direction: 'top',
+                offset: L.point(0, -radius),
+                className: 'custom-marker-tooltip'
             });
         }
 
@@ -406,8 +400,8 @@ class RailCongestionMap {
                     marker.openPopup();
                     console.log(`Popup for ${item.Yard} opened after zoomToShowLayer.`);
                     // if (!marker.getPopup().isOpen()) { // autoClose:true로 인해 이중 체크 불필요
-                    //     console.warn("Popup did not confirm open after direct call. Trying map.openPopup.");
-                    //     this.map.openPopup(marker.getPopup());
+                    //     console.warn(`Popup for ${yardName} did not confirm open after direct call. Final retry via map.`);
+                    //     this.map.openPopup(foundMarker.getPopup());
                     // }
                 });
             } else {
