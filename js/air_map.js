@@ -539,4 +539,151 @@ class AirCongestionMap {
                         } else {
                             console.warn(`Marker object for airport '${airportName}' not immediately found. Falling back to fitBounds and polling.`);
                             const bounds = L.latLngBounds(airportDataForFilter.map(item => [item.lat, item.lng]));
-                            this.map.fitBounds(bounds.pa
+                            this.map.fitBounds(bounds.pad(0.5), { maxZoom: this.allMarkers.options.disableClusteringAtZoom + 1 });
+                            this.markerToOpenAfterMove = airportName; // Save airport name to open after moveend
+                        }
+                    } else {
+                        console.warn(`No data found for airport '${airportName}'.`);
+                    }
+                }
+            });
+
+            div.querySelector('.air-reset-btn').addEventListener('click', () => {
+                console.log("Reset button clicked.");
+                this.map.setView([37.8, -96], 4);
+                this.map.closePopup();
+                this.markerToOpenAfterMove = null;
+                const airportFilter = div.querySelector('.airport-filter');
+                if (airportFilter) {
+                    airportFilter.value = '';
+                    airportFilter.selectedIndex = 0;
+                }
+            });
+
+            // Prevent click/scroll propagation (allow independent interaction with controls)
+            L.DomEvent.disableClickPropagation(div);
+            L.DomEvent.disableScrollPropagation(div);
+
+            this.filterControlInstance = control;
+            return div;
+        };
+
+        control.addTo(this.map);
+    }
+
+    /**
+     * Calculates the central coordinates for a given set of airport data.
+     * @param {Array<Object>} airportData - Array of airport data objects.
+     * @returns {Array<number>} - [latitude, longitude] of the center.
+     */
+    getAirportCenter(airportData) {
+        if (!airportData || airportData.length === 0) return [37.8, -96];
+
+        const lats = airportData.map(item => item.lat);
+        const lngs = airportData.map(item => item.lng);
+
+        const minLat = Math.min(...lats);
+        const maxLat = Math.max(...lats);
+        const minLng = Math.min(...lngs);
+        const maxLng = Math.max(...lngs);
+
+        return [
+            (minLat + maxLat) / 2,
+            (minLng + maxLng) / 2
+        ];
+    }
+
+    /**
+     * Determines the marker radius based on the average Taxi-Out (TXO) value.
+     * @param {number} txo - Average TXO value (in minutes).
+     * @returns {number} Marker radius (in pixels).
+     */
+    getRadiusByTXO(txo) {
+        if (txo == null || isNaN(txo)) return 6; // Default size for unknown/null
+        if (txo >= 25) return 14;
+        if (txo >= 20) return 12;
+        if (txo >= 15) return 10;
+        if (txo >= 10) return 8;
+        return 6;
+    }
+
+    /**
+     * Determines the congestion level string based on TXO value.
+     * @param {number} txo - Average TXO value (in minutes).
+     * @returns {string} Congestion level string.
+     */
+    getCongestionLevelByTXO(txo) {
+        if (txo == null || isNaN(txo)) return 'Unknown';
+        // Thresholds aligned with RailCongestionMap's logic
+        if (txo >= 25) return 'Very High';
+        if (txo >= 20) return 'High';
+        if (txo >= 15) return 'Average';
+        if (txo >= 10) return 'Low';
+        return 'Very Low';
+    }
+
+    /**
+     * Returns color based on congestion level for circles or text.
+     * @param {string} level - Congestion level string.
+     * @param {boolean} [isText=false] - Whether to return text color.
+     * @returns {string} CSS color code.
+     */
+    getColor(level, isText = false) {
+        // Colors matched to RailCongestionMap's scheme:
+        // Very Low: Blue, Low: Light Blue, Average: Gray, High: Orange, Very High: Red
+        const circleColors = {
+            'Very High': '#E53935',  // Red
+            'High': '#FFB300',       // Orange
+            'Average': '#9E9E9E',    // Gray
+            'Low': '#90CAF9',        // Light Blue
+            'Very Low': '#42A5F5',   // Blue
+            'Unknown': '#cccccc'     // Default gray for unknown
+        };
+
+        // Text colors for better contrast
+        const textColors = {
+            'Very High': '#b71c1c',  // Darker red
+            'High': '#e65100',       // Darker orange
+            'Average': '#616161',    // Darker gray
+            'Low': '#2196F3',        // Darker light blue
+            'Very Low': '#1976D2',   // Darker blue
+            'Unknown': '#5e5e5e'     // Darker default gray
+        };
+
+        return isText ? textColors[level] : circleColors[level];
+    }
+
+    /**
+     * Displays a temporary error message on the map.
+     * @param {string} message - The error message to display.
+     */
+    displayErrorMessage(message) {
+        if (this.errorControl) {
+            this.map.removeControl(this.errorControl);
+        }
+
+        const errorControl = L.control({ position: 'topleft' });
+        errorControl.onAdd = function() {
+            const div = L.DomUtil.create('div', 'error-message');
+            div.innerHTML = message;
+            return div;
+        };
+        errorControl.addTo(this.map);
+        this.errorControl = errorControl;
+
+        // Automatically remove message after 5 seconds
+        setTimeout(() => {
+            if (this.map.hasControl(this.errorControl)) {
+                this.map.removeControl(this.errorControl);
+            }
+        }, 5000);
+    }
+}
+
+// Expose AirCongestionMap class to the global scope
+window.AirCongestionMap = AirCongestionMap;
+
+// Initialize the map when the DOM is ready (moved to HTML script block if needed, or external loader)
+// document.addEventListener('DOMContentLoaded', () => {
+//     new AirCongestionMap('map');
+// });
