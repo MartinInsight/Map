@@ -61,49 +61,15 @@ html, body {
 }
 */
 
-/* Leaflet Zoom Control Styling */
-.leaflet-control-zoom {
-    display: flex;
-    flex-direction: row-reverse; /* 변경: +가 오른쪽에, -가 왼쪽에 오도록 순서 반전 */
-    width: 100%; /* 부모 컨테이너 너비를 채움 */
-    height: 34px; /* 버튼 높이 고정 */
-    background-color: white; /* 줌 컨트롤 자체의 배경 */
-    /* padding, border-radius, box-shadow는 이제 .leaflet-top.leaflet-right에서 통합 관리 */
-    padding: 0; /* 내부 패딩 제거 */
-    border-radius: 0;
-    box-shadow: none;
-    border: none; /* 컨테이너 자체의 테두리 제거 */
-    margin-bottom: -4 !important;
-}
-
-.leaflet-control-zoom a {
-    width: 50% !important; /* 각 버튼이 전체 너비의 절반을 차지 */
-    height: 34px !important;
-    background-color: white !important; /* 개별 버튼 배경 유지 */
-    box-shadow: none !important; /* 그림자 제거 */
-    border: 1px solid #e0e0e0 !important; /* 개별 버튼 테두리 유지 */
-    transition: all 0.2s;
-    background-image: none !important; /* 기본 Leaflet 줌 아이콘 제거 */
-    text-indent: 0 !important;
-    text-align: center !important;
-    font-family: 'Noto Sans KR', sans-serif;
-    font-weight: 500 !important;
-    font-size: 13px !important;
-    line-height: 34px !important; /* 텍스트 수직 중앙 정렬 */
-    color: #333 !important;
-    box-sizing: border-box;
-}
-
 /* Specific border-radius for left (-) button (zoom-out, since flex-direction: row-reverse) */
-.leaflet-control-zoom-out { /* 기존 zoom-in에서 변경 */
-    border-radius: 6px 0 0 6px !important; /* 좌측 상단/하단 둥글게 */
-    border-right: none !important; /* 우측 테두리 제거하여 '+' 버튼과 연결 */
+.leaflet-control-zoom-out {
+    border-radius: 0 6px 6px 0 !important;
 }
 
 /* Specific border-radius for right (+) button (zoom-in, since flex-direction: row-reverse) */
-.leaflet-control-zoom-in { /* 기존 zoom-out에서 변경 */
-    border-radius: 0 6px 6px 0 !important; /* 우측 상단/하단 둥글게 */
-    border-left: 1px solid #e0e0e0 !important; /* '-' 버튼과의 경계선 추가 */
+.leaflet-control-zoom-in {
+    border-radius: 6px 0 0 6px !important;
+    border-right: none !important;
 }
 
 /* Removed hover effects for zoom buttons to prevent inconsistent shadows */
@@ -206,17 +172,47 @@ html, body {
 /* Common styling for control boxes (Reset button, Filter box, Toggle buttons container) */
 /* .map-control-container는 현재 사용되지 않으며, .map-control-group-right가 우측 상단 컨트롤을 포함 */
 .map-control-group-right {
-    background: white; /* Reset/Select 그룹 자체의 배경 */
-    padding: 8px 12px; /* Reset/Select 그룹 자체의 패딩 */
-    border-radius: 8px; /* Reset/Select 그룹 자체의 테두리 반경 */
-    box-shadow: none; /* Reset/Select 그룹 자체의 그림자 제거 */
+    background: white;
+    padding: 8px 12px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.15);
     display: flex;
-    flex-direction: column; /* Reset과 Select를 수직으로 쌓음 */
-    align-items: stretch; /* 자식 요소들을 너비에 맞춰 확장 */
-    gap: 8px; /* Reset 버튼과 Select 드롭다운 사이의 간격 조정 */
-    width: 100%; /* 부모(.leaflet-top.leaflet-right)의 너비를 채움 */
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px; /* 모든 컨트롤 간의 간격을 8px로 통일 */
+    width: 100%;
     box-sizing: border-box;
-    /* margin-top은 이제 .leaflet-top.leaflet-right에서 통합 관리 */
+}
+
+/* Leaflet Zoom Control Styling */
+.leaflet-control-zoom {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    height: 34px;
+    background: transparent !important;
+    padding: 0 !important;
+    border-radius: 0;
+    box-shadow: none;
+    border: none;
+    margin: 0 !important; /* 기존 마진 제거 */
+}
+
+.leaflet-control-zoom a {
+    width: 50% !important;
+    height: 34px !important;
+    background-color: white !important;
+    border: 1px solid #e0e0e0 !important;
+    transition: all 0.2s;
+    background-image: none !important;
+    text-indent: 0 !important;
+    text-align: center !important;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-weight: 500 !important;
+    font-size: 13px !important;
+    line-height: 34px !important;
+    color: #333 !important;
+    box-sizing: border-box;
 }
 
 /* Reset Button Style */
@@ -339,16 +335,15 @@ html, body {
 /* Top right for all controls (Zoom, Reset, Filter) */
 .leaflet-top.leaflet-right {
     display: flex;
-    flex-direction: column; /* Controls stack vertically */
-    gap: 8px; /* 줌 컨트롤 박스와 Reset/Select 박스 사이의 간격 */
-    top: 10px !important; /* 데스크톱 상단 위치 조정 */
+    flex-direction: column;
+    gap: 8px; /* 컨트롤 그룹 사이의 간격 */
+    top: 10px !important;
     right: 10px !important;
-    width: 160px; /* 데스크톱에서 모든 컨트롤의 고정 너비 */
-    height: auto;
-    background: none; /* 전체 컨테이너 배경 제거 (개별 컨트롤에 배경 적용) */
-    padding: 0; /* 전체 컨테이너 패딩 제거 */
+    width: 160px;
+    background: none;
+    padding: 0;
     border-radius: 0;
-    box-shadow: none; /* 전체 컨테이너 그림자 제거 */
+    box-shadow: none;
 }
 
 /* Top left (originally for zoom buttons) - now hidden/reset */
