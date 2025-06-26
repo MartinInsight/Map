@@ -211,7 +211,9 @@ class RailCongestionMap {
                 congestion_score: item.congestion_score, // 파이썬에서 이미 float로 변환하여 제공 ('Dwell Time'에 해당)
                 indicator: item.indicator, // 파이썬에서 이미 float로 변환하여 제공
                 congestion_level: item.congestion_level, // 파이썬에서 'congestion_level'로 표준화됨 ('Category'에 해당)
-                average_dwell_time: parseFloat(item.Average), // 'Average' 컬럼 추가 매핑
+                // 'Average' 컬럼이 파이썬 스크립트에서 us-rail.json에 포함되지 않아 N/A로 표시될 수 있습니다.
+                // 만약 이 값을 정확히 표시하려면 파이썬 스크립트에서 'Average' 데이터를 JSON으로 포함해야 합니다.
+                average_value: parseFloat(item.Average), // 'Average' 컬럼 추가 매핑 (이름 변경)
                 date: item.date
             })).filter(item =>
                 // 파이썬에서 이미 유효성 검사를 수행했지만, JS에서도 한 번 더 확인하는 것은 나쁘지 않습니다.
@@ -355,21 +357,13 @@ class RailCongestionMap {
         // 개별 마커의 팝업을 해당 마커의 데이터로 바인딩합니다.
         marker.bindPopup(this.createPopupContent([item]), popupOptions);
 
-        // 개별 마커 툴팁 (마우스 오버 시) -> 이제 호버시 팝업을 띄우므로 제거합니다. (주석 처리됨)
-        // if (!L.Browser.mobile) {
-        //     marker.bindTooltip(`Yard: ${item.Yard}<br>Level: ${item.congestion_level}`, {
-        //         permanent: false,
-        //         direction: 'top',
-        //         offset: L.point(0, -radius),
-        //         className: 'custom-marker-tooltip'
-        //     });
-        // }
-
-        // 새로운 로직: 마커 호버 시 팝업을 띄우고, 마우스 아웃 시 닫습니다. (주석 처리됨)
+        // 이전 툴팁 주석 처리된 부분은 삭제하며, 호버 시 팝업을 띄우는 로직을 다시 활성화합니다.
         if (!L.Browser.mobile) { // 모바일에서는 호버 이벤트를 사용하지 않음
             marker.on('mouseover', (e) => {
                 // 이미 열려 있는 팝업이 있다면 닫고, 현재 마커의 팝업을 엽니다.
-                // this.map.closePopup(); // autoClose:true로 인해 필요 없을 수 있으나, 명시적으로 닫는 것이 안전할 때도 있음
+                // autoClose:true가 설정되어 있으므로 명시적 closePopup은 불필요할 수 있으나,
+                // 혹시 모를 경우를 대비하여 유지합니다.
+                this.map.closePopup(); 
                 e.target.openPopup();
             });
 
@@ -467,7 +461,7 @@ class RailCongestionMap {
             const company = item.company || 'Unknown';
             const location = item.location || 'Unknown Location';
             const congestionScore = (typeof item.congestion_score === 'number' && !isNaN(item.congestion_score)) ? item.congestion_score.toFixed(1) : 'N/A';
-            const averageDwellTime = (typeof item.average_dwell_time === 'number' && !isNaN(item.average_dwell_time)) ? item.average_dwell_time.toFixed(1) : 'N/A';
+            const averageValue = (typeof item.average_value === 'number' && !isNaN(item.average_value)) ? item.average_value.toFixed(1) : 'N/A';
 
 
             content += `
@@ -480,7 +474,7 @@ class RailCongestionMap {
                         </span>
                     </p>
                     <p><strong>Dwell Time:</strong> ${congestionScore} hours</p>
-                    <p><strong>Average Dwell Time:</strong> ${averageDwellTime} hours</p>
+                    <p><strong>Average:</strong> ${averageValue} hours</p>
                 </div>
                 ${isMultiple && safeItems.indexOf(item) !== safeItems.length - 1 ? '<hr>' : ''}
             `;
