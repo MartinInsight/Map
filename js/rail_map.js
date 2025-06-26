@@ -59,8 +59,10 @@ class RailCongestionMap {
             minZoom: 3
         }).addTo(this.map);
 
-        this.map.setMaxBounds([-85, -180],
-            );
+        // 지도 경계 설정: Leaflet의 setMaxBounds는 두 개의 LatLng 배열을 받습니다.
+        this.map.setMaxBounds([-85, -180], // 남서쪽 경계
+                // 북동쪽 경계
+        ]);
 
         this.loadData();
 
@@ -201,7 +203,7 @@ class RailCongestionMap {
                 date: item.date |
 | item.DateMonth
             })).filter(item =>
-               !isNaN(item.lat) &&!isNaN(item.lng) && item.location && item.congestion_level
+              !isNaN(item.lat) &&!isNaN(item.lng) && item.location && item.congestion_level
             );
 
             const coordinateMap = new Map();
@@ -302,9 +304,9 @@ class RailCongestionMap {
                     maxHeight: 300,
                     maxWidth: 300
                 })
-               .setLatLng(a.latlng)
-               .setContent(popupContent)
-               .openOn(this.map);
+              .setLatLng(a.latlng)
+              .setContent(popupContent)
+              .openOn(this.map);
             });
 
             this.allMarkers.off('clustermouseout');
@@ -504,8 +506,8 @@ class RailCongestionMap {
             const div = L.DomUtil.create('div', 'map-control-group-right');
 
             const validYards = this.currentData
-               .filter(item => item.Yard && item.Yard.trim()!== '')
-               .map(item => item.Yard);
+              .filter(item => item.Yard && item.Yard.trim()!== '')
+              .map(item => item.Yard);
 
             const yards =.sort((a, b) => a.localeCompare(b));
 
