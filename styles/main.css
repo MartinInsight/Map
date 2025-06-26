@@ -63,12 +63,12 @@ html, body {
 
 /* Specific border-radius for left (-) button (zoom-out, since flex-direction: row-reverse) */
 .leaflet-control-zoom-out {
-    border-radius: 0 6px 6px 0 !important;
+    border-radius: 6px 0 0 6px !important;
 }
 
 /* Specific border-radius for right (+) button (zoom-in, since flex-direction: row-reverse) */
 .leaflet-control-zoom-in {
-    border-radius: 6px 0 0 6px !important;
+    border-radius: 0 6px 6px 0 !important;
     border-right: none !important;
 }
 
@@ -493,34 +493,34 @@ html, body {
    7. Information & Error Messages
    ===================================== */
 
-/* Last Updated Info Control - Now with a background box */
+/* Last Updated 텍스트 스타일 (저작권 정보와 무관하게 독립적) */
 .last-updated-info {
-    /* 기존 스타일 유지 */
-    font-family: 'Noto Sans KR', sans-serif;
-    font-size: 14px;
+    position: fixed; /* 고정 위치 */
+    right: 10px; /* 우측 여백 = 컨트롤 박스와 동일 */
+    bottom: 30px; /* 저작권 정보 바로 위 (기본값: 20px) */
     background-color: rgba(255, 255, 255, 0.9);
     padding: 6px 10px;
     border-radius: 5px;
     box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 14px;
     color: #333;
     font-weight: 600;
     white-space: nowrap;
-    line-height: 1.2;
-    pointer-events: none;
-    z-index: 1001;
-    
-    /* 추가: 우측 정렬 및 너비 조정 */
-    position: absolute;
-    right: 10px;
     text-align: right;
-    max-width: calc(160px - 20px); /* 컨트롤 박스 너비에 맞춤 */
+    max-width: 160px; /* 컨트롤 박스와 동일 너비 */
+    z-index: 1000; /* 지도 요소 위에 고정 표시 */
+    pointer-events: none; /* 클릭 방지 */
+    margin: 0 !important; /* 기본 마진 제거 */
 }
 
-/* 모바일 대응 추가 */
+/* 모바일 대응 */
 @media (max-width: 768px) {
     .last-updated-info {
         right: 10px !important;
-        max-width: calc(100% - 20px);
+        bottom: 25px !important; /* 모바일에서 더 올림 */
+        max-width: calc(100% - 20px); /* 화면 너비에 맞춤 */
+        font-size: 12px; /* 글자 크기 축소 */
     }
 }
 
