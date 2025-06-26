@@ -222,7 +222,7 @@ class AirCongestionMap {
                     const baseLat = itemsAtCoord[0].lat;
                     const baseLng = itemsAtCoord[0].lng;
 
-                    const offsetScale = 0.0005; // Jittering offset scale (smaller for air data usually)
+                    const offsetScale = 0.15; // Jittering offset scale (smaller for air data usually)
 
                     itemsAtCoord.forEach((item, index) => {
                         const angle = (index / itemsAtCoord.length) * 2 * Math.PI;
