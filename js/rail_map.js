@@ -32,8 +32,6 @@ class RailCongestionMap {
                 let dominantColor = this.getColor('Average'); // 기본값: 평균 색상
 
                 // 혼잡도 레벨을 숫자로 매핑하여 비교 가능하게 함
-                // 이 함수는 RailCongestionMap 클래스의 멤버 함수로 옮기는 것이 더 좋지만,
-                // 현재 기능 수정 금지 요청으로 인해 임시로 여기에 유지합니다.
                 const congestionLevelToValue = (level) => {
                     switch (level) {
                         case 'Very High': return 4;
@@ -72,7 +70,7 @@ class RailCongestionMap {
 
         this.currentData = null; // 현재 로드된 데이터
         this.lastUpdated = null; // 마지막 업데이트 날짜
-        this.filterControlInstance = null; // 필터 컨트롤 인스턴스
+        this.filterControlInstance = null; // 필터 컨트롤 인스턴스 (이제 통합 컨트롤이 됨)
         this.errorControl = null; // 에러 메시지 컨트롤
         this.lastUpdatedControl = null; // 마지막 업데이트 정보 컨트롤
         this.markerToOpenAfterMove = null; // 지도 이동 후 팝업을 열 마커 이름
@@ -91,9 +89,8 @@ class RailCongestionMap {
             [85, 180]    // 북동쪽 경계
         ]);
 
-        // 줌 컨트롤을 우측 상단에 추가 (다른 컨트롤보다 먼저 오도록)
-        // 사용자가 요청한 순서에 따라 Reset View와 Select Yard 위에 둠
-        L.control.zoom({ position: 'topright' }).addTo(this.map);
+        // 기존 Leaflet 줌 컨트롤을 추가하는 라인을 제거합니다.
+        // L.control.zoom({ position: 'topright' }).addTo(this.map);
 
         // 데이터 로드 시작
         this.loadData();
@@ -241,7 +238,8 @@ class RailCongestionMap {
                     const baseLat = itemsAtCoord[0].lat;
                     const baseLng = itemsAtCoord[0].lng;
 
-                    const offsetScale = 0.15; // 지터링 오프셋 스케일
+                    // 지터링 오프셋 스케일 조정 (0.15에서 0.00015로 훨씬 작게 변경)
+                    const offsetScale = 0.00015; 
 
                     itemsAtCoord.forEach((item, index) => {
                         const angle = (index / itemsAtCoord.length) * 2 * Math.PI;
@@ -361,7 +359,6 @@ class RailCongestionMap {
         marker.bindPopup(this.createPopupContent([item]), popupOptions);
 
         // 마우스 호버 시 팝업을 띄우고, 마우스 아웃 시 닫습니다.
-        // `L.Browser.mobile` 조건문을 제거하여 모든 환경에서 호버 기능이 작동하도록 수정했습니다.
         marker.on('mouseover', (e) => {
             // 다른 팝업이 열려있다면 먼저 닫습니다.
             this.map.closePopup(); 
@@ -409,19 +406,11 @@ class RailCongestionMap {
                     // zoomToShowLayer 완료 후 팝업 열기
                     marker.openPopup();
                     console.log(`Popup for ${item.Yard} opened after zoomToShowLayer.`);
-                    // if (!foundMarker.getPopup().isOpen()) { // autoClose:true로 인해 이중 체크 불필요
-                    //     console.warn(`Popup for ${yardName} did not confirm open after direct call. Final retry via map.`);
-                    //     this.map.openPopup(foundMarker.getPopup());
-                    // }
                 });
             } else {
                 // 마커가 클러스터링되지 않은 상태라면 바로 팝업 열기
                 marker.openPopup();
                 console.log(`Popup for ${item.Yard} opened directly.`);
-                // if (!marker.getPopup().isOpen()) { // autoClose:true로 인해 이중 체크 불필요
-                //     console.warn("Popup did not confirm open after direct call (not in cluster). Trying map.openPopup.");
-                //     this.map.openPopup(marker.getPopup());
-                // }
             }
         });
 
@@ -488,257 +477,257 @@ class RailCongestionMap {
     }
 
     /**
-     * 지도에 마지막 업데이트 시간을 표시하는 컨트롤을 추가합니다.
+     * 혼잡도 레벨에 따른 색상 값을 반환합니다.
+     * @param {string} level - 혼잡도 레벨 (예: 'Very High', 'High', 'Average', 'Low', 'Very Low').
+     * @param {boolean} [forText=false] - 텍스트 색상으로 사용할 경우, 더 대비되는 색상을 반환할지 여부.
+     * @returns {string} CSS 색상 코드.
      */
-    addLastUpdatedText() {
-        if (this.lastUpdatedControl) {
-            this.map.removeControl(this.lastUpdatedControl);
-        }
-
-        if (this.lastUpdated) {
-            const date = new Date(this.lastUpdated);
-            // 날짜만 표시되도록 toLocaleString 옵션 변경
-            const formattedDate = date.toLocaleString('en-US', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-            });
-
-            const infoControl = L.control({ position: 'bottomright' });
-
-            infoControl.onAdd = () => {
-                const div = L.DomUtil.create('div', 'last-updated-info');
-                div.innerHTML = `<strong>Last Updated:</strong> ${formattedDate}`;
-                return div;
-            };
-
-            infoControl.addTo(this.map);
-            this.lastUpdatedControl = infoControl;
+    getColor(level, forText = false) {
+        switch (level) {
+            case 'Very High': return forText ? '#C0392B' : '#E74C3C'; // 진한 빨강
+            case 'High': return forText ? '#D35400' : '#F39C12'; // 주황
+            case 'Average': return forText ? '#2C3E50' : '#BDC3C7'; // 중간 회색 (또는 파랑)
+            case 'Low': return forText ? '#27AE60' : '#2ECC71'; // 초록
+            case 'Very Low': return forText ? '#1ABC9C' : '#1ABC9C'; // 진한 초록 (아쿠아)
+            default: return forText ? '#7F8C8D' : '#95A5A6'; // 기본 회색
         }
     }
 
     /**
-     * 지도 우측 상단에 필터 드롭다운과 리셋 버튼 컨트롤을 추가합니다.
+     * 지표 값에 따른 마커 반지름을 반환합니다.
+     * @param {number} indicatorValue - 지표 값.
+     * @returns {number} 마커 반지름 (픽셀).
      */
-    addRightControls() {
-        if (this.filterControlInstance) {
-            this.map.removeControl(this.filterControlInstance);
+    getRadiusByIndicator(indicatorValue) {
+        if (indicatorValue === undefined || isNaN(indicatorValue)) {
+            return 8; // 기본값
         }
+        // 지표 값에 따라 반지름을 동적으로 조정 (예: 1-10 범위)
+        // 0-50 값을 5-15 픽셀 범위로 매핑합니다.
+        const minIndicator = 0;
+        const maxIndicator = 50;
+        const minRadius = 8;
+        const maxRadius = 16;
 
-        const control = L.control({ position: 'topright' });
+        if (indicatorValue <= minIndicator) return minRadius;
+        if (indicatorValue >= maxIndicator) return maxRadius;
 
-        control.onAdd = () => {
-            const div = L.DomUtil.create('div', 'map-control-group-right');
-
-            const validYards = this.currentData
-                .filter(item => item.Yard && item.Yard.trim() !== '')
-                .map(item => item.Yard);
-
-            const yards = [...new Set(validYards)].sort((a, b) => a.localeCompare(b));
-
-            const filterDropdownHtml = `
-                <select class="yard-filter">
-                    <option value="" disabled selected hidden>Select Yard</option>
-                    <option value="All">All Yards</option>
-                    ${yards.map(yard =>
-                        `<option value="${yard}">${yard}</option>`
-                    ).join('')}
-                </select>
-            `;
-            // 순서: Reset View 버튼 먼저, 그 다음에 Select Yard 드롭다운
-            div.insertAdjacentHTML('beforeend', `
-                <button class="rail-reset-btn reset-btn">Reset View</button>
-            `);
-            div.insertAdjacentHTML('beforeend', filterDropdownHtml);
-
-
-            div.querySelector('.yard-filter').addEventListener('change', (e) => {
-                const yardName = e.target.value;
-                if (yardName === "All") {
-                    console.log("Filter: All Yards selected. Resetting view.");
-                    this.map.setView([37.8, -96], 4);
-                    this.map.closePopup();
-                    this.markerToOpenAfterMove = null;
-                } else if (yardName) {
-                    console.log(`Filter selected: ${yardName}`);
-                    const yardDataForFilter = this.currentData.filter(item => item.Yard === yardName);
-                    if (yardDataForFilter.length > 0) {
-                        let foundMarker = null;
-                        this.allMarkers.eachLayer(layer => {
-                            if (layer.options.itemData && layer.options.itemData.Yard === yardName) {
-                                foundMarker = layer;
-                                return;
-                            }
-                        });
-
-                        if (foundMarker) {
-                            console.log(`Found marker for filter: ${yardName}. Using zoomToShowLayer.`);
-                            this.map.closePopup(); // 다른 팝업 먼저 닫기
-                            this.allMarkers.zoomToShowLayer(foundMarker, () => {
-                                // zoomToShowLayer 완료 후 팝업 열기
-                                foundMarker.openPopup();
-                                console.log(`Popup for ${yardName} opened after zoomToShowLayer.`);
-                                // if (!foundMarker.getPopup().isOpen()) { // autoClose:true로 인해 이중 체크 불필요
-                                //     console.warn(`Popup for ${yardName} did not confirm open after direct call. Final retry via map.`);
-                                //     this.map.openPopup(foundMarker.getPopup());
-                                // }
-                            });
-                            this.markerToOpenAfterMove = null; // 성공적으로 처리했으므로 초기화
-                        } else {
-                            console.warn(`Marker object for yard '${yardName}' not immediately found. Falling back to fitBounds and polling.`);
-                            const bounds = L.latLngBounds(yardDataForFilter.map(item => [item.lat, item.lng]));
-                            this.map.fitBounds(bounds.pad(0.5), { maxZoom: this.allMarkers.options.disableClusteringAtZoom + 1 });
-                            this.markerToOpenAfterMove = yardName; // moveend 후 열기 위해 야드 이름 저장
-                        }
-                    } else {
-                        console.warn(`No data found for yard '${yardName}'.`);
-                    }
-                }
-            });
-
-            div.querySelector('.rail-reset-btn').addEventListener('click', () => {
-                console.log("Reset button clicked.");
-                this.map.setView([37.8, -96], 4);
-                this.map.closePopup();
-                this.markerToOpenAfterMove = null;
-                const yardFilter = div.querySelector('.yard-filter');
-                if (yardFilter) {
-                    yardFilter.value = '';
-                    yardFilter.selectedIndex = 0;
-                }
-            });
-
-            // 클릭/스크롤 전파 방지 (지도와 독립적으로 컨트롤 상호작용 가능하도록)
-            L.DomEvent.disableClickPropagation(div);
-            L.DomEvent.disableScrollPropagation(div);
-
-            this.filterControlInstance = control;
-            return div;
-        };
-
-        control.addTo(this.map);
+        return minRadius + (indicatorValue / maxIndicator) * (maxRadius - minRadius);
     }
 
     /**
-     * 지도에 혼잡도 레벨 범례를 추가합니다. (현재 주석 처리됨)
-     */
-    addLegend() {
-        const legend = L.control({ position: 'bottomright' });
-
-        legend.onAdd = function (map) {
-            const div = L.DomUtil.create('div', 'info legend');
-            const levels = ['Very High', 'High', 'Average', 'Low', 'Very Low']; // Average 순서 조정
-            const labels = [];
-
-            for (let i = 0; i < levels.length; i++) {
-                const level = levels[i];
-                const color = this.getColor(level);
-
-                labels.push(
-                    `<i style="background:${color}"></i> ${level}`
-                );
-            }
-
-            div.innerHTML = '<h4>Congestion Level</h4>' + labels.join('<br>');
-            return div;
-        }.bind(this); // 'this' 바인딩 필수
-
-        legend.addTo(this.map);
-    }
-
-    /**
-     * 야드 데이터의 중심 좌표를 계산합니다.
-     * @param {Array<Object>} yardData - 야드 데이터 배열입니다.
-     * @returns {Array<number>} [위도, 경도] 형태의 중심 좌표입니다.
-     */
-    getYardCenter(yardData) {
-        if (!yardData || yardData.length === 0) return [37.8, -96];
-
-        const lats = yardData.map(item => item.lat);
-        const lngs = yardData.map(item => item.lng);
-
-        const minLat = Math.min(...lats);
-        const maxLat = Math.max(...lats);
-        const minLng = Math.min(...lngs);
-        const maxLng = Math.max(...lngs);
-
-        return [
-            (minLat + maxLat) / 2,
-            (minLng + maxLng) / 2
-        ];
-    }
-
-    /**
-     * 인디케이터 값에 따라 마커의 반경을 결정합니다.
-     * @param {number} indicator - 인디케이터 값입니다.
-     * @returns {number} 마커의 반경 (픽셀)입니다.
-     */
-    getRadiusByIndicator(indicator) {
-        if (indicator > 2) return 20;
-        if (indicator > 1) return 16;
-        if (indicator > -1) return 12;
-        if (indicator > -2) return 8;
-        return 5;
-    }
-
-    /**
-     * 혼잡도 레벨에 따른 색상을 반환합니다.
-     * @param {string} level - 혼잡도 레벨 문자열입니다.
-     * @param {boolean} [isText=false] - 텍스트 색상을 반환할지 여부입니다.
-     * @returns {string} CSS 색상 코드입니다.
-     */
-    getColor(level, isText = false) {
-        // 기존 색상에서 'Very Low'는 진한 파랑, 'Low'는 파랑, 'Average'는 회색, 'High'는 주황, 'Very High'는 빨강
-        // 이전에 드렸던 제안의 색상 (Very Low: #42A5F5, Low: #90CAF9, Average: #9E9E9E, High: #FFB300, Very High: #E53935)
-        // 위 색상들이 "매우낮음은 파랑 낮음은 연파랑 에버리지는 회색, 하이는 주황 베리하이는 빨강"에 부합하므로 이 색상으로 변경합니다.
-        const circleColors = {
-            'Very High': '#E53935',  // 빨강
-            'High': '#FFB300',     // 주황
-            'Average': '#9E9E9E',   // 회색
-            'Low': '#90CAF9',      // 연파랑
-            'Very Low': '#42A5F5', // 파랑
-            'Unknown': '#bcbcbc'   // 알 수 없음 (기존 회색 유지)
-        };
-
-        // 텍스트 색상도 위 색상에 맞게 조정 (대비가 잘 되도록)
-        const textColors = {
-            'Very High': '#b71c1c', // 기존보다 진한 빨강 계열
-            'High': '#e65100',      // 기존보다 진한 주황 계열
-            'Average': '#616161',   // 기존보다 진한 회색 계열
-            'Low': '#2196F3',       // 기존보다 진한 파랑 계열
-            'Very Low': '#1976D2',  // 기존보다 진한 파랑 계열
-            'Unknown': '#5e5e5e'    // 기존 회색 유지
-        };
-
-        return isText ? textColors[level] : circleColors[level];
-    }
-
-    /**
-     * 지도에 에러 메시지를 일시적으로 표시합니다.
-     * @param {string} message - 표시할 에러 메시지입니다.
+     * 에러 메시지를 지도에 표시합니다.
+     * @param {string} message - 표시할 에러 메시지.
      */
     displayErrorMessage(message) {
         if (this.errorControl) {
             this.map.removeControl(this.errorControl);
         }
 
-        const errorControl = L.control({ position: 'topleft' });
-        errorControl.onAdd = function() {
-            const div = L.DomUtil.create('div', 'error-message');
-            div.innerHTML = message;
-            return div;
-        };
-        errorControl.addTo(this.map);
-        this.errorControl = errorControl;
+        const errorDiv = L.DomUtil.create('div', 'error-message');
+        errorDiv.innerHTML = message;
 
-        // 5초 후 메시지 자동 제거
+        this.errorControl = L.control({ position: 'topleft' }); // 임시로 top-left에 배치
+
+        this.errorControl.onAdd = () => {
+            L.DomEvent.disableClickPropagation(errorDiv);
+            L.DomEvent.disableScrollPropagation(errorDiv);
+            return errorDiv;
+        };
+
+        this.errorControl.addTo(this.map);
+
+        // 일정 시간 후 메시지 자동 제거
         setTimeout(() => {
-            if (this.map.hasControl(this.errorControl)) {
+            if (this.errorControl) {
                 this.map.removeControl(this.errorControl);
+                this.errorControl = null;
             }
-        }, 5000);
+        }, 5000); // 5초 후 사라짐
+    }
+
+    /**
+     * 지도 우측 상단에 모든 컨트롤 (줌, 리셋, 필터)을 통합하여 추가합니다.
+     * 이 함수는 이제 Leaflet의 기본 줌 컨트롤을 사용하지 않고 모든 요소를 직접 생성합니다.
+     */
+    addRightControls() {
+        // 기존 컨트롤 인스턴스가 있다면 제거 (재초기화 방지)
+        if (this.filterControlInstance) {
+            this.map.removeControl(this.filterControlInstance);
+        }
+
+        // 새로운 커스텀 컨트롤 정의
+        const CustomTopRightControl = L.Control.extend({
+            options: {
+                position: 'topright' // 컨트롤 위치
+            },
+
+            onAdd: (map) => {
+                // 컨트롤 전체를 감싸는 div (CSS의 .map-control-group-right)
+                const container = L.DomUtil.create('div', 'map-control-group-right');
+
+                // 1. 줌 버튼 그룹 생성
+                const zoomGroup = L.DomUtil.create('div', 'custom-zoom-group', container);
+                const zoomOutBtn = L.DomUtil.create('button', 'zoom-out-btn', zoomGroup);
+                zoomOutBtn.innerHTML = '&#x2212;'; // 마이너스 기호
+                const zoomInBtn = L.DomUtil.create('button', 'zoom-in-btn', zoomGroup);
+                zoomInBtn.innerHTML = '&#x002B;'; // 플러스 기호
+
+                // 줌 버튼 이벤트 리스너
+                L.DomEvent.disableClickPropagation(zoomGroup); // 클릭 전파 방지
+                zoomInBtn.addEventListener('click', () => { map.zoomIn(); });
+                zoomOutBtn.addEventListener('click', () => { map.zoomOut(); });
+
+                // 2. 리셋 버튼 생성
+                const resetBtn = L.DomUtil.create('button', 'rail-reset-btn reset-btn', container);
+                resetBtn.innerHTML = 'Reset View';
+                resetBtn.addEventListener('click', () => {
+                    console.log("Reset button clicked.");
+                    map.setView([37.8, -96], 4);
+                    map.closePopup();
+                    this.markerToOpenAfterMove = null;
+                    const yardFilter = container.querySelector('.yard-filter');
+                    if (yardFilter) {
+                        yardFilter.value = '';
+                        yardFilter.selectedIndex = 0;
+                    }
+                });
+                L.DomEvent.disableClickPropagation(resetBtn); // 클릭 전파 방지
+
+                // 3. 필터 드롭다운 생성
+                const filterDropdownHtml = `
+                    <select class="yard-filter">
+                        <option value="" disabled selected hidden>Select Yard</option>
+                        <option value="All">All Yards</option>
+                        ${this.currentData
+                            .filter(item => item.Yard && item.Yard.trim() !== '')
+                            .map(item => item.Yard)
+                            .filter((value, index, self) => self.indexOf(value) === index) // 중복 제거
+                            .sort((a, b) => a.localeCompare(b))
+                            .map(yard => `<option value="${yard}">${yard}</option>`)
+                            .join('')}
+                    </select>
+                `;
+                container.insertAdjacentHTML('beforeend', filterDropdownHtml); // container에 직접 삽입
+
+                const yardFilter = container.querySelector('.yard-filter');
+                if (yardFilter) {
+                    L.DomEvent.disableClickPropagation(yardFilter); // 클릭 전파 방지
+                    yardFilter.addEventListener('change', (e) => {
+                        const yardName = e.target.value;
+                        if (yardName === "All") {
+                            console.log("Filter: All Yards selected. Resetting view.");
+                            map.setView([37.8, -96], 4);
+                            map.closePopup();
+                            this.markerToOpenAfterMove = null;
+                        } else if (yardName) {
+                            console.log(`Filter selected: ${yardName}`);
+                            const yardDataForFilter = this.currentData.filter(item => item.Yard === yardName);
+                            if (yardDataForFilter.length > 0) {
+                                let foundMarker = null;
+                                this.allMarkers.eachLayer(layer => {
+                                    if (layer.options.itemData && layer.options.itemData.Yard === yardName) {
+                                        foundMarker = layer;
+                                        return;
+                                    }
+                                });
+
+                                if (foundMarker) {
+                                    console.log(`Found marker for filter: ${yardName}. Using zoomToShowLayer.`);
+                                    map.closePopup();
+                                    this.allMarkers.zoomToShowLayer(foundMarker, () => {
+                                        foundMarker.openPopup();
+                                        console.log(`Popup for ${yardName} opened after zoomToShowLayer.`);
+                                    });
+                                    this.markerToOpenAfterMove = null;
+                                } else {
+                                    console.warn(`Marker object for yard '${yardName}' not immediately found. Falling back to fitBounds and polling.`);
+                                    const bounds = L.latLngBounds(yardDataForFilter.map(item => [item.lat, item.lng]));
+                                    map.fitBounds(bounds.pad(0.5), { maxZoom: this.allMarkers.options.disableClusteringAtZoom + 1 });
+                                    this.markerToOpenAfterMove = yardName;
+                                }
+                            } else {
+                                console.warn(`No data found for yard '${yardName}'.`);
+                            }
+                        }
+                    });
+                }
+                return container;
+            }
+        });
+
+        // 커스텀 컨트롤 인스턴스 생성 및 지도에 추가
+        this.filterControlInstance = new CustomTopRightControl();
+        this.filterControlInstance.addTo(this.map);
+    }
+    // ... (rest of the class methods: getColor, getRadiusByIndicator, displayErrorMessage)
+    /**
+     * 혼잡도 레벨에 따른 색상 값을 반환합니다.
+     * @param {string} level - 혼잡도 레벨 (예: 'Very High', 'High', 'Average', 'Low', 'Very Low').
+     * @param {boolean} [forText=false] - 텍스트 색상으로 사용할 경우, 더 대비되는 색상을 반환할지 여부.
+     * @returns {string} CSS 색상 코드.
+     */
+    getColor(level, forText = false) {
+        switch (level) {
+            case 'Very High': return forText ? '#C0392B' : '#E74C3C'; // 진한 빨강
+            case 'High': return forText ? '#D35400' : '#F39C12'; // 주황
+            case 'Average': return forText ? '#2C3E50' : '#BDC3C7'; // 중간 회색 (또는 파랑)
+            case 'Low': return forText ? '#27AE60' : '#2ECC71'; // 초록
+            case 'Very Low': return forText ? '#1ABC9C' : '#1ABC9C'; // 진한 초록 (아쿠아)
+            default: return forText ? '#7F8C8D' : '#95A5A6'; // 기본 회색
+        }
+    }
+
+    /**
+     * 지표 값에 따른 마커 반지름을 반환합니다.
+     * @param {number} indicatorValue - 지표 값.
+     * @returns {number} 마커 반지름 (픽셀).
+     */
+    getRadiusByIndicator(indicatorValue) {
+        if (indicatorValue === undefined || isNaN(indicatorValue)) {
+            return 8; // 기본값
+        }
+        // 지표 값에 따라 반지름을 동적으로 조정 (예: 1-10 범위)
+        // 0-50 값을 5-15 픽셀 범위로 매핑합니다.
+        const minIndicator = 0;
+        const maxIndicator = 50;
+        const minRadius = 8;
+        const maxRadius = 16;
+
+        if (indicatorValue <= minIndicator) return minRadius;
+        if (indicatorValue >= maxIndicator) return maxRadius;
+
+        return minRadius + (indicatorValue / maxIndicator) * (maxRadius - minRadius);
+    }
+
+    /**
+     * 에러 메시지를 지도에 표시합니다.
+     * @param {string} message - 표시할 에러 메시지.
+     */
+    displayErrorMessage(message) {
+        if (this.errorControl) {
+            this.map.removeControl(this.errorControl);
+        }
+
+        const errorDiv = L.DomUtil.create('div', 'error-message');
+        errorDiv.innerHTML = message;
+
+        this.errorControl = L.control({ position: 'topleft' }); // 임시로 top-left에 배치
+
+        this.errorControl.onAdd = () => {
+            L.DomEvent.disableClickPropagation(errorDiv);
+            L.DomEvent.disableScrollPropagation(errorDiv);
+            return errorDiv;
+        };
+
+        this.errorControl.addTo(this.map);
+
+        // 일정 시간 후 메시지 자동 제거
+        setTimeout(() => {
+            if (this.errorControl) {
+                this.map.removeControl(this.errorControl);
+                this.errorControl = null;
+            }
+        }, 5000); // 5초 후 사라짐
     }
 }
-
-// RailCongestionMap 클래스를 전역 스코프에 노출합니다.
-window.RailCongestionMap = RailCongestionMap;
