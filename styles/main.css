@@ -25,7 +25,7 @@ html, body {
 
 /* Adjusted Leaflet Popups' structural styles */
 .leaflet-popup {
-    pointer-events: none; /* Allows clicks to pass through to map when popup is not active */
+    /* pointer-events: none; /* Allows clicks to pass through to map when popup is not active - REMOVED */
 }
 
 .leaflet-popup-content-wrapper {
