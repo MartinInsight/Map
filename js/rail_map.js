@@ -30,21 +30,20 @@ class RailCongestionMap {
                 let highestCongestionLevelValue = -1;
                 let dominantColor = this.getColor('Average'); // 기본값: 평균 색상
 
-            // Function to map congestion levels to a numerical value for internal logic/sorting
-            const congestionLevelToValue = (level) => {
-                switch (level) {
-                    case 'Very High': return 4;
-                    case 'High': return 3;
-                    case 'Average': return 2; // Added Average with a distinct value
-                    case 'Low': return 1;
-                    case 'Very Low': return 0;
-                    default: return -1; // Fallback for unknown levels
-                }
-            };
-                        
-            // Attach to marker:
-            // marker.bindTooltip(tooltipContent, { permanent: false, direction: 'top' });
-
+                // 혼잡도 레벨을 숫자로 매핑하여 비교 가능하게 함
+                // 이 함수는 RailCongestionMap 클래스의 멤버 함수로 옮기는 것이 더 좋지만,
+                // 현재 기능 수정 금지 요청으로 인해 임시로 여기에 유지합니다.
+                const congestionLevelToValue = (level) => {
+                    switch (level) {
+                        case 'Very High': return 4;
+                        case 'High': return 3;
+                        case 'Average': return 2; // Average 추가
+                        case 'Low': return 1;
+                        case 'Very Low': return 0;
+                        default: return -1; // Fallback for unknown levels
+                    }
+                };
+                
                 // 클러스터 내의 마커 중 가장 높은 혼잡도 레벨의 색상 선택
                 childMarkers.forEach(marker => {
                     const itemData = marker.options.itemData;
@@ -207,15 +206,16 @@ class RailCongestionMap {
                 lat: item.lat, // 파이썬에서 이미 float로 변환하여 제공
                 lng: item.lng, // 파이썬에서 이미 float로 변환하여 제공
                 Yard: item.location, // 파이썬에서 'location'으로 표준화됨
-                location: item.location, // 파이썬에서 'location'으로 표준화됨
+                location: item.location, // 파이썬에서 'location'으로 표준화됨 (Yard와 동일하게 유지)
                 company: item.company,
-                congestion_score: item.congestion_score, // 파이썬에서 이미 float로 변환하여 제공
+                congestion_score: item.congestion_score, // 파이썬에서 이미 float로 변환하여 제공 ('Dwell Time'에 해당)
                 indicator: item.indicator, // 파이썬에서 이미 float로 변환하여 제공
-                congestion_level: item.congestion_level, // 파이썬에서 'congestion_level'로 표준화됨
+                congestion_level: item.congestion_level, // 파이썬에서 'congestion_level'로 표준화됨 ('Category'에 해당)
+                average_dwell_time: parseFloat(item.Average), // 'Average' 컬럼 추가 매핑
                 date: item.date
             })).filter(item =>
                 // 파이썬에서 이미 유효성 검사를 수행했지만, JS에서도 한 번 더 확인하는 것은 나쁘지 않습니다.
-                // 다만, 파이썬이 더 엄격하게 필터링하므로, 여기서는 기본 값만 확인해도 됩니다.
+                // 다만, 파이썬이 더 엄격하게 필터링하므로, 여기서는 주요 값들만 확인합니다.
                 item.lat !== undefined && item.lng !== undefined && item.location && item.congestion_level
             );
 
@@ -355,7 +355,7 @@ class RailCongestionMap {
         // 개별 마커의 팝업을 해당 마커의 데이터로 바인딩합니다.
         marker.bindPopup(this.createPopupContent([item]), popupOptions);
 
-        // 개별 마커 툴팁 (마우스 오버 시) -> 이제 호버시 팝업을 띄우므로 제거합니다.
+        // 개별 마커 툴팁 (마우스 오버 시) -> 이제 호버시 팝업을 띄우므로 제거합니다. (주석 처리됨)
         // if (!L.Browser.mobile) {
         //     marker.bindTooltip(`Yard: ${item.Yard}<br>Level: ${item.congestion_level}`, {
         //         permanent: false,
@@ -365,7 +365,7 @@ class RailCongestionMap {
         //     });
         // }
 
-        // 새로운 로직: 마커 호버 시 팝업을 띄우고, 마우스 아웃 시 닫습니다.
+        // 새로운 로직: 마커 호버 시 팝업을 띄우고, 마우스 아웃 시 닫습니다. (주석 처리됨)
         if (!L.Browser.mobile) { // 모바일에서는 호버 이벤트를 사용하지 않음
             marker.on('mouseover', (e) => {
                 // 이미 열려 있는 팝업이 있다면 닫고, 현재 마커의 팝업을 엽니다.
@@ -467,6 +467,8 @@ class RailCongestionMap {
             const company = item.company || 'Unknown';
             const location = item.location || 'Unknown Location';
             const congestionScore = (typeof item.congestion_score === 'number' && !isNaN(item.congestion_score)) ? item.congestion_score.toFixed(1) : 'N/A';
+            const averageDwellTime = (typeof item.average_dwell_time === 'number' && !isNaN(item.average_dwell_time)) ? item.average_dwell_time.toFixed(1) : 'N/A';
+
 
             content += `
                 <div class="location-info">
@@ -478,6 +480,7 @@ class RailCongestionMap {
                         </span>
                     </p>
                     <p><strong>Dwell Time:</strong> ${congestionScore} hours</p>
+                    <p><strong>Average Dwell Time:</strong> ${averageDwellTime} hours</p>
                 </div>
                 ${isMultiple && safeItems.indexOf(item) !== safeItems.length - 1 ? '<hr>' : ''}
             `;
@@ -632,7 +635,7 @@ class RailCongestionMap {
 
         legend.onAdd = function (map) {
             const div = L.DomUtil.create('div', 'info legend');
-            const levels = ['Very High', 'High', 'Low', 'Very Low', 'Average'];
+            const levels = ['Very High', 'High', 'Average', 'Low', 'Very Low']; // Average 순서 조정
             const labels = [];
 
             for (let i = 0; i < levels.length; i++) {
@@ -693,22 +696,26 @@ class RailCongestionMap {
      * @returns {string} CSS 색상 코드입니다.
      */
     getColor(level, isText = false) {
+        // 기존 색상에서 'Very Low'는 진한 파랑, 'Low'는 파랑, 'Average'는 회색, 'High'는 주황, 'Very High'는 빨강
+        // 이전에 드렸던 제안의 색상 (Very Low: #42A5F5, Low: #90CAF9, Average: #9E9E9E, High: #FFB300, Very High: #E53935)
+        // 위 색상들이 "매우낮음은 파랑 낮음은 연파랑 에버리지는 회색, 하이는 주황 베리하이는 빨강"에 부합하므로 이 색상으로 변경합니다.
         const circleColors = {
-            'Very High': '#d62828', // 매우 높음 (빨강)
-            'High': '#f88c2b',    // 높음 (주황)
-            'Low': '#5fa9f6',     // 낮음 (파랑)
-            'Very Low': '#004fc0',  // 매우 낮음 (진한 파랑)
-            'Average': '#bcbcbc',  // 보통 (회색)
-            'Unknown': '#bcbcbc'   // 알 수 없음 (회색)
+            'Very High': '#E53935',  // 빨강
+            'High': '#FFB300',     // 주황
+            'Average': '#9E9E9E',   // 회색
+            'Low': '#90CAF9',      // 연파랑
+            'Very Low': '#42A5F5', // 파랑
+            'Unknown': '#bcbcbc'   // 알 수 없음 (기존 회색 유지)
         };
 
+        // 텍스트 색상도 위 색상에 맞게 조정 (대비가 잘 되도록)
         const textColors = {
-            'Very High': '#6b1414',
-            'High': '#7c4616',
-            'Low': '#30557b',
-            'Very Low': '#002860',
-            'Average': '#5e5e5e',
-            'Unknown': '#5e5e5e'
+            'Very High': '#b71c1c', // 기존보다 진한 빨강 계열
+            'High': '#e65100',      // 기존보다 진한 주황 계열
+            'Average': '#616161',   // 기존보다 진한 회색 계열
+            'Low': '#2196F3',       // 기존보다 진한 파랑 계열
+            'Very Low': '#1976D2',  // 기존보다 진한 파랑 계열
+            'Unknown': '#5e5e5e'    // 기존 회색 유지
         };
 
         return isText ? textColors[level] : circleColors[level];
