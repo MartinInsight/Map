@@ -52,12 +52,14 @@ html, body {
     box-shadow: 0 4px 15px rgba(0,0,0,0.2) !important;
 }
 
-/* Leaflet Tooltip general override (adjust default positioning slightly) */
+/* Leaflet Tooltip general override (Removed conflicting positioning styles) */
+/*
 .leaflet-tooltip {
     transform: translate(-50%, 0) !important;
     left: 50% !important;
     margin-top: 15px !important;
 }
+*/
 
 /* Leaflet Zoom Control Styling */
 .leaflet-control-zoom {
