@@ -483,14 +483,29 @@ class RailCongestionMap {
      * @returns {string} CSS 색상 코드.
      */
     getColor(level, forText = false) {
-        switch (level) {
-            case 'Very High': return forText ? '#C0392B' : '#E74C3C'; // 진한 빨강
-            case 'High': return forText ? '#D35400' : '#F39C12'; // 주황
-            case 'Average': return forText ? '#2C3E50' : '#BDC3C7'; // 중간 회색 (또는 파랑)
-            case 'Low': return forText ? '#27AE60' : '#2ECC71'; // 초록
-            case 'Very Low': return forText ? '#1ABC9C' : '#1ABC9C'; // 진한 초록 (아쿠아)
-            default: return forText ? '#7F8C8D' : '#95A5A6'; // 기본 회색
-        }
+        // 기존 색상에서 'Very Low'는 진한 파랑, 'Low'는 파랑, 'Average'는 회색, 'High'는 주황, 'Very High'는 빨강
+        // 이전에 드렸던 제안의 색상 (Very Low: #42A5F5, Low: #90CAF9, Average: #9E9E9E, High: #FFB300, Very High: #E53935)
+        // 위 색상들이 "매우낮음은 파랑 낮음은 연파랑 에버리지는 회색, 하이는 주황 베리하이는 빨강"에 부합하므로 이 색상으로 변경합니다.
+        const circleColors = {
+            'Very High': '#E53935',  // 빨강
+            'High': '#FFB300',     // 주황
+            'Average': '#9E9E9E',    // 회색
+            'Low': '#90CAF9',      // 연파랑
+            'Very Low': '#42A5F5', // 파랑
+            'Unknown': '#bcbcbc'   // 알 수 없음 (기존 회색 유지)
+        };
+
+        // 텍스트 색상도 위 색상에 맞게 조정 (대비가 잘 되도록)
+        const textColors = {
+            'Very High': '#b71c1c', // 기존보다 진한 빨강 계열
+            'High': '#e65100',       // 기존보다 진한 주황 계열
+            'Average': '#616161',    // 기존보다 진한 회색 계열
+            'Low': '#2196F3',        // 기존보다 진한 파랑 계열
+            'Very Low': '#1976D2',   // 기존보다 진한 파랑 계열
+            'Unknown': '#5e5e5e'     // 기존 회색 유지
+        };
+
+        return forText ? textColors[level] : circleColors[level];
     }
 
     /**
@@ -544,6 +559,36 @@ class RailCongestionMap {
                 this.errorControl = null;
             }
         }, 5000); // 5초 후 사라짐
+    }
+
+    /**
+     * 지도에 마지막 업데이트 시간을 표시하는 컨트롤을 추가합니다.
+     */
+    addLastUpdatedText() {
+        if (this.lastUpdatedControl) {
+            this.map.removeControl(this.lastUpdatedControl);
+        }
+
+        if (this.lastUpdated) {
+            const date = new Date(this.lastUpdated);
+            // 날짜만 표시되도록 toLocaleString 옵션 변경
+            const formattedDate = date.toLocaleString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+
+            const infoControl = L.control({ position: 'bottomright' });
+
+            infoControl.onAdd = () => {
+                const div = L.DomUtil.create('div', 'last-updated-info');
+                div.innerHTML = `<strong>Last Updated:</strong> ${formattedDate}`;
+                return div;
+            };
+
+            infoControl.addTo(this.map);
+            this.lastUpdatedControl = infoControl;
+        }
     }
 
     /**
@@ -660,74 +705,7 @@ class RailCongestionMap {
         this.filterControlInstance = new CustomTopRightControl();
         this.filterControlInstance.addTo(this.map);
     }
-    // ... (rest of the class methods: getColor, getRadiusByIndicator, displayErrorMessage)
-    /**
-     * 혼잡도 레벨에 따른 색상 값을 반환합니다.
-     * @param {string} level - 혼잡도 레벨 (예: 'Very High', 'High', 'Average', 'Low', 'Very Low').
-     * @param {boolean} [forText=false] - 텍스트 색상으로 사용할 경우, 더 대비되는 색상을 반환할지 여부.
-     * @returns {string} CSS 색상 코드.
-     */
-    getColor(level, forText = false) {
-        switch (level) {
-            case 'Very High': return forText ? '#C0392B' : '#E74C3C'; // 진한 빨강
-            case 'High': return forText ? '#D35400' : '#F39C12'; // 주황
-            case 'Average': return forText ? '#2C3E50' : '#BDC3C7'; // 중간 회색 (또는 파랑)
-            case 'Low': return forText ? '#27AE60' : '#2ECC71'; // 초록
-            case 'Very Low': return forText ? '#1ABC9C' : '#1ABC9C'; // 진한 초록 (아쿠아)
-            default: return forText ? '#7F8C8D' : '#95A5A6'; // 기본 회색
-        }
-    }
-
-    /**
-     * 지표 값에 따른 마커 반지름을 반환합니다.
-     * @param {number} indicatorValue - 지표 값.
-     * @returns {number} 마커 반지름 (픽셀).
-     */
-    getRadiusByIndicator(indicatorValue) {
-        if (indicatorValue === undefined || isNaN(indicatorValue)) {
-            return 8; // 기본값
-        }
-        // 지표 값에 따라 반지름을 동적으로 조정 (예: 1-10 범위)
-        // 0-50 값을 5-15 픽셀 범위로 매핑합니다.
-        const minIndicator = 0;
-        const maxIndicator = 50;
-        const minRadius = 8;
-        const maxRadius = 16;
-
-        if (indicatorValue <= minIndicator) return minRadius;
-        if (indicatorValue >= maxIndicator) return maxRadius;
-
-        return minRadius + (indicatorValue / maxIndicator) * (maxRadius - minRadius);
-    }
-
-    /**
-     * 에러 메시지를 지도에 표시합니다.
-     * @param {string} message - 표시할 에러 메시지.
-     */
-    displayErrorMessage(message) {
-        if (this.errorControl) {
-            this.map.removeControl(this.errorControl);
-        }
-
-        const errorDiv = L.DomUtil.create('div', 'error-message');
-        errorDiv.innerHTML = message;
-
-        this.errorControl = L.control({ position: 'topleft' }); // 임시로 top-left에 배치
-
-        this.errorControl.onAdd = () => {
-            L.DomEvent.disableClickPropagation(errorDiv);
-            L.DomEvent.disableScrollPropagation(errorDiv);
-            return errorDiv;
-        };
-
-        this.errorControl.addTo(this.map);
-
-        // 일정 시간 후 메시지 자동 제거
-        setTimeout(() => {
-            if (this.errorControl) {
-                this.map.removeControl(this.errorControl);
-                this.errorControl = null;
-            }
-        }, 5000); // 5초 후 사라짐
-    }
 }
+
+// RailCongestionMap 클래스를 전역 스코프에 노출합니다.
+window.RailCongestionMap = RailCongestionMap;
