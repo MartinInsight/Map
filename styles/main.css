@@ -170,7 +170,6 @@ html, body {
    ===================================== */
 
 /* Common styling for control boxes (Reset button, Filter box, Toggle buttons container) */
-/* .map-control-container는 현재 사용되지 않으며, .map-control-group-right가 우측 상단 컨트롤을 포함 */
 .map-control-group-right {
     background: white;
     padding: 8px 12px;
@@ -275,17 +274,24 @@ html, body {
 
 /* ========== 트럭 토글 버튼 수정 시작 ========== */
 .truck-toggle-map-control {
-    position: absolute;
-    top: 119px !important; /* reset-btn과 동일 위치 */
-    left: 50%;
-    transform: translateX(-50%) !important;
-    z-index: 1001; /* 우측 컨트롤보다 상위 */
-    display: flex;
-    height: 34px;
-    margin: 0;
-    padding: 0;
-    background: none !important;
-    box-shadow: none !important;
+    /* 기존 absolute 포지셔닝 속성 제거: 이 속성들이 버튼을 다른 요소와 독립적으로 위치시켰습니다. */
+    /* top, left, transform, z-index 속성을 제거합니다. */
+    /* z-index: 1001; */
+
+    /* Flexbox 레이아웃 내에서 자연스럽게 배치되도록 설정 */
+    display: flex; /* 버튼들을 가로로 나란히 정렬 */
+    justify-content: center; /* 내부 버튼들을 컨테이너 중앙으로 정렬 */
+    align-items: center; /* 수직 중앙 정렬 (내부 요소가 세로로 있다면) */
+    
+    height: 34px; /* 버튼의 높이와 일관되게 설정 */
+    width: 100%; /* 부모 컨테이너 (.leaflet-top.leaflet-right)의 너비를 채우도록 설정 */
+    box-sizing: border-box; /* 패딩과 보더를 너비에 포함 */
+
+    /* 배경과 그림자는 내부 버튼 또는 감싸는 그룹 컨테이너에서 처리되므로 여기서는 제거합니다. */
+    /* background: none !important; */
+    /* box-shadow: none !important; */
+    margin: 0; /* 기존에 명시된 마진 제거 */
+    padding: 0; /* 기존에 명시된 패딩 제거 */
 }
 
 .truck-toggle-btn {
@@ -319,18 +325,18 @@ html, body {
 }
 
 /* Control Position Adjustments */
-/* Top right for all controls (Zoom, Reset, Filter) */
+/* Top right for all controls (Zoom, Reset, Filter, Truck Toggle) */
 .leaflet-top.leaflet-right {
     display: flex;
-    flex-direction: column;
+    flex-direction: column; /* 모든 컨트롤을 세로로 정렬 */
     gap: 8px; /* 컨트롤 그룹 사이의 간격 */
-    top: 10px !important;
-    right: 10px !important;
-    width: 160px;
-    background: none;
-    padding: 0;
-    border-radius: 0;
-    box-shadow: none;
+    top: 10px !important; /* 전체 컨트롤 그룹의 상단 위치 */
+    right: 10px !important; /* 전체 컨트롤 그룹의 우측 위치 */
+    width: 160px; /* 전체 컨트롤 그룹의 너비 */
+    background: none; /* 배경 제거 (각 컨트롤이 자체 배경을 가짐) */
+    padding: 0; /* 패딩 제거 */
+    border-radius: 0; /* 테두리 둥글게 하기 제거 */
+    box-shadow: none; /* 그림자 제거 */
 }
 
 /* Top left (originally for zoom buttons) - now hidden/reset */
@@ -579,13 +585,13 @@ html, body {
 
     /* Controls: Adjust for mobile */
     .leaflet-top.leaflet-right {
-        top: 0px !important; /* 모바일 상단 위치 조정 */
-        gap: 8px; /* 모바일에서 컨트롤 블록 간의 간격 */
+        top: 10px !important; /* 모바일에서도 일관된 상단 위치 */
+        gap: 8px; /* 모바일에서도 컨트롤 블록 간의 간격 유지 */
         width: calc(100% - 20px); /* 화면 너비에 맞춰 10px 좌우 패딩/마진 확보 */
         max-width: 160px; /* PC 크기보다 넓어지지 않도록 고정 */
         right: 10px !important;
         margin-left: auto; /* 우측 정렬 */
-        padding: 6px 8px; /* 모바일에서 전체 컨트롤 블록의 패딩 조정 */
+        padding: 0; /* 모바일에서 전체 컨트롤 블록의 패딩 제거 */
     }
 
     .map-control-container,
@@ -603,7 +609,7 @@ html, body {
     }
 
     .truck-toggle-map-control {
-        top: 65px !important; /* 모바일 reset-btn 위치 */
+        /* top: 65px !important; */ /* 절대 위치 제거로 인해 이 속성 필요 없음 */
         height: 30px !important;
     }
     .truck-toggle-btn {
@@ -611,11 +617,11 @@ html, body {
         font-size: 12px !important;
         padding: 0 12px !important;
     }
-   
+    
     /* Zoom buttons on mobile */
     .leaflet-control-zoom {
         height: 30px; /* 모바일에서 줌 버튼 높이 조정 */
-        padding: 6px 8px; /* 모바일에서 줌 컨트롤 자체의 패딩 조정 */
+        padding: 0; /* 모바일에서 줌 컨트롤 자체의 패딩 제거 */
     }
     .leaflet-control-zoom a {
         height: 30px !important;
@@ -630,21 +636,18 @@ html, body {
     }
 
     .leaflet-top.leaflet-right {
-        top: 0px !important;
+        top: 10px !important; /* 일관된 상단 위치 */
     }
     .leaflet-top.leaflet-left { /* Ensure hidden */
         display: none !important;
     }
     
     .truck-toggle-map-control {
-        top: 0px !important; /* Aligned with other top controls for very small screens */
-    }
-
-    .truck-toggle-btn {
+        /* top: 0px !important; */ /* 절대 위치 제거로 인해 이 속성 필요 없음 */
         min-width: 70px !important;
         padding: 0 8px !important;
     }
-   
+    
     .leaflet-bottom.leaflet-right {
         bottom: 20px !important;
     }
