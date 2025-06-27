@@ -1,103 +1,315 @@
-import os
-import gspread
-import json
-from google.oauth2 import service_account
+class TruckCongestionMap {
+    constructor(mapElementId) {
+        this.map = L.map(mapElementId).setView([37.8, -96], 4);
+        this.stateLayer = null;
+        this.currentMode = 'inbound';
+        this.metricData = null;
+        this.geoJsonData = null;
+        this.initialized = false;
+        this.controlDiv = null;
+        this.errorControl = null;
 
-def safe_convert(val, default=None):
-    """안전한 데이터 변환 함수"""
-    if val in [None, "", " ", "N/A", "NaN"]:
-        return default
-    try:
-        if isinstance(val, str):
-            val = val.replace(",", "").strip()
-        # Convert to float if it has a decimal, otherwise to int
-        return float(val) if "." in str(val) else int(val)
-    except (ValueError, TypeError):
-        return default
+        // 지도 타일 레이어를 CartoDB Light All로 변경하여 영어 지명 통일
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+            maxZoom: 18,
+            minZoom: 3
+        }).addTo(this.map);
 
-def fetch_truck_data():
-    print("🚛 Truck 데이터 수집 시작")
-    try:
-        # 인증 설정 (Service Account Key from environment variable)
-        creds_dict = eval(os.environ['GOOGLE_CREDENTIAL_JSON'])
-        creds = service_account.Credentials.from_service_account_info(
-            creds_dict,
-            scopes=['https://www.googleapis.com/auth/spreadsheets']
-        )
-        gc = gspread.authorize(creds)
-        print("✅ Google 인증 성공")
+        this.map.setMaxBounds([
+            [-85, -180],
+            [85, 180]
+        ]);
 
-        # 데이터 로드
-        sheet = gc.open_by_key(os.environ['SPREADSHEET_ID'])
-        worksheet = sheet.worksheet('CONGESTION_TRUCK')
+        this.map.on('zoomend', () => {
+            const currentZoom = this.map.getZoom();
+            if (currentZoom < this.map.getMinZoom()) {
+                this.map.setZoom(this.map.getMinZoom());
+            }
+        });
 
-        # --- IMPORTANT FIX: Specify expected headers to handle duplicate/empty header issues ---
-        # Based on your row.get() calls, these seem to be your intended headers.
-        # Please ensure these exactly match the headers in your Google Sheet's first row.
-        expected_headers = [
-            'Code', 'State', 'Inbound Delay', 'Inbound Color',
-            'Outbound Delay', 'Outbound Color', 'Dwell Inbound', 'Dwell Outbound'
-        ]
-        records = worksheet.get_all_records(expected_headers=expected_headers)
-        # ----------------------------------------------------------------------------------
+        this.init();
+    }
 
-        print(f"📝 레코드 개수: {len(records)}")
+    async init() {
+        try {
+            const [geoJson, sheetData] = await Promise.all([
+                fetch('data/us-states.json').then(res => {
+                    if (!res.ok) throw new Error("GeoJSON fetch error");
+                    return res.json();
+                }),
+                this.fetchSheetData()
+            ]);
 
-        # 데이터 처리
-        result = {}
-        for row in records:
-            try:
-                state_code = row.get('Code')
-                if not state_code:
-                    print(f"⚠️ State Code 없음 - 행 건너뜀: {row.get('State')}")
-                    continue
+            this.geoJsonData = geoJson;
+            this.metricData = sheetData;
 
-                # 데이터 정제 및 타입 변환
-                data = {
-                    'name': str(row.get('State', 'Unknown')).strip(),
-                    'inboundDelay': safe_convert(row.get('Inbound Delay')),
-                    'inboundColor': int(safe_convert(row.get('Inbound Color'), 0)),
-                    'outboundDelay': safe_convert(row.get('Outbound Delay')),
-                    'outboundColor': int(safe_convert(row.get('Outbound Color'), 0)),
-                    'dwellInbound': safe_convert(row.get('Dwell Inbound')),
-                    'dwellOutbound': safe_convert(row.get('Dwell Outbound'))
-                }
+            this.renderMap();
+            this.addToggleControls(); // INBOUND/OUTBOUND 토글 버튼 (상단 중앙)
+            this.addRightControls();   // 리셋 버튼과 필터 드롭다운 (상단 우측)
+            this.initialized = true;
+        } catch (err) {
+            console.error("Initialization failed:", err);
+            this.showError("Failed to load truck data. Please try again later.");
+        }
+    }
 
-                # 색상 값 범위 제한 (-3 ~ 3)
-                for color_field in ['inboundColor', 'outboundColor']:
-                    # Ensure color values are within the range [-3, 3]
-                    data[color_field] = max(-3, min(3, data[color_field]))
+    async fetchSheetData() {
+        try {
+            const res = await fetch('data/us-truck.json');
+            if (!res.ok) throw new Error("Truck data fetch error");
+            return await res.json();
+        } catch (err) {
+            console.warn("Truck data fetch failed, using fallback data.");
+            return {
+                'AL': { name: 'Alabama', inboundDelay: 0, inboundColor: 0, outboundDelay: 0, outboundColor: 0, dwellInbound: 0, dwellOutbound: 0 },
+                'TN': { name: 'Tennessee', inboundDelay: 0, inboundColor: 0, outboundDelay: 0, outboundColor: 0, dwellInbound: 0, dwellOutbound: 0 }
+            };
+        }
+    }
 
-                result[state_code] = data
+    renderMap() {
+        if (this.stateLayer) this.map.removeLayer(this.stateLayer);
 
-            except Exception as e:
-                # Log errors for specific rows without stopping the entire process
-                print(f"⚠️ 행 처리 오류 - {row.get('State', 'Unknown')}: {str(e)}")
-                continue
+        this.stateLayer = L.geoJSON(this.geoJsonData, {
+            style: this.getStyle.bind(this),
+            onEachFeature: this.bindEvents.bind(this)
+        }).addTo(this.map);
+    }
 
-        # JSON 파일 저장 (파일명: us-truck.json)
-        output_dir = os.path.join(os.path.dirname(__file__), '../data')
-        os.makedirs(output_dir, exist_ok=True) # Ensure the directory exists
-        output_path = os.path.join(output_dir, 'us-truck.json')
+    getStyle(feature) {
+        const stateCode = feature.id;
+        const data = this.metricData[stateCode] || {};
+        const colorValue = this.currentMode === 'inbound'
+            ? data.inboundColor
+            : data.outboundColor;
 
-        with open(output_path, 'w', encoding='utf-8') as f:
-            json.dump(result, f, indent=2, ensure_ascii=False) # Pretty print JSON
+        return {
+            fillColor: this.getColor(colorValue),
+            weight: 1,
+            opacity: 1,
+            color: 'white', // 기본 테두리 색상은 흰색
+            fillOpacity: 0.7
+        };
+    }
 
-        print(f"✅ Truck 데이터 저장 완료: {output_path}")
-        print(f"🔄 처리된 주(State) 개수: {len(result)}")
+    getColor(value) {
+        const colors = {
+            '-3': '#d73027',
+            '-2': '#f46d43',
+            '-1': '#fdae61',
+            '0': '#ffffbf',
+            '1': '#a6d96a',
+            '2': '#66bd63',
+            '3': '#1a9850'
+        };
+        return colors[value] || '#cccccc';
+    }
 
-        # 샘플 데이터 출력 (first item in the result dictionary)
-        if result:
-            sample_state_code = next(iter(result))
-            print("\n🔍 샘플 데이터:")
-            print(json.dumps({sample_state_code: result[sample_state_code]}, indent=2, ensure_ascii=False))
+    bindEvents(feature, layer) {
+        const stateCode = feature.id;
+        const data = this.metricData[stateCode] || {};
 
-        return True
+        layer.on({
+            mouseover: (e) => {
+                const center = layer.getBounds().getCenter();
+                this.showTooltip(center, data);
+                layer.setStyle({
+                    weight: 2, // 호버 시 테두리 두께를 2로 변경
+                    color: 'white', // 호버 시에도 테두리 색상은 흰색 유지
+                    dashArray: '',
+                    fillOpacity: 0.9
+                });
+            },
+            mouseout: (e) => {
+                this.map.closePopup();
+                this.stateLayer.resetStyle(layer); // 원래 스타일로 복원 (weight: 1, color: 'white')
+            },
+            click: () => this.zoomToState(feature)
+        });
+    }
 
-    except Exception as e:
-        # Catch and report any major errors during the fetch process
-        print(f"❌ 심각한 오류: {str(e)}")
-        return False
+    showTooltip(latlng, data) {
+        if (!this.initialized) return;
 
-if __name__ == "__main__":
-    fetch_truck_data()
+        const format = (v) => isNaN(Number(v)) ? '0.00' : Math.abs(Number(v)).toFixed(2);
+        const isInbound = this.currentMode === 'inbound';
+        const delay = isInbound ? data.inboundDelay : data.outboundDelay;
+        const dwellValue = isInbound ? data.dwellInbound : data.dwellOutbound;
+
+        const content = `
+            <h4>${data.name || 'Unknown'}</h4>
+            <div>
+                <strong>Truck Movement</strong>
+                <p class="${delay >= 0 ? 'truck-positive' : 'truck-negative'}">
+                    ${delay >= 0 ? '↑' : '↓'} ${format(delay)}%
+                    <span class="truck-normal-text">${delay >= 0 ? 'above' : 'below'} 2-week avg</span>
+                </p>
+            </div>
+            <div>
+                <strong>Dwell Time</strong>
+                <p class="${dwellValue >= 0 ? 'truck-positive' : 'truck-negative'}">
+                    ${dwellValue >= 0 ? '↑' : '↓'} ${format(dwellValue)}%
+                    <span class="truck-normal-text">${dwellValue >= 0 ? 'above' : 'below'} 2-week avg</span>
+                </p>
+            </div>
+        `;
+
+        L.popup({
+            className: 'truck-tooltip-container',
+            maxWidth: 300,
+            autoClose: false,
+            closeButton: false,
+            closeOnClick: false,
+            offset: L.point(0, -10)
+        })
+        .setLatLng(latlng)
+        .setContent(content)
+        .openOn(this.map);
+    }
+
+    zoomToState(feature) {
+        const bounds = L.geoJSON(feature).getBounds();
+        const center = bounds.getCenter();
+        const fixedZoomLevel = 7; // 모든 주에 대해 동일한 줌 레벨을 적용합니다.
+
+        this.map.setView(center, fixedZoomLevel);
+    }
+
+    // INBOUND/OUTBOUND 토글 버튼 컨트롤 (상단 중앙 배치)
+    addToggleControls() {
+        // Leaflet 컨트롤 시스템 대신, 직접 지도 컨테이너에 div를 추가하여 중앙 정렬 CSS가 작동하도록 함
+        // 이 div가 유일한 박스/배경/그림자 래퍼가 됨
+        const centeredToggleDiv = L.DomUtil.create('div', 'map-control-container truck-toggle-map-control');
+        this.map.getContainer().appendChild(centeredToggleDiv); // 지도의 DOM 요소에 직접 추가
+
+        this.controlDiv = centeredToggleDiv; // 이 div를 참조하도록 설정
+        this.renderToggleButtons();
+
+        // 맵 이벤트 전파 방지
+        L.DomEvent.disableClickPropagation(centeredToggleDiv);
+        L.DomEvent.disableScrollPropagation(centeredToggleDiv);
+    }
+
+    renderToggleButtons() {
+        // 불필요한 이중 래퍼 (truck-toggle-container, truck-toggle-wrapper)를 제거하고
+        // 버튼들을 직접 this.controlDiv (map-control-container) 안에 삽입
+        this.controlDiv.innerHTML = `
+            <button class="truck-toggle-btn ${this.currentMode === 'inbound' ? 'truck-active' : ''}" data-mode="inbound">INBOUND</button>
+            <button class="truck-toggle-btn ${this.currentMode === 'outbound' ? 'truck-active' : ''}" data-mode="outbound">OUTBOUND</button>
+        `;
+
+        this.controlDiv.querySelectorAll('.truck-toggle-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                this.currentMode = btn.dataset.mode;
+                this.renderToggleButtons(); // 토글 버튼 상태 업데이트
+                this.stateLayer.setStyle(this.getStyle.bind(this));
+            });
+        });
+    }
+
+    // 리셋 버튼과 필터 드롭다운 컨트롤 (상단 우측에 나란히 배치)
+addRightControls() {
+    if (this.filterControlInstance) {
+        this.map.removeControl(this.filterControlInstance);
+    }
+    
+    const control = L.control({ position: 'topright' });
+    
+    control.onAdd = () => {
+        const div = L.DomUtil.create('div', 'map-control-group-right');
+        
+        // 커스텀 줌 컨트롤 추가 (레일 지도와 동일한 구조)
+        const zoomControl = L.DomUtil.create('div', 'leaflet-control-zoom');
+        zoomControl.innerHTML = `
+            <a class="leaflet-control-zoom-in" href="#" title="Zoom in">+</a>
+            <a class="leaflet-control-zoom-out" href="#" title="Zoom out">-</a>
+        `;
+        div.appendChild(zoomControl);
+        
+        // 줌 버튼 이벤트 핸들러
+        zoomControl.querySelector('.leaflet-control-zoom-in').addEventListener('click', (e) => {
+            e.preventDefault();
+            this.map.zoomIn();
+        });
+        
+        zoomControl.querySelector('.leaflet-control-zoom-out').addEventListener('click', (e) => {
+            e.preventDefault();
+            this.map.zoomOut();
+        });
+
+        // 주 선택 필터 드롭다운 추가 (기존 코드 유지)
+        const states = this.geoJsonData.features
+            .map(f => ({
+                id: f.id,
+                name: f.properties.name
+            }))
+            .sort((a, b) => a.name.localeCompare(b.name));
+
+        const filterDropdownHtml = `
+            <select class="state-filter">
+                <option value="">Select State</option>
+                ${states.map(state =>
+                    `<option value="${state.id}">${state.name}</option>`
+                ).join('')}
+            </select>
+        `;
+        div.insertAdjacentHTML('beforeend', filterDropdownHtml);
+
+        // 리셋 버튼 추가 (기존 코드 유지)
+        const resetButtonHtml = `
+            <button class="truck-reset-btn reset-btn">Reset View</button>
+        `;
+        div.insertAdjacentHTML('beforeend', resetButtonHtml);
+
+        // 이벤트 리스너 추가 (기존 코드 유지)
+        div.querySelector('.truck-reset-btn').addEventListener('click', () => {
+            this.map.setView([37.8, -96], 4);
+            const stateFilter = div.querySelector('.state-filter');
+            if (stateFilter) stateFilter.value = '';
+        });
+
+        div.querySelector('.state-filter').addEventListener('change', (e) => {
+            const stateId = e.target.value;
+            if (!stateId) {
+                this.map.setView([37.8, -96], 4);
+                return;
+            }
+
+            const state = this.geoJsonData.features.find(f => f.id === stateId);
+            if (state) {
+                const bounds = L.geoJSON(state).getBounds();
+                const center = bounds.getCenter();
+                const fixedZoomLevel = 7;
+
+                this.map.setView(center, fixedZoomLevel);
+            }
+        });
+
+        L.DomEvent.disableClickPropagation(div);
+        L.DomEvent.disableScrollPropagation(div);
+
+        this.filterControlInstance = control;
+        return div;
+    };
+    
+    control.addTo(this.map);
+}
+
+    showError(message) {
+        if (this.errorControl) {
+            this.map.removeControl(this.errorControl);
+        }
+
+        const errorControl = L.control({ position: 'topleft' });
+        errorControl.onAdd = function() {
+            const div = L.DomUtil.create('div', 'error-message');
+            div.innerHTML = message;
+            return div;
+        };
+        errorControl.addTo(this.map);
+        this.errorControl = errorControl;
+    }
+}
+
+window.TruckCongestionMap = TruckCongestionMap;
