@@ -483,10 +483,6 @@ html, body {
 
 /* 마커 클러스터 아이콘 스타일 */
 .marker-cluster-custom {
-    background-color: transparent; /* 배경은 내부 div에서 처리 */
-}
-
-.marker-cluster-custom div {
     border-radius: 50%; /* 원형 */
     color: white;
     font-weight: bold;
