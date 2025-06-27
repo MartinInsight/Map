@@ -138,6 +138,8 @@ html, body {
     /* 탭 높이만큼 제외한 나머지 높이 */
     height: calc(100% - 40px); /* 탭 높이를 제외한 나머지 높이 */
     display: none; /* 기본적으로 숨김, JS로 활성화 */
+    /* 배경색을 흰색으로 명시하여 혹시 모를 배경 문제 방지 */
+    background-color: #f8f8f8; /* 지도가 로드되지 않았을 때의 기본 배경색 (맵 타일 로드 후 덮어써짐) */
 }
 
 .transport-map.active {
