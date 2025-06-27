@@ -123,13 +123,19 @@ class TruckCongestionMap {
     bindEvents(feature, layer) {
         const stateCode = feature.id;
         const data = this.metricData[stateCode] || {};
-
+    
         layer.on({
             mouseover: (e) => {
-                // 확대/이동 중이거나 특정 주가 '잠금' 상태일 때는 hover 무시
                 if (this.isZoomingToState || this.lockedStateId) return;
-
-                const center = layer.getBounds().getCenter();
+    
+                let center = layer.getBounds().getCenter();
+    
+                // 알래스카 (AK)에 대한 툴팁 위치 수동 조정 (예시 좌표)
+                // 이 좌표는 지도를 직접 보면서 가장 적절한 위치를 찾아야 합니다.
+                if (stateCode === 'AK') {
+                    center = L.latLng(62.0, -150.0); // 알래스카의 대략적인 시각적 중심 (조정 필요)
+                }
+    
                 this.showTooltip(center, data);
                 layer.setStyle({
                     weight: 2,
