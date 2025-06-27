@@ -169,7 +169,8 @@ html, body {
    5. Control Styles (Common & Specific)
    ===================================== */
 
-/* Common styling for control boxes (Reset button, Filter box) */
+/* Common styling for control boxes (Reset button, Filter box, Toggle buttons container) */
+/* .map-control-container는 현재 사용되지 않으며, .map-control-group-right가 우측 상단 컨트롤을 포함 */
 .map-control-group-right {
     background: white;
     padding: 8px 12px;
@@ -199,6 +200,7 @@ html, body {
 
 /* 줌 버튼 텍스트 가운데 정렬 수정 */
 .leaflet-control-zoom a {
+    /* 기존 스타일 유지 */
     width: 50% !important;
     height: 34px !important;
     background-color: white !important;
@@ -210,6 +212,7 @@ html, body {
     color: #333 !important;
     box-sizing: border-box;
     
+    /* 추가: 텍스트 가운데 정렬 */
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
@@ -270,66 +273,71 @@ html, body {
     box-shadow: 0 0 0 2px rgba(0,101,126,0.2); /* 포커스 시 테두리 그림자는 유지 */
 }
 
-/* ========== 트럭 토글 버튼 컨테이너 스타일 (HTML에 있는 요소) ========== */
+/* Truck specific styles for the toggle buttons (if used by other maps) */
 .truck-toggle-map-control {
-    position: absolute; /* 다른 컨트롤과 독립적으로 위치 */
-    left: 50%; /* 수평 중앙 정렬 */
-    transform: translateX(-50%); /* 수평 중앙 정렬을 위한 조정 */
-    top: 92px !important; /* 상단 탭바 아래와 우측 버튼에 맞춰 위치 조정 */
-    width: auto; /* 내용물에 따라 너비 자동 조정 */
-    z-index: 1005 !important; /* 다른 컨트롤보다 위에 표시되도록 z-index 상향 */
+    /* 1. 배경 & 그림자 완전 제거 */
+    background: transparent !important;
+    box-shadow: none !important;
     
-    display: flex; /* 내부 버튼들을 가로로 나란히 정렬 */
-    height: 34px; /* 버튼의 높이와 일관되게 설정 */
-    margin: 0;
-    padding: 0;
-    background: white; /* 배경색 추가 */
-    border-radius: 6px; /* 테두리 둥글게 */
-    box-shadow: 0 2px 10px rgba(0,0,0,0.15); /* 그림자 추가 */
-    box-sizing: border-box; /* 패딩과 보더를 너비에 포함 */
+    /* 2. 기존 위치 스타일은 유지 */
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    display: flex;
+    gap: 0;
+    padding: 0 !important; /* 패딩도 제거 */
 }
 
 .truck-toggle-btn {
-    height: 34px !important;
-    min-width: 85px;
+    /* 3. 버튼 스타일은 기존대로 유지하되, active 상태 강조 */
     padding: 0 16px;
-    background: white;
     border: 1px solid #e0e0e0;
+    background: white; /* 각 버튼에 개별 배경 */
+    cursor: pointer;
     font-family: 'Noto Sans KR', sans-serif;
-    font-size: 13px;
     font-weight: 500;
+    font-size: 13px;
+    height: 34px;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-sizing: border-box;
-    flex-grow: 1; /* 버튼이 컨테이너 너비를 채우도록 설정 */
-    transition: all 0.2s;
     color: #333;
-    cursor: pointer;
+    box-sizing: border-box;
 }
 
+/* 4. 첫 번째 버튼 왼쪽 모서리 둥글게 */
 .truck-toggle-btn:first-child {
-    border-radius: 6px 0 0 6px !important;
+    border-top-left-radius: 6px;
+    border-bottom-left-radius: 6px;
 }
 
+/* 5. 마지막 버튼 오른쪽 모서리 둥글게 */
 .truck-toggle-btn:last-child {
-    border-radius: 0 6px 6px 0 !important;
-    border-left: none !important;
+    border-top-right-radius: 6px;
+    border-bottom-right-radius: 6px;
 }
 
+/* 6. 버튼 간 경계선 중복 제거 */
+.truck-toggle-btn:not(:first-child) {
+    border-left: none;
+}
+
+/* 7. Active 버튼 스타일 */
 .truck-toggle-btn.truck-active {
-    background: #00657E !important;
-    color: white !important;
-    border-color: #00657E !important;
+    background: #00657E;
+    color: white;
+    border-color: #00657E; /* active 시 테두리 색상 통일 */
 }
 
-/* 트럭 맵이 아닐 때 토글 컨트롤 숨기기 위한 클래스 (JavaScript에서 제어) */
-.truck-toggle-map-control:not(.truck-active-control) {
-    display: none !important;
+.truck-toggle-btn:not(.truck-active):hover {
+    background: #f0f0f0;
 }
+
 
 /* Control Position Adjustments */
-/* Top right for all Leaflet controls */
+/* Top right for all controls (Zoom, Reset, Filter) */
 .leaflet-top.leaflet-right {
     display: flex;
     flex-direction: column;
@@ -341,7 +349,6 @@ html, body {
     padding: 0;
     border-radius: 0;
     box-shadow: none;
-    z-index: 1000; /* 트럭 토글보다 낮은 z-index */
 }
 
 /* Top left (originally for zoom buttons) - now hidden/reset */
@@ -590,13 +597,13 @@ html, body {
 
     /* Controls: Adjust for mobile */
     .leaflet-top.leaflet-right {
-        top: 10px !important; /* 모바일에서도 일관된 상단 위치 */
-        gap: 8px; /* 모바일에서도 컨트롤 블록 간의 간격 유지 */
+        top: 0px !important; /* 모바일 상단 위치 조정 */
+        gap: 8px; /* 모바일에서 컨트롤 블록 간의 간격 */
         width: calc(100% - 20px); /* 화면 너비에 맞춰 10px 좌우 패딩/마진 확보 */
         max-width: 160px; /* PC 크기보다 넓어지지 않도록 고정 */
         right: 10px !important;
         margin-left: auto; /* 우측 정렬 */
-        padding: 0; /* 모바일에서 전체 컨트롤 블록의 패딩 제거 */
+        padding: 6px 8px; /* 모바일에서 전체 컨트롤 블록의 패딩 조정 */
     }
 
     .map-control-container,
@@ -613,20 +620,10 @@ html, body {
         padding: 0 10px; /* 모바일에서 패딩 조정 */
     }
 
-    .truck-toggle-map-control {
-        top: 48px !important; /* 모바일 환경에 맞춰 상단 위치 조정 */
-        height: 30px !important;
-    }
-    .truck-toggle-btn {
-        height: 30px !important;
-        font-size: 12px !important;
-        padding: 0 12px !important;
-    }
-    
     /* Zoom buttons on mobile */
     .leaflet-control-zoom {
         height: 30px; /* 모바일에서 줌 버튼 높이 조정 */
-        padding: 0; /* 모바일에서 줌 컨트롤 자체의 패딩 제거 */
+        padding: 6px 8px; /* 모바일에서 줌 컨트롤 자체의 패딩 조정 */
     }
     .leaflet-control-zoom a {
         height: 30px !important;
@@ -641,18 +638,16 @@ html, body {
     }
 
     .leaflet-top.leaflet-right {
-        top: 10px !important; /* 일관된 상단 위치 */
+        top: 0px !important;
     }
     .leaflet-top.leaflet-left { /* Ensure hidden */
         display: none !important;
     }
     
     .truck-toggle-map-control {
-        top: 48px !important; /* 모바일 환경에 맞춰 상단 위치 조정 */
-        min-width: 70px !important;
-        padding: 0 8px !important;
+        top: 0px !important; /* Aligned with other top controls for very small screens */
     }
-    
+
     .leaflet-bottom.leaflet-right {
         bottom: 20px !important;
     }
