@@ -283,20 +283,22 @@ class TruckCongestionMap {
                     // 1. 기존 툴팁 강제 닫기
                     this.map.closePopup();
                     
-                    // 2. 이동 중 툴팁 차단을 위해 일시적으로 모든 주의 mouseover 이벤트 제거
-                    const originalMouseOverHandlers = [];
+                    // 2. 이동 중 툴팁 차단 (안전한 방법)
+                    const layersWithHover = [];
                     this.stateLayer.eachLayer(layer => {
-                        originalMouseOverHandlers.push({
-                            layer: layer,
-                            handler: layer._events.mouseover[0].fn
-                        });
-                        layer.off('mouseover');
+                        if (layer._events?.mouseover) {
+                            layersWithHover.push({
+                                layer: layer,
+                                handler: layer._events.mouseover[0].fn
+                            });
+                            layer.off('mouseover');
+                        }
                     });
             
                     const bounds = L.geoJSON(state).getBounds();
                     const center = bounds.getCenter();
                     
-                    // 3. 부드러운 이동 시작
+                    // 3. 부드러운 이동
                     this.map.flyTo(center, 7, {
                         duration: 0.5,
                         onEnd: () => {
@@ -306,9 +308,9 @@ class TruckCongestionMap {
                                 this.showTooltip(center, this.metricData[stateId] || {});
                             }
                             
-                            // 5. 0.3초 후 기존 mouseover 이벤트 복원
+                            // 5. 300ms 후 이벤트 복원
                             setTimeout(() => {
-                                originalMouseOverHandlers.forEach(item => {
+                                layersWithHover.forEach(item => {
                                     item.layer.on('mouseover', item.handler);
                                 });
                             }, 300);
