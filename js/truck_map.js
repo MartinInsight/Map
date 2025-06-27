@@ -274,43 +274,43 @@ class TruckCongestionMap {
                 const stateId = e.target.value;
                 if (!stateId) {
                     this.map.setView([37.8, -96], 4);
-                    this.map.closePopup(); // "Select State" 선택 시 툴팁 닫기
+                    if (this.map._popup) this.map.closePopup(); // 팝업이 있을 때만 닫기
                     return;
                 }
             
                 const state = this.geoJsonData.features.find(f => f.id === stateId);
                 if (state) {
-                    // 1. 기존 툴팁 강제 닫기
-                    this.map.closePopup();
+                    // 1. 기존 툴팁 강제 닫기 (안전한 방법)
+                    if (this.map._popup) this.map.closePopup();
                     
                     const bounds = L.geoJSON(state).getBounds();
                     const center = bounds.getCenter();
                     const fixedZoomLevel = 7;
             
-                    // 2. 지도 이동 시작 (이동 중에는 툴팁 표시 안 함)
-                    this.map.setView(center, fixedZoomLevel, {
-                        animate: true,
-                        duration: 0.5 // 0.5초 애니메이션
+                    // 2. 지도 이동
+                    this.map.flyTo(center, fixedZoomLevel, {
+                        duration: 0.5 // 부드러운 이동 효과
                     });
             
-                    // 3. 이동 완료 후 툴팁 표시
-                    setTimeout(() => {
-                        // 이동 중에 사용자가 다른 주를 호버했을 수 있으므로 다시 확인
-                        if (e.target.value === stateId) { // 아직 같은 주가 선택되어 있을 때만
+                    // 3. 이동 완료 후 처리
+                    this.map.once('moveend', () => {
+                        // 같은 주가 여전히 선택된 경우에만 툴팁 표시
+                        if (e.target.value === stateId) {
                             const stateLayer = this.findStateLayer(stateId);
                             if (stateLayer) {
-                                // 마우스 오버 이벤트 트리거 (기존 툴팁 로직 재사용)
-                                stateLayer.fire('mouseover');
+                                // 툴팁 표시
+                                const data = this.metricData[stateId] || {};
+                                this.showTooltip(center, data);
                                 
-                                // 안전장치: 0.5초 후에도 툴팁이 안 열렸으면 강제 표시
+                                // 팝업이 열렸는지 확인 (선택 사항)
                                 setTimeout(() => {
-                                    if (!this.map.getPopup()?.isOpen()) {
-                                        this.showTooltip(center, this.metricData[stateId] || {});
+                                    if (!this.map._popup || !this.map._popup.isOpen()) {
+                                        this.showTooltip(center, data);
                                     }
-                                }, 500);
+                                }, 300);
                             }
                         }
-                    }, 500); // 애니메이션 시간(500ms)과 동일하게 설정
+                    });
                 }
             });
     
