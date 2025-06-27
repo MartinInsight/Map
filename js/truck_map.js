@@ -283,7 +283,7 @@ class TruckCongestionMap {
                     // 1. 기존 툴팁 강제 닫기
                     this.map.closePopup();
                     
-                    // 2. 이동 중 툴팁 차단 (안전한 방법)
+                    // 2. 이동 중 툴팁 차단
                     const layersWithHover = [];
                     this.stateLayer.eachLayer(layer => {
                         if (layer._events?.mouseover) {
@@ -302,11 +302,21 @@ class TruckCongestionMap {
                     this.map.flyTo(center, 7, {
                         duration: 0.5,
                         onEnd: () => {
-                            // 4. 이동 완료 후 선택한 주의 툴팁 강제 표시
-                            const targetLayer = this.findStateLayer(stateId);
-                            if (targetLayer) {
-                                this.showTooltip(center, this.metricData[stateId] || {});
-                            }
+                            // 4. 반드시 툴팁 표시 (3중 안전장치)
+                            const showTooltipForSelectedState = () => {
+                                const targetLayer = this.findStateLayer(stateId);
+                                if (targetLayer) {
+                                    const data = this.metricData[stateId] || {};
+                                    this.showTooltip(center, data);
+                                    
+                                    // 툴팁이 안 열렸을 경우 재시도
+                                    if (!this.map._popup) {
+                                        setTimeout(() => this.showTooltip(center, data), 100);
+                                    }
+                                }
+                            };
+                            
+                            showTooltipForSelectedState();
                             
                             // 5. 300ms 후 이벤트 복원
                             setTimeout(() => {
