@@ -270,70 +270,74 @@ class TruckCongestionMap {
                 this.map.closePopup(); // 리셋 시 툴팁 닫기
             });
     
-            div.querySelector('.state-filter').addEventListener('change', (e) => {
+            div.querySelector('.state-filter').addEventListener('change', async (e) => {
                 const stateId = e.target.value;
                 if (!stateId) {
                     this.map.setView([37.8, -96], 4);
-                    if (this.map._popup) this.map.closePopup(); // 팝업이 있을 때만 닫기
+                    this.closeAllTooltips(); // 모든 툴팁 강제 닫기
                     return;
                 }
             
                 const state = this.geoJsonData.features.find(f => f.id === stateId);
                 if (state) {
-                    // 1. 기존 툴팁 강제 닫기 (안전한 방법)
-                    if (this.map._popup) this.map.closePopup();
-                    
+                    // 1. 모든 툴팁과 이벤트 리스너 일시 중지
+                    this.closeAllTooltips();
+                    this.disableHoverEvents();
+            
                     const bounds = L.geoJSON(state).getBounds();
                     const center = bounds.getCenter();
                     const fixedZoomLevel = 7;
             
-                    // 2. 지도 이동
-                    this.map.flyTo(center, fixedZoomLevel, {
-                        duration: 0.5 // 부드러운 이동 효과
+                    // 2. 지도 이동 (flyTo로 부드러운 이동)
+                    await new Promise(resolve => {
+                        this.map.flyTo(center, fixedZoomLevel, {
+                            duration: 0.5,
+                            onEnd: resolve
+                        });
                     });
             
                     // 3. 이동 완료 후 처리
-                    this.map.once('moveend', () => {
-                        // 같은 주가 여전히 선택된 경우에만 툴팁 표시
-                        if (e.target.value === stateId) {
-                            const stateLayer = this.findStateLayer(stateId);
-                            if (stateLayer) {
-                                // 툴팁 표시
-                                const data = this.metricData[stateId] || {};
-                                this.showTooltip(center, data);
-                                
-                                // 팝업이 열렸는지 확인 (선택 사항)
-                                setTimeout(() => {
-                                    if (!this.map._popup || !this.map._popup.isOpen()) {
-                                        this.showTooltip(center, data);
-                                    }
-                                }, 300);
-                            }
+                    this.enableHoverEvents(); // 호버 이벤트 다시 활성화
+                    
+                    // 0.5초 대기 후 툴팁 표시 (사용자 추가 호버 방지)
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    
+                    if (e.target.value === stateId) { // 아직 같은 주가 선택된 경우만
+                        const stateLayer = this.findStateLayer(stateId);
+                        if (stateLayer) {
+                            this.showTooltip(center, this.metricData[stateId] || {});
                         }
-                    });
+                    }
                 }
             });
-    
-            L.DomEvent.disableClickPropagation(div);
-            L.DomEvent.disableScrollPropagation(div);
-    
-            this.filterControlInstance = control;
-            return div;
-        };
-        
-        control.addTo(this.map);
-    }
-    
-    // 주 레이어를 찾는 헬퍼 메소드 추가
-    findStateLayer(stateId) {
-        let targetLayer = null;
-        this.stateLayer.eachLayer((layer) => {
-            if (layer.feature && layer.feature.id === stateId) {
-                targetLayer = layer;
+            
+            // 새로운 헬퍼 메소드들 추가
+            closeAllTooltips() {
+                this.map.closePopup();
+                // Leaflet의 모든 툴팁 제거
+                document.querySelectorAll('.leaflet-popup').forEach(popup => popup.remove());
             }
-        });
-        return targetLayer;
-    }
+            
+            disableHoverEvents() {
+                // 모든 주 레이어의 마우스 이벤트 일시 비활성화
+                this.stateLayer.eachLayer(layer => {
+                    layer.off('mouseover');
+                    layer.off('mouseout');
+                });
+            }
+            
+            enableHoverEvents() {
+                // 모든 주 레이어의 마우스 이벤트 다시 활성화
+                this.stateLayer.eachLayer(layer => {
+                    layer.on({
+                        mouseover: (e) => {
+                            const center = e.target.getBounds().getCenter();
+                            this.showTooltip(center, this.metricData[e.target.feature.id] || {});
+                        },
+                        mouseout: () => this.map.closePopup()
+                    });
+                });
+            }
 
     showError(message) {
         if (this.errorControl) {
