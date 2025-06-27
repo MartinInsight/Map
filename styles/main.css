@@ -552,7 +552,7 @@ html, body {
     .leaflet-top.leaflet-left {
         /* 탭 높이(50px)와 컨트롤 간 여백 조정 */
         /* INBOUND/OUTBOUND 버튼이 줌 컨트롤보다 위에 있으므로, top 값을 더 늘려 아래로 내립니다. */
-        top: 65px !important; /* 모바일 버전: 50px (탭 높이) + 15px (조정된 여백) */
+        top: 67px !important; /* 모바일 버전: 50px (탭 높이) + 17px (조정된 여백) */
         left: 50% !important;
         transform: translateX(-50%) !important;
     }
@@ -613,7 +613,7 @@ html, body {
 
     /* 좌측 상단 컨트롤 컨테이너 (INBOUND/OUTBOUND 토글 포함) */
     .leaflet-top.leaflet-left {
-        top: 65px !important; /* 탭 높이(50px) 아래 15px 여백 유지 */
+        top: 67px !important; /* 탭 높이(50px) 아래 17px 여백 유지 */
     }
     /* 우측 상단 컨트롤 컨테이너 (줌, 리셋, 필터 포함) */
     .leaflet-top.leaflet-right {
