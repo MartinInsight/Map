@@ -276,9 +276,9 @@ html, body {
 /* ===== 트럭 토글 버튼 완전 재정의 ===== */
 .truck-toggle-map-control {
     position: absolute;
-    top: 10px;
+    top: 119px !important; /* reset-btn과 동일한 위치로 강제 지정 */
     left: 50%;
-    transform: translateX(-50%) translateY(0) !important;
+    transform: translateX(-50%) !important;
     z-index: 1001;
     display: flex;
     height: 34px;
@@ -604,14 +604,13 @@ html, body {
     }
 
     .truck-toggle-map-control {
-        top: 10px !important;
+        top: 65px !important; /* 모바일에서의 reset-btn 위치에 맞춤 */
         height: 30px !important;
     }
     .truck-toggle-btn {
         height: 30px !important;
         font-size: 12px !important;
         padding: 0 12px !important;
-        min-width: 70px;
     }
    
     /* Zoom buttons on mobile */
