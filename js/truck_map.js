@@ -219,7 +219,7 @@ class TruckCongestionMap {
         control.onAdd = () => {
             const div = L.DomUtil.create('div', 'map-control-group-right');
             
-            // 줌 컨트롤 추가
+            // 커스텀 줌 컨트롤 추가
             const zoomControl = L.DomUtil.create('div', 'leaflet-control-zoom');
             zoomControl.innerHTML = `
                 <a class="leaflet-control-zoom-in" href="#" title="Zoom in">+</a>
@@ -227,7 +227,7 @@ class TruckCongestionMap {
             `;
             div.appendChild(zoomControl);
             
-            // 줌 버튼 이벤트
+            // 줌 버튼 이벤트 핸들러
             zoomControl.querySelector('.leaflet-control-zoom-in').addEventListener('click', (e) => {
                 e.preventDefault();
                 this.map.zoomIn();
@@ -238,7 +238,7 @@ class TruckCongestionMap {
                 this.map.zoomOut();
             });
     
-            // 주 선택 필터
+            // 주 선택 필터 드롭다운 추가
             const states = this.geoJsonData.features
                 .map(f => ({
                     id: f.id,
@@ -256,59 +256,69 @@ class TruckCongestionMap {
             `;
             div.insertAdjacentHTML('beforeend', filterDropdownHtml);
     
-            // 리셋 버튼
+            // 리셋 버튼 추가
             const resetButtonHtml = `
                 <button class="truck-reset-btn reset-btn">Reset View</button>
             `;
             div.insertAdjacentHTML('beforeend', resetButtonHtml);
     
-            // 이벤트 리스너
+            // 이벤트 리스너 추가
             div.querySelector('.truck-reset-btn').addEventListener('click', () => {
                 this.map.setView([37.8, -96], 4);
                 const stateFilter = div.querySelector('.state-filter');
                 if (stateFilter) stateFilter.value = '';
-                this.map.closePopup();
+                this.map.closePopup(); // 리셋 시 툴팁 닫기
             });
     
             div.querySelector('.state-filter').addEventListener('change', (e) => {
                 const stateId = e.target.value;
                 if (!stateId) {
                     this.map.setView([37.8, -96], 4);
-                    this.map.closePopup();
+                    this.map.closePopup(); // "Select State" 선택 시 툴팁 닫기
                     return;
                 }
-            
+    
                 const state = this.geoJsonData.features.find(f => f.id === stateId);
                 if (state) {
-                    // 1. 기존 툴팁 닫기
-                    this.map.closePopup();
+                    const bounds = L.geoJSON(state).getBounds();
+                    const center = bounds.getCenter();
+                    const fixedZoomLevel = 7;
+    
+                    this.map.setView(center, fixedZoomLevel);
                     
-                    // 2. 이동 시작 (간단한 버전)
-                    this.map.flyTo(stateLayer.getBounds().getCenter(), 7, {
-                        duration: 0.5,
-                        onEnd: () => {
-                            // 3. 이동 완료 후 툴팁 표시
-                            const stateLayer = this.findStateLayer(stateId);
-                            if (stateLayer) {
-                                stateLayer.fire('mouseover');
-                            }
+                    // 주를 선택한 후 해당 주의 툴팁 표시 (레일 지도와 유사한 동작)
+                    setTimeout(() => {
+                        const stateLayer = this.findStateLayer(stateId);
+                        if (stateLayer) {
+                            // 마우스 오버 이벤트를 트리거하여 툴팁 표시
+                            stateLayer.fire('mouseover');
+                            
+                            // 일정 시간 후 툴팁이 열리지 않으면 강제로 표시
+                            setTimeout(() => {
+                                if (!this.map.getPopup() || !this.map.getPopup().isOpen()) {
+                                    this.showTooltip(center, this.metricData[stateId] || {});
+                                }
+                            }, 500);
                         }
-                    });
+                    }, 300); // 지도 이동이 완료될 시간을 주기 위해 약간의 지연 추가
                 }
             });
     
+            L.DomEvent.disableClickPropagation(div);
+            L.DomEvent.disableScrollPropagation(div);
+    
+            this.filterControlInstance = control;
             return div;
         };
         
         control.addTo(this.map);
-        this.filterControlInstance = control;
     }
     
-    // 주 레이어 찾는 헬퍼 메소드
+    // 주 레이어를 찾는 헬퍼 메소드 추가
     findStateLayer(stateId) {
         let targetLayer = null;
-        this.stateLayer.eachLayer(layer => {
-            if (layer.feature?.id === stateId) {
+        this.stateLayer.eachLayer((layer) => {
+            if (layer.feature && layer.feature.id === stateId) {
                 targetLayer = layer;
             }
         });
