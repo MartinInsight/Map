@@ -552,7 +552,7 @@ html, body {
     .leaflet-top.leaflet-left {
         /* 탭 높이(50px)와 컨트롤 간 여백 조정 */
         /* INBOUND/OUTBOUND 버튼이 줌 컨트롤보다 위에 있으므로, top 값을 더 늘려 아래로 내립니다. */
-        top: 67px !important; /* 모바일 버전: 50px (탭 높이) + 17px (조정된 여백) */
+        top: 66px !important; /* 모바일 버전: 50px (탭 높이) + 17px (조정된 여백) */
         left: 50% !important;
         transform: translateX(-50%) !important;
     }
