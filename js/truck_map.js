@@ -12,6 +12,7 @@ class TruckCongestionMap {
         this.errorControl = null;
         this.isZoomingToState = false; // 필터 선택으로 확대 중인지 추적하는 플래그
         this.lockedStateId = null; // 필터로 선택되어 '잠긴' 주의 ID를 추적하는 플래그
+        this.currentOpenPopup = null; // Add a reference to the currently open popup
 
         // 지도 타일 레이어를 CartoDB Light All로 변경하여 영어 지명 통일
         L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', {
@@ -29,6 +30,13 @@ class TruckCongestionMap {
             const currentZoom = this.map.getZoom();
             if (currentZoom < this.map.getMinZoom()) {
                 this.map.setZoom(this.map.getMinZoom());
+            }
+        });
+
+        // Listen for popupclose event to clear the reference
+        this.map.on('popupclose', (e) => {
+            if (this.currentOpenPopup && e.popup === this.currentOpenPopup) {
+                this.currentOpenPopup = null;
             }
         });
 
@@ -51,7 +59,7 @@ class TruckCongestionMap {
 
             this.renderMap();
             this.addToggleControls(); // INBOUND/OUTBOUND 토글 버튼 (상단 중앙)
-            this.addRightControls();   // 리셋 버튼과 필터 드롭다운 (상단 우측)
+            this.addRightControls();    // 리셋 버튼과 필터 드롭다운 (상단 우측)
             this.initialized = true;
         } catch (err) {
             console.error("Initialization failed:", err);
@@ -134,11 +142,11 @@ class TruckCongestionMap {
                 // 특정 주가 '잠금' 상태일 때는 mouseout 무시
                 if (this.lockedStateId) return;
 
-                // **깜빡임 방지 로직**: 마우스가 팝업 안으로 이동하면 닫지 않음
-                const popup = this.map.getPopup();
-                if (popup) {
+                // 깜빡임 방지 로직: 마우스가 팝업 안으로 이동하면 닫지 않음
+                if (this.currentOpenPopup) {
                     const toElement = e.originalEvent.relatedTarget;
-                    if (popup.getElement().contains(toElement)) {
+                    // Check if the related target (where the mouse moved to) is within the popup's DOM element
+                    if (this.currentOpenPopup.getElement() && this.currentOpenPopup.getElement().contains(toElement)) {
                         return; // 마우스가 팝업 내부에 있으므로 리턴
                     }
                 }
@@ -163,11 +171,12 @@ class TruckCongestionMap {
 
         // 기존 팝업이 있으면 닫고 새로 열기 (중복 방지)
         this.map.closePopup();
+        this.currentOpenPopup = null; // Clear old reference
 
         const format = (v) => isNaN(Number(v)) ? '0.00' : Math.abs(Number(v)).toFixed(2);
         const isInbound = this.currentMode === 'inbound';
         const delay = isInbound ? data.inboundDelay : data.outboundDelay;
-        const dwellValue = isInbound ? data.dwellInbound : data.dwellOutbound;
+        const dwellValue = isInbound ? data.dwellInbound : data.outboundDwell; // Assuming 'outboundDwell' based on context
 
         const content = `
             <h4>${data.name || 'Unknown'}</h4>
@@ -187,7 +196,8 @@ class TruckCongestionMap {
             </div>
         `;
 
-        L.popup({
+        // Create the popup and store a reference to it
+        this.currentOpenPopup = L.popup({
             className: 'truck-tooltip-container',
             maxWidth: 300,
             autoClose: false,
@@ -196,8 +206,9 @@ class TruckCongestionMap {
             offset: L.point(0, -10)
         })
         .setLatLng(latlng)
-        .setContent(content)
-        .openOn(this.map);
+        .setContent(content);
+
+        this.currentOpenPopup.openOn(this.map);
     }
 
     zoomToState(feature) {
@@ -207,7 +218,7 @@ class TruckCongestionMap {
 
     addToggleControls() {
         const centeredToggleDiv = L.DomUtil.create('div', 'map-control-container truck-toggle-map-control');
-        this.map.getContainer().appendChild(centeredToggleDiv); 
+        this.map.getContainer().appendChild(centeredToggleDiv);
 
         this.controlDiv = centeredToggleDiv;
         this.renderToggleButtons();
@@ -235,19 +246,19 @@ class TruckCongestionMap {
         if (this.filterControlInstance) {
             this.map.removeControl(this.filterControlInstance);
         }
-        
+
         const control = L.control({ position: 'topright' });
-        
+
         control.onAdd = () => {
             const div = L.DomUtil.create('div', 'map-control-group-right');
-            
+
             const zoomControl = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-custom');
             zoomControl.innerHTML = `
                 <a class="leaflet-control-zoom-in" href="#" title="Zoom in" role="button" aria-label="Zoom in">+</a>
                 <a class="leaflet-control-zoom-out" href="#" title="Zoom out" role="button" aria-label="Zoom out">-</a>
             `;
             div.appendChild(zoomControl);
-            
+
             zoomControl.querySelector('.leaflet-control-zoom-in').addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); this.map.zoomIn(); });
             zoomControl.querySelector('.leaflet-control-zoom-out').addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); this.map.zoomOut(); });
 
@@ -268,12 +279,14 @@ class TruckCongestionMap {
                 const stateFilter = div.querySelector('.state-filter');
                 if (stateFilter) stateFilter.value = '';
                 this.map.closePopup();
+                this.currentOpenPopup = null; // Clear popup reference on reset
             });
 
             // 필터 변경 리스너
             div.querySelector('.state-filter').addEventListener('change', (e) => {
                 const stateId = e.target.value;
                 this.map.closePopup();
+                this.currentOpenPopup = null; // Clear popup reference on filter change
 
                 if (!stateId) { // 'Select State' 선택 시
                     this.lockedStateId = null; // 잠금 해제
@@ -283,7 +296,7 @@ class TruckCongestionMap {
 
                 const state = this.geoJsonData.features.find(f => f.id === stateId);
                 if (state) {
-                    this.isZoomingToState = true; 
+                    this.isZoomingToState = true;
                     this.lockedStateId = stateId; // 선택한 주를 '잠금'
 
                     const bounds = L.geoJSON(state).getBounds();
@@ -294,7 +307,7 @@ class TruckCongestionMap {
                         this.showTooltip(center, stateData);
                         this.isZoomingToState = false;
                     });
-                    
+
                     // setView 대신 fitBounds를 사용하여 줌 레벨을 더 유연하게 조정
                     this.map.fitBounds(bounds, { paddingTopLeft: [50, 50], paddingBottomRight: [50, 50] });
                 }
@@ -306,10 +319,10 @@ class TruckCongestionMap {
             this.filterControlInstance = control;
             return div;
         };
-        
+
         control.addTo(this.map);
     }
-    
+
     showError(message) {
         if (this.errorControl) {
             this.map.removeControl(this.errorControl);
