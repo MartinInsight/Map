@@ -6,7 +6,6 @@ class TruckCongestionMap {
         this.metricData = null;
         this.geoJsonData = null;
         this.initialized = false;
-        this.controlDiv = null;
         this.errorControl = null;
 
         // 지도 타일 레이어를 CartoDB Light All로 변경하여 영어 지명 통일
@@ -45,8 +44,8 @@ class TruckCongestionMap {
             this.metricData = sheetData;
 
             this.renderMap();
-            this.addToggleControls(); // INBOUND/OUTBOUND 토글 버튼 (상단 중앙)
-            this.addRightControls();   // 리셋 버튼과 필터 드롭다운 (상단 우측)
+            // INBOUND/OUTBOUND 토글 버튼과 리셋 버튼 및 필터 드롭다운을 하나의 Leaflet 컨트롤로 통합
+            this.addCombinedRightControls(); 
             this.initialized = true;
         } catch (err) {
             console.error("Initialization failed:", err);
@@ -135,7 +134,7 @@ class TruckCongestionMap {
         const format = (v) => isNaN(Number(v)) ? '0.00' : Math.abs(Number(v)).toFixed(2);
         const isInbound = this.currentMode === 'inbound';
         const delay = isInbound ? data.inboundDelay : data.outboundDelay;
-        const dwellValue = isInbound ? data.dwellInbound : data.dwellOutbound;
+        const dwellValue = isInbound ? data.dwellInbound : data.outboundDwell; // Fixed: dwellOutbound to outboundDwell as per us-truck.json schema. If your sheet uses 'dwellOutbound', keep that.
 
         const content = `
             <h4>${data.name || 'Unknown'}</h4>
@@ -176,46 +175,23 @@ class TruckCongestionMap {
         this.map.setView(center, fixedZoomLevel);
     }
 
-    // INBOUND/OUTBOUND 토글 버튼 컨트롤 (상단 중앙 배치)
-    addToggleControls() {
-        // Leaflet 컨트롤 시스템 대신, 직접 지도 컨테이너에 div를 추가하여 중앙 정렬 CSS가 작동하도록 함
-        // 이 div가 유일한 박스/배경/그림자 래퍼가 됨
-        const centeredToggleDiv = L.DomUtil.create('div', 'map-control-container truck-toggle-map-control');
-        this.map.getContainer().appendChild(centeredToggleDiv); // 지도의 DOM 요소에 직접 추가
-
-        this.controlDiv = centeredToggleDiv; // 이 div를 참조하도록 설정
-        this.renderToggleButtons();
-
-        // 맵 이벤트 전파 방지
-        L.DomEvent.disableClickPropagation(centeredToggleDiv);
-        L.DomEvent.disableScrollPropagation(centeredToggleDiv);
-    }
-
-    renderToggleButtons() {
-        // 불필요한 이중 래퍼 (truck-toggle-container, truck-toggle-wrapper)를 제거하고
-        // 버튼들을 직접 this.controlDiv (map-control-container) 안에 삽입
-        this.controlDiv.innerHTML = `
-            <button class="truck-toggle-btn ${this.currentMode === 'inbound' ? 'truck-active' : ''}" data-mode="inbound">INBOUND</button>
-            <button class="truck-toggle-btn ${this.currentMode === 'outbound' ? 'truck-active' : ''}" data-mode="outbound">OUTBOUND</button>
-        `;
-
-        this.controlDiv.querySelectorAll('.truck-toggle-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                this.currentMode = btn.dataset.mode;
-                this.renderToggleButtons(); // 토글 버튼 상태 업데이트
-                this.stateLayer.setStyle(this.getStyle.bind(this));
-            });
-        });
-    }
-
-    // 리셋 버튼과 필터 드롭다운 컨트롤 (상단 우측에 나란히 배치)
-    addRightControls() {
+    // 모든 우측 상단 컨트롤을 통합하여 추가
+    addCombinedRightControls() {
         const control = L.control({ position: 'topright' });
 
         control.onAdd = () => {
             const div = L.DomUtil.create('div', 'map-control-group-right');
 
-            // 주 선택 필터 드롭다운 추가 (먼저 삽입)
+            // 1. INBOUND/OUTBOUND 토글 버튼 섹션
+            const toggleButtonsHtml = `
+                <div class="truck-toggle-container">
+                    <button class="truck-toggle-btn ${this.currentMode === 'inbound' ? 'truck-active' : ''}" data-mode="inbound">INBOUND</button>
+                    <button class="truck-toggle-btn ${this.currentMode === 'outbound' ? 'truck-active' : ''}" data-mode="outbound">OUTBOUND</button>
+                </div>
+            `;
+            div.insertAdjacentHTML('beforeend', toggleButtonsHtml);
+
+            // 2. 주 선택 필터 드롭다운
             const states = this.geoJsonData.features
                 .map(f => ({
                     id: f.id,
@@ -231,18 +207,18 @@ class TruckCongestionMap {
                     ).join('')}
                 </select>
             `;
-            div.insertAdjacentHTML('beforeend', filterDropdownHtml); // 드롭다운 먼저 추가
+            div.insertAdjacentHTML('beforeend', filterDropdownHtml);
 
-            // 리셋 버튼 추가 (나중에 삽입)
+            // 3. 리셋 버튼
             const resetButtonHtml = `
                 <button class="truck-reset-btn reset-btn">Reset View</button>
             `;
-            div.insertAdjacentHTML('beforeend', resetButtonHtml); // 리셋 버튼 추가
+            div.insertAdjacentHTML('beforeend', resetButtonHtml);
 
-            // 이벤트 리스너 추가 (요소들이 DOM에 추가된 후 참조)
+            // 이벤트 리스너 추가
             div.querySelector('.truck-reset-btn').addEventListener('click', () => {
                 this.map.setView([37.8, -96], 4);
-                const stateFilter = div.querySelector('.state-filter'); // 현재 div 내에서 찾음
+                const stateFilter = div.querySelector('.state-filter');
                 if (stateFilter) stateFilter.value = '';
             });
 
@@ -263,10 +239,22 @@ class TruckCongestionMap {
                 }
             });
 
+            // 토글 버튼 이벤트 리스너
+            div.querySelectorAll('.truck-toggle-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    this.currentMode = btn.dataset.mode;
+                    // 모든 토글 버튼의 active 클래스 제거 후 현재 클릭된 버튼에만 추가
+                    div.querySelectorAll('.truck-toggle-btn').forEach(innerBtn => {
+                        innerBtn.classList.remove('truck-active');
+                    });
+                    btn.classList.add('truck-active');
+                    this.stateLayer.setStyle(this.getStyle.bind(this)); // 지도 스타일 업데이트
+                });
+            });
+
             L.DomEvent.disableClickPropagation(div);
             L.DomEvent.disableScrollPropagation(div);
 
-            this.filterControlInstance = control; // 이제 전체 그룹핑 컨트롤이 됨
             return div;
         };
         control.addTo(this.map);
