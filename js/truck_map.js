@@ -11,6 +11,7 @@ class TruckCongestionMap {
         this.controlDiv = null;
         this.errorControl = null;
         this.isZoomingToState = false; // 필터 선택으로 확대 중인지 추적하는 플래그
+        this.lockedStateId = null; // 필터로 선택되어 '잠긴' 주의 ID를 추적하는 플래그
 
         // 지도 타일 레이어를 CartoDB Light All로 변경하여 영어 지명 통일
         L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', {
@@ -117,8 +118,8 @@ class TruckCongestionMap {
 
         layer.on({
             mouseover: (e) => {
-                // BUG FIX: 확대/이동 중에는 mouseover 이벤트를 무시
-                if (this.isZoomingToState) return;
+                // 확대/이동 중이거나 특정 주가 '잠금' 상태일 때는 hover 무시
+                if (this.isZoomingToState || this.lockedStateId) return;
 
                 const center = layer.getBounds().getCenter();
                 this.showTooltip(center, data);
@@ -130,19 +131,38 @@ class TruckCongestionMap {
                 });
             },
             mouseout: (e) => {
-                // BUG FIX: 확대/이동 중에는 mouseout 이벤트도 무시할 수 있지만,
-                // 안전하게 팝업을 닫고 스타일을 리셋하는 것이 더 나을 수 있음.
-                // 단, isZoomingToState 플래그가 true일 때는 팝업이 닫히지 않도록 제어.
-                if (this.isZoomingToState) return;
+                // 특정 주가 '잠금' 상태일 때는 mouseout 무시
+                if (this.lockedStateId) return;
+
+                // **깜빡임 방지 로직**: 마우스가 팝업 안으로 이동하면 닫지 않음
+                const popup = this.map.getPopup();
+                if (popup) {
+                    const toElement = e.originalEvent.relatedTarget;
+                    if (popup.getElement().contains(toElement)) {
+                        return; // 마우스가 팝업 내부에 있으므로 리턴
+                    }
+                }
+
                 this.map.closePopup();
                 this.stateLayer.resetStyle(layer);
             },
-            click: () => this.zoomToState(feature)
+            click: (e) => {
+                // 지도의 다른 주를 클릭하면 '잠금' 상태 해제
+                if (this.lockedStateId) {
+                    this.lockedStateId = null;
+                    const filter = document.querySelector('.state-filter');
+                    if (filter) filter.value = '';
+                }
+                this.zoomToState(feature);
+            }
         });
     }
 
     showTooltip(latlng, data) {
         if (!this.initialized || !data.name) return;
+
+        // 기존 팝업이 있으면 닫고 새로 열기 (중복 방지)
+        this.map.closePopup();
 
         const format = (v) => isNaN(Number(v)) ? '0.00' : Math.abs(Number(v)).toFixed(2);
         const isInbound = this.currentMode === 'inbound';
@@ -182,10 +202,7 @@ class TruckCongestionMap {
 
     zoomToState(feature) {
         const bounds = L.geoJSON(feature).getBounds();
-        const center = bounds.getCenter();
-        const fixedZoomLevel = 7; 
-
-        this.map.setView(center, fixedZoomLevel);
+        this.map.fitBounds(bounds, { paddingTopLeft: [50, 50], paddingBottomRight: [50, 50] });
     }
 
     addToggleControls() {
@@ -231,67 +248,55 @@ class TruckCongestionMap {
             `;
             div.appendChild(zoomControl);
             
-            zoomControl.querySelector('.leaflet-control-zoom-in').addEventListener('click', (e) => {
-                e.preventDefault(); e.stopPropagation(); this.map.zoomIn();
-            });
-            
-            zoomControl.querySelector('.leaflet-control-zoom-out').addEventListener('click', (e) => {
-                e.preventDefault(); e.stopPropagation(); this.map.zoomOut();
-            });
+            zoomControl.querySelector('.leaflet-control-zoom-in').addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); this.map.zoomIn(); });
+            zoomControl.querySelector('.leaflet-control-zoom-out').addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); this.map.zoomOut(); });
 
             const states = this.geoJsonData.features
                 .map(f => ({ id: f.id, name: f.properties.name }))
                 .sort((a, b) => a.name.localeCompare(b.name));
 
-            const filterDropdownHtml = `
-                <select class="state-filter">
-                    <option value="">Select State</option>
-                    ${states.map(state => `<option value="${state.id}">${state.name}</option>`).join('')}
-                </select>
-            `;
+            const filterDropdownHtml = `<select class="state-filter"><option value="">Select State</option>${states.map(state => `<option value="${state.id}">${state.name}</option>`).join('')}</select>`;
             div.insertAdjacentHTML('beforeend', filterDropdownHtml);
 
             const resetButtonHtml = `<button class="truck-reset-btn reset-btn">Reset View</button>`;
             div.insertAdjacentHTML('beforeend', resetButtonHtml);
 
+            // 리셋 버튼 리스너
             div.querySelector('.truck-reset-btn').addEventListener('click', () => {
+                this.lockedStateId = null; // 잠금 해제
                 this.map.setView([37.8, -96], 4);
                 const stateFilter = div.querySelector('.state-filter');
                 if (stateFilter) stateFilter.value = '';
                 this.map.closePopup();
             });
 
-            // ======================================================================
-            // BUG FIX v2: 필터 변경 이벤트 핸들러에 플래그 로직 추가
-            // ======================================================================
+            // 필터 변경 리스너
             div.querySelector('.state-filter').addEventListener('change', (e) => {
                 const stateId = e.target.value;
                 this.map.closePopup();
 
-                if (!stateId) {
+                if (!stateId) { // 'Select State' 선택 시
+                    this.lockedStateId = null; // 잠금 해제
                     this.map.setView([37.8, -96], 4);
                     return;
                 }
 
                 const state = this.geoJsonData.features.find(f => f.id === stateId);
                 if (state) {
-                    // 1. 확대/이동 시작 전 플래그를 true로 설정
                     this.isZoomingToState = true; 
+                    this.lockedStateId = stateId; // 선택한 주를 '잠금'
 
                     const bounds = L.geoJSON(state).getBounds();
                     const center = bounds.getCenter();
-                    const fixedZoomLevel = 7;
                     const stateData = this.metricData[stateId] || {};
 
                     this.map.once('moveend', () => {
-                        // 3. 이동 완료 후 툴팁을 표시
                         this.showTooltip(center, stateData);
-                        // 4. 모든 동작이 끝났으므로 플래그를 false로 리셋하여 마우스 이벤트를 다시 활성화
                         this.isZoomingToState = false;
                     });
-
-                    // 2. 지도 이동 시작
-                    this.map.setView(center, fixedZoomLevel);
+                    
+                    // setView 대신 fitBounds를 사용하여 줌 레벨을 더 유연하게 조정
+                    this.map.fitBounds(bounds, { paddingTopLeft: [50, 50], paddingBottomRight: [50, 50] });
                 }
             });
 
