@@ -109,23 +109,33 @@ class TruckCongestionMap {
     bindEvents(feature, layer) {
         const stateCode = feature.id;
         const data = this.metricData[stateCode] || {};
-
+    
         layer.on({
             mouseover: (e) => {
                 const center = layer.getBounds().getCenter();
                 this.showTooltip(center, data);
                 layer.setStyle({
-                    weight: 2, // 호버 시 테두리 두께를 2로 변경
-                    color: 'white', // 호버 시에도 테두리 색상은 흰색 유지
+                    weight: 2,
+                    color: 'white',
                     dashArray: '',
                     fillOpacity: 0.9
                 });
             },
             mouseout: (e) => {
                 this.map.closePopup();
-                this.stateLayer.resetStyle(layer); // 원래 스타일로 복원 (weight: 1, color: 'white')
+                this.stateLayer.resetStyle(layer);
             },
-            click: () => this.zoomToState(feature)
+            click: (e) => {
+                // 주 클릭 시: 1. 이동 2. 툴팁 표시
+                const bounds = L.geoJSON(feature).getBounds();
+                const center = bounds.getCenter();
+                this.map.flyTo(center, 7, {
+                    duration: 0.3,
+                    onEnd: () => {
+                        this.showTooltip(center, data);
+                    }
+                });
+            }
         });
     }
 
@@ -281,29 +291,18 @@ class TruckCongestionMap {
             
                 const state = this.geoJsonData.features.find(f => f.id === stateId);
                 if (state) {
-                    // 1. 기존 툴팁 강제 닫기
                     this.map.closePopup();
-                    
-                    // 2. 이동 중 툴팁 차단
-                    this.stateLayer.eachLayer(layer => {
-                        layer.off('mouseover');
-                    });
+                    this.stateLayer.eachLayer(layer => layer.off('mouseover'));
             
                     const bounds = L.geoJSON(state).getBounds();
                     const center = bounds.getCenter();
                     
-                    // 3. 부드러운 이동
                     this.map.flyTo(center, 7, {
                         duration: 0.5,
                         onEnd: () => {
-                            // 4. 반드시 툴팁 표시 (기존 showTooltip 메소드 사용)
-                            const targetLayer = this.findStateLayer(stateId);
-                            if (targetLayer) {
-                                const data = this.metricData[stateId] || {};
-                                this.showTooltip(center, data);
-                            }
+                            const data = this.metricData[stateId] || {};
+                            this.showTooltip(center, data);
                             
-                            // 5. 500ms 후 이벤트 복원
                             setTimeout(() => {
                                 this.stateLayer.eachLayer(layer => {
                                     layer.on('mouseover', (e) => {
