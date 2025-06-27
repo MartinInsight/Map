@@ -30,8 +30,10 @@
         <div id="air-map" class="transport-map"></div>
     </div>
 
-    <!-- 트럭 인바운드/아웃바운드 토글 버튼은 이제 JS에 의해 동적으로 Leaflet 컨트롤 내부에 생성됩니다. -->
-    <!-- 따라서 이 HTML 블록은 제거되었습니다. -->
+    <div class="truck-toggle-map-control truck-active-control">
+        <button class="truck-toggle-btn" data-type="inbound">INBOUND</button>
+        <button class="truck-toggle-btn" data-type="outbound">OUTBOUND</button>
+    </div>
 
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
     
@@ -49,41 +51,42 @@
             const oceanMapInstance = new OceanCongestionMap('ocean-map');
             const airMapInstance = new AirCongestionMap('air-map');
 
-            // 이제 트럭 토글 컨트롤은 js/truck_map.js 내에서 동적으로 생성되므로
-            // 여기서 직접 참조하여 보이고 숨길 필요가 없습니다.
-            // 각 맵의 인스턴스가 자신의 컨트롤을 관리합니다.
+            // 트럭 토글 컨트롤 요소 가져오기 (HTML에 이미 존재하므로 쿼리셀렉터로 찾음)
+            const truckToggleControl = document.querySelector('.truck-toggle-map-control');
 
             document.querySelectorAll('.transport-tab').forEach(tab => {
                 tab.addEventListener('click', () => {
-                    // 탭 전환
+                    // 탭 전환 로직
                     document.querySelectorAll('.transport-tab').forEach(t => {
                         t.classList.remove('active');
                     });
                     tab.classList.add('active');
 
-                    // 지도 전환
+                    // 지도 전환 로직
                     document.querySelectorAll('.transport-map').forEach(m => {
                         m.classList.remove('active');
                     });
                     const currentMapId = `${tab.dataset.map}-map`;
                     document.getElementById(currentMapId).classList.add('active');
 
-                    // 지도 크기 조정
+                    // 지도 크기 조정 및 트럭 토글 버튼 가시성 제어
                     setTimeout(() => {
                         switch(tab.dataset.map) {
                             case 'truck':
                                 truckMapInstance.map.invalidateSize();
-                                // 트럭 맵일 때만 트럭 컨트롤이 생성되도록 truck_map.js에서 처리합니다.
-                                // 다른 맵으로 전환 시 해당 컨트롤은 존재하지 않거나 숨겨집니다.
+                                truckToggleControl.classList.add('truck-active-control'); // 트럭 맵일 때 토글 버튼 보이기
                                 break;
                             case 'rail':
                                 railMapInstance.map.invalidateSize();
+                                truckToggleControl.classList.remove('truck-active-control'); // 다른 맵일 때 토글 버튼 숨기기
                                 break;
                             case 'ocean':
                                 oceanMapInstance.map.invalidateSize();
+                                truckToggleControl.classList.remove('truck-active-control'); // 다른 맵일 때 토글 버튼 숨기기
                                 break;
                             case 'air':
                                 airMapInstance.map.invalidateSize();
+                                truckToggleControl.classList.remove('truck-active-control'); // 다른 맵일 때 토글 버튼 숨기기
                                 break;
                         }
                     }, 100); // 100ms 지연
@@ -92,6 +95,7 @@
 
             // 초기 로드 시 첫 번째 맵(Truck)이 제대로 활성화되도록 invalidateSize 호출
             truckMapInstance.map.invalidateSize();
+            // 초기 로드 시 트럭 토글 버튼을 보이도록 설정 (이미 HTML에 'truck-active-control' 클래스 추가됨)
         });
     </script>
 </body>
