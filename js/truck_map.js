@@ -8,7 +8,7 @@ class TruckCongestionMap {
         this.metricData = null;
         this.geoJsonData = null;
         this.initialized = false;
-        this.controlDiv = null;
+        this.controlDiv = null; // 이제 L.control 인스턴스를 저장할 것입니다.
         this.errorControl = null;
         this.isZoomingToState = false; // 필터 선택으로 확대 중인지 추적하는 플래그
         this.lockedStateId = null; // 필터로 선택되어 '잠긴' 주의 ID를 추적하는 플래그
@@ -130,9 +130,8 @@ class TruckCongestionMap {
                 if (this.isZoomingToState || this.lockedStateId) return;
 
                 let center = layer.getBounds().getCenter();
-                // 알래스카 (AK)에 대한 툴팁 위치 수동 조정 (이전 요청의 반영)
+                // 알래스카 (AK)에 대한 툴팁 위치 수동 조정
                 if (stateCode === 'AK') {
-                    // 이 좌표는 지도를 보면서 가장 적절한 위치로 조정해야 합니다.
                     center = L.latLng(62.0, -150.0); 
                 }
 
@@ -223,34 +222,45 @@ class TruckCongestionMap {
     }
 
     addToggleControls() {
-        const centeredToggleDiv = L.DomUtil.create('div', 'map-control-container truck-toggle-map-control');
-        this.map.getContainer().appendChild(centeredToggleDiv);
-
-        this.controlDiv = centeredToggleDiv;
-        this.renderToggleButtons();
-
-        // 탭 메뉴의 실제 높이를 가져와 토글 컨트롤의 top 위치를 설정
-        const tabContainer = document.querySelector('.transport-tab-container');
-        if (tabContainer) {
-            // 탭 메뉴 높이 + 10px 여백
-            const tabHeight = tabContainer.offsetHeight; 
-            centeredToggleDiv.style.top = `${tabHeight + 10}px`;
-        } else {
-            // 탭 메뉴를 찾지 못할 경우 기본값 설정 (CSS의 고정값과 일치)
-            centeredToggleDiv.style.top = '50px'; 
+        if (this.controlDiv) { // 기존 컨트롤이 있다면 제거
+            this.map.removeControl(this.controlDiv);
         }
 
-        L.DomEvent.disableClickPropagation(centeredToggleDiv);
-        L.DomEvent.disableScrollPropagation(centeredToggleDiv);
+        // L.control을 사용하여 Leaflet의 컨트롤 시스템에 통합
+        const toggleControl = L.control({ position: 'topleft' });
+        
+        toggleControl.onAdd = () => {
+            const div = L.DomUtil.create('div', 'map-control-container truck-toggle-map-control');
+            this.controlDivElement = div; // 실제 DOM 요소를 저장
+            this.renderToggleButtons(); // 여기에 버튼 렌더링
+            
+            L.DomEvent.disableClickPropagation(div);
+            L.DomEvent.disableScrollPropagation(div);
+            return div;
+        };
+        
+        toggleControl.addTo(this.map);
+        this.controlDiv = toggleControl; // L.control 인스턴스를 저장
+
+        // 초기 위치 설정 (CSS가 덮어쓸 것이므로 여기서는 필수 아님)
+        // const tabContainer = document.querySelector('.transport-tab-container');
+        // if (tabContainer && this.controlDivElement) {
+        //     const tabHeight = tabContainer.offsetHeight; 
+        //     this.controlDivElement.style.top = `${tabHeight + 10}px`;
+        // } else if (this.controlDivElement) {
+        //     this.controlDivElement.style.top = '50px'; 
+        // }
     }
 
     renderToggleButtons() {
-        this.controlDiv.innerHTML = `
+        if (!this.controlDivElement) return; // DOM 요소가 아직 없으면 리턴
+
+        this.controlDivElement.innerHTML = `
             <button class="truck-toggle-btn ${this.currentMode === 'inbound' ? 'truck-active' : ''}" data-mode="inbound">INBOUND</button>
             <button class="truck-toggle-btn ${this.currentMode === 'outbound' ? 'truck-active' : ''}" data-mode="outbound">OUTBOUND</button>
         `;
 
-        this.controlDiv.querySelectorAll('.truck-toggle-btn').forEach(btn => {
+        this.controlDivElement.querySelectorAll('.truck-toggle-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 this.currentMode = btn.dataset.mode;
                 this.renderToggleButtons();
@@ -342,18 +352,6 @@ class TruckCongestionMap {
         };
         
         control.addTo(this.map);
-
-        // 탭 메뉴의 실제 높이를 가져와 우측 컨트롤의 top 위치를 설정
-        const tabContainer = document.querySelector('.transport-tab-container');
-        const leafletRightControl = document.querySelector('.leaflet-top.leaflet-right');
-        if (tabContainer && leafletRightControl) {
-            // 탭 메뉴 높이 + 10px 여백
-            const tabHeight = tabContainer.offsetHeight; 
-            leafletRightControl.style.top = `${tabHeight + 10}px`;
-        } else if (leafletRightControl) {
-            // 탭 메뉴를 찾지 못할 경우 기본값 설정 (CSS의 고정값과 일치)
-            leafletRightControl.style.top = '50px'; 
-        }
     }
     
     showError(message) {
