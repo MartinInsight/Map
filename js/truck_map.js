@@ -258,7 +258,7 @@ class TruckCongestionMap {
         control.onAdd = () => {
             const div = L.DomUtil.create('div', 'map-control-group-right');
             
-            // 줌 컨트롤 생성 (RailCongestionMap과 동일하게 'leaflet-control-zoom' 클래스만 사용)
+            // 줌 컨트롤 생성
             const zoomControl = L.DomUtil.create('div', 'leaflet-control-zoom');
             zoomControl.innerHTML = `
                 <a class="leaflet-control-zoom-in" href="#" title="Zoom in">+</a>
@@ -266,7 +266,7 @@ class TruckCongestionMap {
             `;
             div.appendChild(zoomControl);
             
-            // 줌 버튼 이벤트 핸들러 (e.stopPropagation() 제거)
+            // 줌 버튼 이벤트 핸들러
             zoomControl.querySelector('.leaflet-control-zoom-in').addEventListener('click', (e) => { e.preventDefault(); this.map.zoomIn(); });
             zoomControl.querySelector('.leaflet-control-zoom-out').addEventListener('click', (e) => { e.preventDefault(); this.map.zoomOut(); });
 
@@ -275,10 +275,11 @@ class TruckCongestionMap {
                 .sort((a, b) => a.name.localeCompare(b.name));
 
             const filterDropdownHtml = `<select class="state-filter"><option value="">Select State</option>${states.map(state => `<option value="${state.id}">${state.name}</option>`).join('')}</select>`;
-            div.insertAdjacentHTML('beforeend', filterDropdownHtml);
-
             const resetButtonHtml = `<button class="truck-reset-btn reset-btn">Reset View</button>`;
+
+            // 순서 변경: 리셋 버튼 먼저 추가, 그 다음에 필터 드롭다운 추가
             div.insertAdjacentHTML('beforeend', resetButtonHtml);
+            div.insertAdjacentHTML('beforeend', filterDropdownHtml);
 
             // 리셋 버튼 리스너
             div.querySelector('.truck-reset-btn').addEventListener('click', () => {
