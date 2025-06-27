@@ -109,33 +109,23 @@ class TruckCongestionMap {
     bindEvents(feature, layer) {
         const stateCode = feature.id;
         const data = this.metricData[stateCode] || {};
-    
+
         layer.on({
             mouseover: (e) => {
                 const center = layer.getBounds().getCenter();
                 this.showTooltip(center, data);
                 layer.setStyle({
-                    weight: 2,
-                    color: 'white',
+                    weight: 2, // 호버 시 테두리 두께를 2로 변경
+                    color: 'white', // 호버 시에도 테두리 색상은 흰색 유지
                     dashArray: '',
                     fillOpacity: 0.9
                 });
             },
             mouseout: (e) => {
                 this.map.closePopup();
-                this.stateLayer.resetStyle(layer);
+                this.stateLayer.resetStyle(layer); // 원래 스타일로 복원 (weight: 1, color: 'white')
             },
-            click: (e) => {
-                // 주 클릭 시: 1. 이동 2. 툴팁 표시
-                const bounds = L.geoJSON(feature).getBounds();
-                const center = bounds.getCenter();
-                this.map.flyTo(center, 7, {
-                    duration: 0.3,
-                    onEnd: () => {
-                        this.showTooltip(center, data);
-                    }
-                });
-            }
+            click: () => this.zoomToState(feature)
         });
     }
 
@@ -280,7 +270,6 @@ class TruckCongestionMap {
                 this.map.closePopup(); // 리셋 시 툴팁 닫기
             });
     
-            // addRightControls() 메소드 내부의 change 이벤트 핸들러만 수정 (나머지 코드는 동일)
             div.querySelector('.state-filter').addEventListener('change', (e) => {
                 const stateId = e.target.value;
                 if (!stateId) {
@@ -291,26 +280,50 @@ class TruckCongestionMap {
             
                 const state = this.geoJsonData.features.find(f => f.id === stateId);
                 if (state) {
+                    // 1. 기존 툴팁 강제 닫기
                     this.map.closePopup();
-                    this.stateLayer.eachLayer(layer => layer.off('mouseover'));
+                    
+                    // 2. 이동 중 툴팁 차단
+                    const layersWithHover = [];
+                    this.stateLayer.eachLayer(layer => {
+                        if (layer._events?.mouseover) {
+                            layersWithHover.push({
+                                layer: layer,
+                                handler: layer._events.mouseover[0].fn
+                            });
+                            layer.off('mouseover');
+                        }
+                    });
             
                     const bounds = L.geoJSON(state).getBounds();
                     const center = bounds.getCenter();
                     
+                    // 3. 부드러운 이동
                     this.map.flyTo(center, 7, {
                         duration: 0.5,
                         onEnd: () => {
-                            const data = this.metricData[stateId] || {};
-                            this.showTooltip(center, data);
+                            // 4. 반드시 툴팁 표시 (3중 안전장치)
+                            const showTooltipForSelectedState = () => {
+                                const targetLayer = this.findStateLayer(stateId);
+                                if (targetLayer) {
+                                    const data = this.metricData[stateId] || {};
+                                    this.showTooltip(center, data);
+                                    
+                                    // 툴팁이 안 열렸을 경우 재시도
+                                    if (!this.map._popup) {
+                                        setTimeout(() => this.showTooltip(center, data), 100);
+                                    }
+                                }
+                            };
                             
+                            showTooltipForSelectedState();
+                            
+                            // 5. 300ms 후 이벤트 복원
                             setTimeout(() => {
-                                this.stateLayer.eachLayer(layer => {
-                                    layer.on('mouseover', (e) => {
-                                        const center = e.target.getBounds().getCenter();
-                                        this.showTooltip(center, this.metricData[e.target.feature.id] || {});
-                                    });
+                                layersWithHover.forEach(item => {
+                                    item.layer.on('mouseover', item.handler);
                                 });
-                            }, 500);
+                            }, 300);
                         }
                     });
                 }
