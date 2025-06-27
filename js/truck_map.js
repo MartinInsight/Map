@@ -229,6 +229,17 @@ class TruckCongestionMap {
         this.controlDiv = centeredToggleDiv;
         this.renderToggleButtons();
 
+        // 탭 메뉴의 실제 높이를 가져와 토글 컨트롤의 top 위치를 설정
+        const tabContainer = document.querySelector('.transport-tab-container');
+        if (tabContainer) {
+            // 탭 메뉴 높이 + 10px 여백
+            const tabHeight = tabContainer.offsetHeight; 
+            centeredToggleDiv.style.top = `${tabHeight + 10}px`;
+        } else {
+            // 탭 메뉴를 찾지 못할 경우 기본값 설정 (CSS의 고정값과 일치)
+            centeredToggleDiv.style.top = '50px'; 
+        }
+
         L.DomEvent.disableClickPropagation(centeredToggleDiv);
         L.DomEvent.disableScrollPropagation(centeredToggleDiv);
     }
@@ -331,6 +342,18 @@ class TruckCongestionMap {
         };
         
         control.addTo(this.map);
+
+        // 탭 메뉴의 실제 높이를 가져와 우측 컨트롤의 top 위치를 설정
+        const tabContainer = document.querySelector('.transport-tab-container');
+        const leafletRightControl = document.querySelector('.leaflet-top.leaflet-right');
+        if (tabContainer && leafletRightControl) {
+            // 탭 메뉴 높이 + 10px 여백
+            const tabHeight = tabContainer.offsetHeight; 
+            leafletRightControl.style.top = `${tabHeight + 10}px`;
+        } else if (leafletRightControl) {
+            // 탭 메뉴를 찾지 못할 경우 기본값 설정 (CSS의 고정값과 일치)
+            leafletRightControl.style.top = '50px'; 
+        }
     }
     
     showError(message) {
