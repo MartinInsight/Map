@@ -10,6 +10,7 @@ class TruckCongestionMap {
         this.initialized = false;
         this.controlDiv = null;
         this.errorControl = null;
+        this.isZoomingToState = false; // 필터 선택으로 확대 중인지 추적하는 플래그
 
         // 지도 타일 레이어를 CartoDB Light All로 변경하여 영어 지명 통일
         L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', {
@@ -116,25 +117,32 @@ class TruckCongestionMap {
 
         layer.on({
             mouseover: (e) => {
+                // BUG FIX: 확대/이동 중에는 mouseover 이벤트를 무시
+                if (this.isZoomingToState) return;
+
                 const center = layer.getBounds().getCenter();
                 this.showTooltip(center, data);
                 layer.setStyle({
-                    weight: 2, // 호버 시 테두리 두께를 2로 변경
-                    color: 'white', // 호버 시에도 테두리 색상은 흰색 유지
+                    weight: 2,
+                    color: 'white',
                     dashArray: '',
                     fillOpacity: 0.9
                 });
             },
             mouseout: (e) => {
+                // BUG FIX: 확대/이동 중에는 mouseout 이벤트도 무시할 수 있지만,
+                // 안전하게 팝업을 닫고 스타일을 리셋하는 것이 더 나을 수 있음.
+                // 단, isZoomingToState 플래그가 true일 때는 팝업이 닫히지 않도록 제어.
+                if (this.isZoomingToState) return;
                 this.map.closePopup();
-                this.stateLayer.resetStyle(layer); // 원래 스타일로 복원 (weight: 1, color: 'white')
+                this.stateLayer.resetStyle(layer);
             },
             click: () => this.zoomToState(feature)
         });
     }
 
     showTooltip(latlng, data) {
-        if (!this.initialized || !data.name) return; // 데이터가 없으면 툴팁 표시 안 함
+        if (!this.initialized || !data.name) return;
 
         const format = (v) => isNaN(Number(v)) ? '0.00' : Math.abs(Number(v)).toFixed(2);
         const isInbound = this.currentMode === 'inbound';
@@ -175,7 +183,7 @@ class TruckCongestionMap {
     zoomToState(feature) {
         const bounds = L.geoJSON(feature).getBounds();
         const center = bounds.getCenter();
-        const fixedZoomLevel = 7; // 모든 주에 대해 동일한 줌 레벨을 적용합니다.
+        const fixedZoomLevel = 7; 
 
         this.map.setView(center, fixedZoomLevel);
     }
@@ -216,7 +224,6 @@ class TruckCongestionMap {
         control.onAdd = () => {
             const div = L.DomUtil.create('div', 'map-control-group-right');
             
-            // 커스텀 줌 컨트롤 추가
             const zoomControl = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-custom');
             zoomControl.innerHTML = `
                 <a class="leaflet-control-zoom-in" href="#" title="Zoom in" role="button" aria-label="Zoom in">+</a>
@@ -224,80 +231,66 @@ class TruckCongestionMap {
             `;
             div.appendChild(zoomControl);
             
-            // 줌 버튼 이벤트 핸들러
             zoomControl.querySelector('.leaflet-control-zoom-in').addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                this.map.zoomIn();
+                e.preventDefault(); e.stopPropagation(); this.map.zoomIn();
             });
             
             zoomControl.querySelector('.leaflet-control-zoom-out').addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                this.map.zoomOut();
+                e.preventDefault(); e.stopPropagation(); this.map.zoomOut();
             });
 
-            // 주 선택 필터 드롭다운 추가
             const states = this.geoJsonData.features
-                .map(f => ({
-                    id: f.id,
-                    name: f.properties.name
-                }))
+                .map(f => ({ id: f.id, name: f.properties.name }))
                 .sort((a, b) => a.name.localeCompare(b.name));
 
             const filterDropdownHtml = `
                 <select class="state-filter">
                     <option value="">Select State</option>
-                    ${states.map(state =>
-                        `<option value="${state.id}">${state.name}</option>`
-                    ).join('')}
+                    ${states.map(state => `<option value="${state.id}">${state.name}</option>`).join('')}
                 </select>
             `;
             div.insertAdjacentHTML('beforeend', filterDropdownHtml);
 
-            // 리셋 버튼 추가
-            const resetButtonHtml = `
-                <button class="truck-reset-btn reset-btn">Reset View</button>
-            `;
+            const resetButtonHtml = `<button class="truck-reset-btn reset-btn">Reset View</button>`;
             div.insertAdjacentHTML('beforeend', resetButtonHtml);
 
-            // 이벤트 리스너 추가
             div.querySelector('.truck-reset-btn').addEventListener('click', () => {
                 this.map.setView([37.8, -96], 4);
                 const stateFilter = div.querySelector('.state-filter');
                 if (stateFilter) stateFilter.value = '';
-                this.map.closePopup(); // 리셋 시 툴팁 닫기
+                this.map.closePopup();
             });
 
             // ======================================================================
-            // BUG FIX: 필터 변경 이벤트 핸들러 수정
+            // BUG FIX v2: 필터 변경 이벤트 핸들러에 플래그 로직 추가
             // ======================================================================
             div.querySelector('.state-filter').addEventListener('change', (e) => {
                 const stateId = e.target.value;
-
-                // 1. 어떤 동작이든 시작하기 전에 열려있는 팝업을 먼저 닫습니다.
                 this.map.closePopup();
 
                 if (!stateId) {
-                    // "Select State"를 선택하면 기본 뷰로 리셋합니다.
                     this.map.setView([37.8, -96], 4);
                     return;
                 }
 
                 const state = this.geoJsonData.features.find(f => f.id === stateId);
                 if (state) {
+                    // 1. 확대/이동 시작 전 플래그를 true로 설정
+                    this.isZoomingToState = true; 
+
                     const bounds = L.geoJSON(state).getBounds();
                     const center = bounds.getCenter();
                     const fixedZoomLevel = 7;
                     const stateData = this.metricData[stateId] || {};
 
-                    // 2. 지도 이동/줌 애니메이션이 끝난 후 'moveend' 이벤트를 한 번만 수신합니다.
                     this.map.once('moveend', () => {
-                        // 3. 애니메이션이 끝난 후, 해당 주의 툴팁을 정확한 위치에 표시합니다.
+                        // 3. 이동 완료 후 툴팁을 표시
                         this.showTooltip(center, stateData);
+                        // 4. 모든 동작이 끝났으므로 플래그를 false로 리셋하여 마우스 이벤트를 다시 활성화
+                        this.isZoomingToState = false;
                     });
 
-                    // 4. 지도 이동을 시작합니다.
+                    // 2. 지도 이동 시작
                     this.map.setView(center, fixedZoomLevel);
                 }
             });
