@@ -169,7 +169,7 @@ html, body {
    5. Control Styles (Common & Specific)
    ===================================== */
 
-/* Common styling for control boxes (Reset button, Filter box, Toggle buttons container) */
+/* Common styling for control boxes (Reset button, Filter box) */
 .map-control-group-right {
     background: white;
     padding: 8px 12px;
@@ -270,25 +270,23 @@ html, body {
     box-shadow: 0 0 0 2px rgba(0,101,126,0.2); /* 포커스 시 테두리 그림자는 유지 */
 }
 
-/* ========== 트럭 토글 버튼 수정 시작 (위치 및 z-index 개선) ========== */
+/* ========== 트럭 토글 버튼 컨테이너 스타일 (HTML에 있는 요소) ========== */
 .truck-toggle-map-control {
     position: absolute; /* 다른 컨트롤과 독립적으로 위치 */
-    right: 10px !important; /* 우측 컨트롤 그룹과 같은 우측 정렬 */
-    width: 160px; /* 우측 컨트롤 그룹과 같은 너비 */
-    z-index: 1005 !important; /* 다른 컨트롤보다 높은 z-index로 확실히 보이게 */
+    left: 50%; /* 수평 중앙 정렬 */
+    transform: translateX(-50%); /* 수평 중앙 정렬을 위한 조정 */
+    top: 50px !important; /* 상단 탭바 아래에 적절한 위치 설정 */
+    width: auto; /* 내용물에 따라 너비 자동 조정 */
+    z-index: 1005 !important; /* 다른 컨트롤보다 위에 표시되도록 z-index 상향 */
     
-    display: flex;
+    display: flex; /* 내부 버튼들을 가로로 나란히 정렬 */
     height: 34px; /* 버튼의 높이와 일관되게 설정 */
     margin: 0;
     padding: 0;
-    background: none !important;
-    box-shadow: none !important;
-}
-
-/* 데스크탑에서 리셋 버튼과 동일 높이 정렬 */
-/* (leaflet-top.leaflet-right의 top:10px) + (zoom control height:34px) + (gap:8px) = 52px */
-.truck-toggle-map-control {
-    top: 52px !important; 
+    background: white; /* 배경색 추가 */
+    border-radius: 6px; /* 테두리 둥글게 */
+    box-shadow: 0 2px 10px rgba(0,0,0,0.15); /* 그림자 추가 */
+    box-sizing: border-box; /* 패딩과 보더를 너비에 포함 */
 }
 
 .truck-toggle-btn {
@@ -305,6 +303,9 @@ html, body {
     justify-content: center;
     box-sizing: border-box;
     flex-grow: 1; /* 버튼이 컨테이너 너비를 채우도록 설정 */
+    transition: all 0.2s;
+    color: #333;
+    cursor: pointer;
 }
 
 .truck-toggle-btn:first-child {
@@ -322,7 +323,7 @@ html, body {
     border-color: #00657E !important;
 }
 
-/* 트럭 맵이 아닐 때 토글 컨트롤 숨기기 위한 클래스 */
+/* 트럭 맵이 아닐 때 토글 컨트롤 숨기기 위한 클래스 (JavaScript에서 제어) */
 .truck-toggle-map-control:not(.truck-active-control) {
     display: none !important;
 }
@@ -613,7 +614,7 @@ html, body {
     }
 
     .truck-toggle-map-control {
-        top: 48px !important; /* 모바일에서도 PC와 동일한 계산 방식으로 높이 정렬 */
+        top: 48px !important; /* 모바일 환경에 맞춰 상단 위치 조정 */
         height: 30px !important;
     }
     .truck-toggle-btn {
@@ -647,7 +648,7 @@ html, body {
     }
     
     .truck-toggle-map-control {
-        top: 48px !important; /* 일관된 상단 위치 */
+        top: 48px !important; /* 모바일 환경에 맞춰 상단 위치 조정 */
         min-width: 70px !important;
         padding: 0 8px !important;
     }
