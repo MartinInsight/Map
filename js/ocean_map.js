@@ -218,7 +218,7 @@ class OceanCongestionMap {
                     const baseLat = itemsAtCoord[0].lat;
                     const baseLng = itemsAtCoord[0].lng;
 
-                    const offsetScale = 0.15; // Jittering offset scale
+                    const offsetScale = 0.3; // Jittering offset scale
 
                     itemsAtCoord.forEach((item, index) => {
                         const angle = (index / itemsAtCoord.length) * 2 * Math.PI;
