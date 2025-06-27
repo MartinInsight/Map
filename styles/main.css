@@ -75,7 +75,7 @@ html, body {
     left: 0;
     width: 100%;
     /* 상단 탭 높이 증가 */
-    height: 50px; /* PC 기본 탭 높이로 고정 (이전 40px에서 증가) */
+    height: 60px; /* PC 기본 탭 높이 고정 */
     z-index: 1000;
     display: flex;
     background: white;
@@ -93,7 +93,7 @@ html, body {
     font-family: 'Noto Sans KR', sans-serif;
     font-weight: 400;
     /* 폰트 크기 증가 */
-    font-size: 16px; /* 이전 14px에서 증가 */
+    font-size: 18px; /* PC 폰트 크기 */
     color: black;
     position: relative;
     transition: all 0.3s ease;
@@ -131,14 +131,12 @@ html, body {
    ===================================== */
 .transport-map {
     position: fixed;
-    /* 탭 높이 변화에 따라 top 조정 */
-    top: 50px; /* 탭 높이만큼 아래로 이동 (이전 40px에서 증가) */
+    top: 60px; /* 탭 높이만큼 아래로 이동 */
     left: 0;
     width: 100%;
-    /* 탭 높이 변화에 따라 height 조정 */
-    height: calc(100% - 50px); /* 탭 높이를 제외한 나머지 높이 (이전 40px에서 증가) */
+    height: calc(100% - 60px); /* 탭 높이를 제외한 나머지 높이 */
     display: none; /* 기본적으로 숨김, JS로 활성화 */
-    background-color: #F8F8F8; /* 이미지에 보인 주황색 대신 밝은 회색으로 변경 */
+    background-color: #F8F8F8;
 }
 
 .transport-map.active {
@@ -242,6 +240,7 @@ html, body {
     -webkit-appearance: none;
     -moz-appearance: none;
     box-shadow: none; /* 셀렉트 자체 그림자 제거 */
+    height: 34px; /* 높이 고정 */
 }
 
 .filter-control select:focus,
@@ -257,7 +256,7 @@ html, body {
     box-shadow: none !important;
     z-index: 1000;
     display: flex;
-    gap: 0; /* 버튼 간 간격 제거 */
+    gap: 0; /* 버튼 간 간격 제거 (확실히) */
     padding: 0 !important; /* 패딩도 제거 */
 }
 
@@ -275,7 +274,7 @@ html, body {
     justify-content: center;
     color: #333;
     box-sizing: border-box;
-    margin: 0 !important; /* 버튼 자체 마진 제거로 공백 방지 */
+    margin: 0 !important; /* 버튼 자체 마진 제거로 공백 방지 (강력하게) */
 }
 
 /* 첫 번째 토글 버튼 왼쪽 모서리 둥글게 */
@@ -311,7 +310,8 @@ html, body {
 /* 좌측 상단 컨트롤 컨테이너 (INBOUND/OUTBOUND 토글 포함) */
 .leaflet-top.leaflet-left {
     display: block !important; /* 다시 보이도록 설정 */
-    top: 20px !important; /* PC 버전: 20px로 상단 여백 조정 */
+    /* 상단 탭 (60px) 아래 10px 여백에 위치 */
+    top: 70px !important; /* PC 버전: 60px (탭 높이) + 10px (원하는 여백) */
     left: 50% !important; /* 가로 중앙 정렬 */
     transform: translateX(-50%) !important; /* 정확한 중앙 정렬 */
     width: auto; /* 내용물에 따라 너비 조정 */
@@ -329,7 +329,8 @@ html, body {
     display: flex;
     flex-direction: column;
     gap: 8px; /* 컨트롤 그룹 사이의 간격 */
-    top: 20px !important; /* PC 버전: 20px로 상단 여백 조정 */
+    /* 상단 탭 (60px) 아래 10px 여백에 위치 */
+    top: 70px !important; /* PC 버전: 60px (탭 높이) + 10px (원하는 여백) */
     right: 10px !important;
     width: 160px; /* 컨트롤 그룹 전체 너비 고정 */
     background: none;
@@ -530,79 +531,83 @@ html, body {
 @media (max-width: 768px) {
     .transport-tab-container {
         /* 상단 탭 높이 증가 */
-        height: 45px; /* 모바일 기본 탭 높이로 고정 (이전 36px에서 증가) */
+        height: 50px; /* 모바일 기본 탭 높이로 고정 */
     }
 
     .transport-tab {
-        font-size: 14px; /* 이전 12px에서 증가 */
+        font-size: 16px; /* 모바일 폰트 크기 */
         padding: 0 3px;
     }
 
     .transport-map {
-        /* 탭 높이 변화에 따라 top 조정 */
-        top: 45px; /* 탭 높이만큼 아래로 이동 (이전 36px에서 증가) */
-        /* 탭 높이 변화에 따라 height 조정 */
-        height: calc(100% - 45px); /* 탭 높이를 제외한 나머지 높이 (이전 36px에서 증가) */
+        top: 50px; /* 탭 높이만큼 아래로 이동 */
+        height: calc(100% - 50px); /* 탭 높이를 제외한 나머지 높이 */
     }
 
     /* 컨트롤: 모바일 조정 */
     /* 좌측 상단 컨트롤 컨테이너 (INBOUND/OUTBOUND 토글 포함) */
     .leaflet-top.leaflet-left {
-        top: 20px !important; /* 모바일 버전: 20px로 상단 여백 조정 */
+        /* 탭 높이(50px) 아래 10px 여백에 위치 */
+        top: 60px !important; /* 50px (탭 높이) + 10px (원하는 여백) */
         left: 50% !important;
         transform: translateX(-50%) !important;
     }
     
     /* 우측 상단 컨트롤 컨테이너 (줌, 리셋, 필터 포함) */
     .leaflet-top.leaflet-right {
-        top: 20px !important; /* 모바일 버전: 20px로 상단 여백 조정 */
-        gap: 8px; /* 모바일에서 컨트롤 블록 간의 간격 */
+        /* 탭 높이(50px) 아래 10px 여백에 위치 */
+        top: 60px !important; /* 50px (탭 높이) + 10px (원하는 여백) */
+        gap: 8px; /* 컨트롤 블록 내부 간격 */
         width: calc(100% - 20px); /* 화면 너비에 맞춰 10px 좌우 패딩/마진 확보 */
         max-width: 160px; /* PC 크기보다 넓어지지 않도록 고정 */
         right: 10px !important;
         margin-left: auto; /* 우측 정렬 */
-        padding: 6px 8px; /* 모바일에서 전체 컨트롤 블록의 패딩 조정 */
+        padding: 6px 8px; /* 전체 컨트롤 블록의 패딩 */
     }
 
     .map-control-container,
     .map-control-group-right {
         width: 100%; /* 부모(.leaflet-top.leaflet-right) 너비에 맞춰 확장 */
         padding: 0; /* 내부 패딩 제거 */
-        gap: 6px; /* 모바일에서 리셋/셀렉트 버튼 간의 내부 간격 조정 */
+        gap: 6px; /* 리셋/셀렉트 버튼 간의 내부 간격 */
     }
 
+    /* 모든 버튼 및 셀렉트의 높이를 34px로 통일 */
     .reset-btn,
-    .map-control-group-right select {
-        height: 30px; /* 모바일에서 버튼/셀렉트 높이 조정 */
-        font-size: 12px; /* 모바일에서 폰트 크기 조정 */
-        padding: 0 10px; /* 모바일에서 패딩 조정 */
+    .map-control-group-right select,
+    .leaflet-control-zoom a,
+    .truck-toggle-btn {
+        height: 34px !important; /* 모든 버튼 높이 34px로 통일 */
+        font-size: 13px !important; /* 폰트 크기도 통일 */
     }
-
-    /* 모바일 줌 버튼 */
     .leaflet-control-zoom {
-        height: 30px; /* 모바일에서 줌 버튼 높이 조정 */
+        height: 34px; /* 줌 컨트롤 컨테이너 높이도 버튼 높이에 맞춤 */
     }
-    .leaflet-control-zoom a {
-        height: 30px !important;
-        font-size: 12px !important;
+    
+    /* 모바일에서 버튼 간 공백 제거 (이전 코드에서 이미 있었지만 재강조) */
+    .truck-toggle-map-control {
+        gap: 0 !important; /* 버튼 간 간격 없음 */
+    }
+    .truck-toggle-btn:not(:first-child) {
+        border-left: none; /* 중복 테두리 제거로 공백 방지 */
+    }
+    .truck-toggle-btn {
+        margin: 0 !important; /* 버튼 자체 마진 제거 */
     }
 }
 
 /* 아주 작은 화면 (최대 너비: 480px) */
 @media (max-width: 480px) {
     .transport-tab {
-        font-size: 11px;
+        font-size: 14px; /* 폰트 크기 조정 */
     }
 
-    /* 상단 탭 (36px) 아래 0px 여백에 위치 */
+    /* 좌측 상단 컨트롤 컨테이너 (INBOUND/OUTBOUND 토글 포함) */
+    .leaflet-top.leaflet-left {
+        top: 60px !important; /* 탭 높이(50px) 아래 10px 여백 유지 */
+    }
+    /* 우측 상단 컨트롤 컨테이너 (줌, 리셋, 필터 포함) */
     .leaflet-top.leaflet-right {
-        top: 20px !important; /* 아주 작은 화면에서도 20px 유지 */
-    }
-    .leaflet-top.leaflet-left { /* 숨겨져 있는지 확인 */
-        top: 20px !important; /* 아주 작은 화면에서도 20px 유지 */
-    }
-    
-    .truck-toggle-map-control {
-        /* 이제 .leaflet-top.leaflet-left에 의해 배치되므로 이 부분은 삭제되거나 오버라이드될 것입니다. */
+        top: 60px !important; /* 탭 높이(50px) 아래 10px 여백 유지 */
     }
 }
