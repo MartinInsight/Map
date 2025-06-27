@@ -275,7 +275,7 @@ html, body {
     position: absolute; /* 다른 컨트롤과 독립적으로 위치 */
     left: 50%; /* 수평 중앙 정렬 */
     transform: translateX(-50%); /* 수평 중앙 정렬을 위한 조정 */
-    top: 50px !important; /* 상단 탭바 아래에 적절한 위치 설정 */
+    top: 92px !important; /* 상단 탭바 아래와 우측 버튼에 맞춰 위치 조정 */
     width: auto; /* 내용물에 따라 너비 자동 조정 */
     z-index: 1005 !important; /* 다른 컨트롤보다 위에 표시되도록 z-index 상향 */
     
