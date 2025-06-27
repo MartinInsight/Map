@@ -209,135 +209,134 @@ class TruckCongestionMap {
     }
 
     // 리셋 버튼과 필터 드롭다운 컨트롤 (상단 우측에 나란히 배치)
-    addRightControls() {
-        if (this.filterControlInstance) {
-            this.map.removeControl(this.filterControlInstance);
-        }
+        addRightControls() {
+            if (this.filterControlInstance) {
+                this.map.removeControl(this.filterControlInstance);
+            }
+            
+            const control = L.control({ position: 'topright' });
+            
+            control.onAdd = () => {
+                const div = L.DomUtil.create('div', 'map-control-group-right');
+                
+                // 줌 컨트롤 추가
+                const zoomControl = L.DomUtil.create('div', 'leaflet-control-zoom');
+                zoomControl.innerHTML = `
+                    <a class="leaflet-control-zoom-in" href="#" title="Zoom in">+</a>
+                    <a class="leaflet-control-zoom-out" href="#" title="Zoom out">-</a>
+                `;
+                div.appendChild(zoomControl);
+                
+                // 줌 버튼 이벤트
+                zoomControl.querySelector('.leaflet-control-zoom-in').addEventListener('click', (e) => {
+                    e.preventDefault();
+                    this.map.zoomIn();
+                });
+                
+                zoomControl.querySelector('.leaflet-control-zoom-out').addEventListener('click', (e) => {
+                    e.preventDefault();
+                    this.map.zoomOut();
+                });
         
-        const control = L.control({ position: 'topright' });
+                // 주 선택 필터
+                const states = this.geoJsonData.features
+                    .map(f => ({
+                        id: f.id,
+                        name: f.properties.name
+                    }))
+                    .sort((a, b) => a.name.localeCompare(b.name));
         
-        control.onAdd = () => {
-            const div = L.DomUtil.create('div', 'map-control-group-right');
-            
-            // 커스텀 줌 컨트롤 추가
-            const zoomControl = L.DomUtil.create('div', 'leaflet-control-zoom');
-            zoomControl.innerHTML = `
-                <a class="leaflet-control-zoom-in" href="#" title="Zoom in">+</a>
-                <a class="leaflet-control-zoom-out" href="#" title="Zoom out">-</a>
-            `;
-            div.appendChild(zoomControl);
-            
-            // 줌 버튼 이벤트 핸들러
-            zoomControl.querySelector('.leaflet-control-zoom-in').addEventListener('click', (e) => {
-                e.preventDefault();
-                this.map.zoomIn();
-            });
-            
-            zoomControl.querySelector('.leaflet-control-zoom-out').addEventListener('click', (e) => {
-                e.preventDefault();
-                this.map.zoomOut();
-            });
-    
-            // 주 선택 필터 드롭다운 추가
-            const states = this.geoJsonData.features
-                .map(f => ({
-                    id: f.id,
-                    name: f.properties.name
-                }))
-                .sort((a, b) => a.name.localeCompare(b.name));
-    
-            const filterDropdownHtml = `
-                <select class="state-filter">
-                    <option value="">Select State</option>
-                    ${states.map(state =>
-                        `<option value="${state.id}">${state.name}</option>`
-                    ).join('')}
-                </select>
-            `;
-            div.insertAdjacentHTML('beforeend', filterDropdownHtml);
-    
-            // 리셋 버튼 추가
-            const resetButtonHtml = `
-                <button class="truck-reset-btn reset-btn">Reset View</button>
-            `;
-            div.insertAdjacentHTML('beforeend', resetButtonHtml);
-    
-            // 이벤트 리스너 추가
-            div.querySelector('.truck-reset-btn').addEventListener('click', () => {
-                this.map.setView([37.8, -96], 4);
-                const stateFilter = div.querySelector('.state-filter');
-                if (stateFilter) stateFilter.value = '';
-                this.map.closePopup(); // 리셋 시 툴팁 닫기
-            });
-    
-            div.querySelector('.state-filter').addEventListener('change', async (e) => {
-                const stateId = e.target.value;
-                if (!stateId) {
+                const filterDropdownHtml = `
+                    <select class="state-filter">
+                        <option value="">Select State</option>
+                        ${states.map(state =>
+                            `<option value="${state.id}">${state.name}</option>`
+                        ).join('')}
+                    </select>
+                `;
+                div.insertAdjacentHTML('beforeend', filterDropdownHtml);
+        
+                // 리셋 버튼
+                const resetButtonHtml = `
+                    <button class="truck-reset-btn reset-btn">Reset View</button>
+                `;
+                div.insertAdjacentHTML('beforeend', resetButtonHtml);
+        
+                // 이벤트 리스너
+                div.querySelector('.truck-reset-btn').addEventListener('click', () => {
                     this.map.setView([37.8, -96], 4);
-                    this.closeAllTooltips(); // 모든 툴팁 강제 닫기
-                    return;
-                }
-            
-                const state = this.geoJsonData.features.find(f => f.id === stateId);
-                if (state) {
-                    // 1. 모든 툴팁과 이벤트 리스너 일시 중지
+                    const stateFilter = div.querySelector('.state-filter');
+                    if (stateFilter) stateFilter.value = '';
                     this.closeAllTooltips();
-                    this.disableHoverEvents();
-            
-                    const bounds = L.geoJSON(state).getBounds();
-                    const center = bounds.getCenter();
-                    const fixedZoomLevel = 7;
-            
-                    // 2. 지도 이동 (flyTo로 부드러운 이동)
-                    await new Promise(resolve => {
-                        this.map.flyTo(center, fixedZoomLevel, {
-                            duration: 0.5,
-                            onEnd: resolve
+                });
+        
+                div.querySelector('.state-filter').addEventListener('change', async (e) => {
+                    const stateId = e.target.value;
+                    if (!stateId) {
+                        this.map.setView([37.8, -96], 4);
+                        this.closeAllTooltips();
+                        return;
+                    }
+                
+                    const state = this.geoJsonData.features.find(f => f.id === stateId);
+                    if (state) {
+                        this.closeAllTooltips();
+                        this.disableHoverEvents();
+                
+                        const bounds = L.geoJSON(state).getBounds();
+                        const center = bounds.getCenter();
+                        const fixedZoomLevel = 7;
+                
+                        await new Promise(resolve => {
+                            this.map.flyTo(center, fixedZoomLevel, {
+                                duration: 0.5,
+                                onEnd: resolve
+                            });
                         });
-                    });
-            
-                    // 3. 이동 완료 후 처리
-                    this.enableHoverEvents(); // 호버 이벤트 다시 활성화
-                    
-                    // 0.5초 대기 후 툴팁 표시 (사용자 추가 호버 방지)
-                    await new Promise(resolve => setTimeout(resolve, 500));
-                    
-                    if (e.target.value === stateId) { // 아직 같은 주가 선택된 경우만
-                        const stateLayer = this.findStateLayer(stateId);
-                        if (stateLayer) {
-                            this.showTooltip(center, this.metricData[stateId] || {});
+                
+                        this.enableHoverEvents();
+                        await new Promise(resolve => setTimeout(resolve, 500));
+                        
+                        if (e.target.value === stateId) {
+                            const stateLayer = this.findStateLayer(stateId);
+                            if (stateLayer) {
+                                this.showTooltip(center, this.metricData[stateId] || {});
+                            }
                         }
                     }
-                }
+                });
+    
+                return div;
+            };
+            
+            control.addTo(this.map);
+            this.filterControlInstance = control;
+        }
+    
+        // 헬퍼 메소드들
+        closeAllTooltips() {
+            this.map.closePopup();
+            document.querySelectorAll('.leaflet-popup').forEach(popup => popup.remove());
+        }
+    
+        disableHoverEvents() {
+            this.stateLayer.eachLayer(layer => {
+                layer.off('mouseover');
+                layer.off('mouseout');
             });
-            
-            // 새로운 헬퍼 메소드들 추가
-            closeAllTooltips() {
-                this.map.closePopup();
-                // Leaflet의 모든 툴팁 제거
-                document.querySelectorAll('.leaflet-popup').forEach(popup => popup.remove());
-            }
-            
-            disableHoverEvents() {
-                // 모든 주 레이어의 마우스 이벤트 일시 비활성화
-                this.stateLayer.eachLayer(layer => {
-                    layer.off('mouseover');
-                    layer.off('mouseout');
+        }
+    
+        enableHoverEvents() {
+            this.stateLayer.eachLayer(layer => {
+                layer.on({
+                    mouseover: (e) => {
+                        const center = e.target.getBounds().getCenter();
+                        this.showTooltip(center, this.metricData[e.target.feature.id] || {});
+                    },
+                    mouseout: () => this.map.closePopup()
                 });
-            }
-            
-            enableHoverEvents() {
-                // 모든 주 레이어의 마우스 이벤트 다시 활성화
-                this.stateLayer.eachLayer(layer => {
-                    layer.on({
-                        mouseover: (e) => {
-                            const center = e.target.getBounds().getCenter();
-                            this.showTooltip(center, this.metricData[e.target.feature.id] || {});
-                        },
-                        mouseout: () => this.map.closePopup()
-                    });
-                });
-            }
+            });
+        }
 
     showError(message) {
         if (this.errorControl) {
