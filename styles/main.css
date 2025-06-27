@@ -551,17 +551,16 @@ html, body {
     /* 좌측 상단 컨트롤 컨테이너 (INBOUND/OUTBOUND 토글 포함) */
     .leaflet-top.leaflet-left {
         /* 탭 높이(50px)와 컨트롤 간 여백 조정 */
-        top: 60px !important; /* 모바일 버전: 50px (탭 높이) + 10px (원하는 여백) */
+        /* INBOUND/OUTBOUND 버튼이 줌 컨트롤보다 위에 있으므로, top 값을 더 늘려 아래로 내립니다. */
+        top: 65px !important; /* 모바일 버전: 50px (탭 높이) + 15px (조정된 여백) */
         left: 50% !important;
         transform: translateX(-50%) !important;
-        /* 추가: flexbox 내부 아이템으로 동작할 때 top/bottom 정렬 문제를 방지 */
-        /* align-items: flex-start !important; (이전 문제로 추가했지만, 제거 또는 조정 필요) */
     }
     
     /* 우측 상단 컨트롤 컨테이너 (줌, 리셋, 필터 포함) */
     .leaflet-top.leaflet-right {
         /* 탭 높이(50px)와 컨트롤 간 여백 조정 */
-        top: 60px !important; /* 모바일 버전: 50px (탭 높이) + 10px (원하는 여백) */
+        top: 60px !important; /* 모바일 버전: 50px (탭 높이) + 10px (원래 여백) */
         gap: 8px; /* 컨트롤 블록 내부 간격 */
         width: calc(100% - 20px); /* 화면 너비에 맞춰 10px 좌우 패딩/마진 확보 */
         max-width: 160px; /* PC 크기보다 넓어지지 않도록 고정 */
@@ -614,7 +613,7 @@ html, body {
 
     /* 좌측 상단 컨트롤 컨테이너 (INBOUND/OUTBOUND 토글 포함) */
     .leaflet-top.leaflet-left {
-        top: 60px !important; /* 탭 높이(50px) 아래 10px 여백 유지 */
+        top: 65px !important; /* 탭 높이(50px) 아래 15px 여백 유지 */
     }
     /* 우측 상단 컨트롤 컨테이너 (줌, 리셋, 필터 포함) */
     .leaflet-top.leaflet-right {
