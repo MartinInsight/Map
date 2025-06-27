@@ -74,9 +74,7 @@ html, body {
     top: 0;
     left: 0;
     width: 100%;
-    /* 상단 탭의 높이를 고정값으로 설정하여 컨트롤 정렬의 기준을 명확히 함 */
     height: 40px; /* PC 기본 탭 높이로 고정 */
-    /* min-height는 이제 height에 의해 결정되므로 필요 없음 */
     z-index: 1000;
     display: flex;
     background: white;
@@ -131,15 +129,12 @@ html, body {
    ===================================== */
 .transport-map {
     position: fixed;
-    /* 탭 높이가 40px로 고정되었으므로 top 값도 고정값으로 조정 */
     top: 40px; /* 탭 높이만큼 아래로 이동 */
     left: 0;
     width: 100%;
-    /* 탭 높이만큼 제외한 나머지 높이 */
     height: calc(100% - 40px); /* 탭 높이를 제외한 나머지 높이 */
     display: none; /* 기본적으로 숨김, JS로 활성화 */
-    /* 배경색을 흰색으로 명시하여 혹시 모를 배경 문제 방지 */
-    background-color: #f8f8f8; /* 지도가 로드되지 않았을 때의 기본 배경색 (맵 타일 로드 후 덮어써짐) */
+    background-color: #F8F8F8; /* 이미지에 보인 주황색 대신 밝은 회색으로 변경 */
 }
 
 .transport-map.active {
@@ -253,15 +248,14 @@ html, body {
 }
 
 /* 트럭 맵 토글 버튼 (INBOUND/OUTBOUND) */
+/* 이제 Leaflet 컨트롤 시스템에 통합되므로, .leaflet-top.leaflet-left에 의해 배치됩니다. */
 .truck-toggle-map-control {
     background: transparent !important; /* 배경 및 그림자 완전 제거 */
     box-shadow: none !important;
-    
-    position: absolute;
-    /* 상단 탭 (40px) 아래 10px 여백에 위치 */
-    top: 50px; /* 40px (탭 높이) + 10px (원하는 여백) */
-    left: 50%;
-    transform: translateX(-50%);
+    /* top, left, transform은 이제 .leaflet-top.leaflet-left에서 관리합니다. */
+    /* position: absolute; */ /* Leaflet 기본값 */
+    /* left: 50%; */
+    /* transform: translateX(-50%); */
     z-index: 1000;
     display: flex;
     gap: 0; /* 버튼 간 간격 제거 */
@@ -313,8 +307,27 @@ html, body {
 }
 
 
-/* 컨트롤 위치 조정 */
-/* 우측 상단 컨트롤 전체 (줌, 리셋, 필터) */
+/* 컨트롤 위치 조정 - 이제 Leaflet이 생성하는 최상위 위치 컨테이너를 직접 제어 */
+/* 좌측 상단 컨트롤 컨테이너 (INBOUND/OUTBOUND 토글 포함) */
+.leaflet-top.leaflet-left {
+    /* 원래 display: none !important;였던 부분을 제거 */
+    display: block !important; /* 다시 보이도록 설정 */
+    
+    /* 상단 탭 (40px) 아래 10px 여백에 위치 */
+    top: 50px !important; /* PC 버전: 40px (탭 높이) + 10px (원하는 여백) */
+    left: 50% !important; /* 가로 중앙 정렬 */
+    transform: translateX(-50%) !important; /* 정확한 중앙 정렬 */
+    width: auto; /* 내용물에 따라 너비 조정 */
+    height: auto; /* 내용물에 따라 높이 조정 */
+    padding: 0;
+    margin: 0;
+    background: none; /* Leaflet 기본 배경 제거 */
+    box-shadow: none; /* Leaflet 기본 그림자 제거 */
+    z-index: 999; /* 다른 컨트롤 위에 오도록 */
+}
+
+
+/* 우측 상단 컨트롤 컨테이너 (줌, 리셋, 필터 포함) */
 .leaflet-top.leaflet-right {
     display: flex;
     flex-direction: column;
@@ -327,16 +340,6 @@ html, body {
     padding: 0;
     border-radius: 0;
     box-shadow: none;
-}
-
-/* 좌측 상단 컨트롤 (기존 줌 버튼 위치 - 이제 숨김) */
-.leaflet-top.leaflet-left {
-    display: none !important; /* 줌 컨트롤이 우측 상단으로 이동했으므로 이 컨테이너 숨김 */
-    top: auto !important; /* 초기화 */
-    left: auto !important; /* 초기화 */
-    transform: none !important; /* 초기화 */
-    width: auto; /* 초기화 */
-    height: auto; /* 초기화 */
 }
 
 /* =====================================
@@ -531,7 +534,6 @@ html, body {
 @media (max-width: 768px) {
     .transport-tab-container {
         height: 36px; /* 모바일 기본 탭 높이로 고정 */
-        /* min-height는 이제 height에 의해 결정되므로 필요 없음 */
     }
 
     .transport-tab {
@@ -545,8 +547,15 @@ html, body {
     }
 
     /* 컨트롤: 모바일 조정 */
+    /* 좌측 상단 컨트롤 컨테이너 (INBOUND/OUTBOUND 토글 포함) */
+    .leaflet-top.leaflet-left {
+        top: 46px !important; /* 모바일 버전: 36px (탭 높이) + 10px (원하는 여백) */
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+    }
+    
+    /* 우측 상단 컨트롤 컨테이너 (줌, 리셋, 필터 포함) */
     .leaflet-top.leaflet-right {
-        /* 상단 탭 (36px) 아래 10px 여백에 위치 */
         top: 46px !important; /* 모바일 버전: 36px (탭 높이) + 10px (원하는 여백) */
         gap: 8px; /* 모바일에서 컨트롤 블록 간의 간격 */
         width: calc(100% - 20px); /* 화면 너비에 맞춰 10px 좌우 패딩/마진 확보 */
@@ -591,10 +600,10 @@ html, body {
         top: 46px !important; /* 아주 작은 화면에서도 탭 높이와 여백 유지 */
     }
     .leaflet-top.leaflet-left { /* 숨겨져 있는지 확인 */
-        display: none !important;
+        top: 46px !important; /* 아주 작은 화면에서도 탭 높이와 여백 유지 */
     }
     
     .truck-toggle-map-control {
-        top: 46px !important; /* 아주 작은 화면에서도 다른 상단 컨트롤과 정렬 */
+        /* 이제 .leaflet-top.leaflet-left에 의해 배치되므로 이 부분은 삭제되거나 오버라이드될 것입니다. */
     }
 }
