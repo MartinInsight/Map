@@ -284,15 +284,8 @@ class TruckCongestionMap {
                     this.map.closePopup();
                     
                     // 2. 이동 중 툴팁 차단
-                    const layersWithHover = [];
                     this.stateLayer.eachLayer(layer => {
-                        if (layer._events?.mouseover) {
-                            layersWithHover.push({
-                                layer: layer,
-                                handler: layer._events.mouseover[0].fn
-                            });
-                            layer.off('mouseover');
-                        }
+                        layer.off('mouseover');
                     });
             
                     const bounds = L.geoJSON(state).getBounds();
@@ -302,32 +295,61 @@ class TruckCongestionMap {
                     this.map.flyTo(center, 7, {
                         duration: 0.5,
                         onEnd: () => {
-                            // 4. 반드시 툴팁 표시 (3중 안전장치)
-                            const showTooltipForSelectedState = () => {
-                                const targetLayer = this.findStateLayer(stateId);
-                                if (targetLayer) {
-                                    const data = this.metricData[stateId] || {};
-                                    this.showTooltip(center, data);
-                                    
-                                    // 툴팁이 안 열렸을 경우 재시도
-                                    if (!this.map._popup) {
-                                        setTimeout(() => this.showTooltip(center, data), 100);
-                                    }
-                                }
-                            };
+                            // 4. 반드시 툴팁 표시 (강제 방식)
+                            const data = this.metricData[stateId] || {};
+                            const content = this.createTooltipContent(data);
                             
-                            showTooltipForSelectedState();
+                            // 기존 showTooltip 로직을 직접 구현
+                            L.popup({
+                                className: 'truck-tooltip-container',
+                                maxWidth: 300,
+                                closeButton: false,
+                                closeOnClick: false,
+                                offset: L.point(0, -10)
+                            })
+                            .setLatLng(center)
+                            .setContent(content)
+                            .openOn(this.map);
                             
-                            // 5. 300ms 후 이벤트 복원
+                            // 5. 500ms 후 이벤트 복원
                             setTimeout(() => {
-                                layersWithHover.forEach(item => {
-                                    item.layer.on('mouseover', item.handler);
+                                this.stateLayer.eachLayer(layer => {
+                                    layer.on('mouseover', (e) => {
+                                        const center = e.target.getBounds().getCenter();
+                                        this.showTooltip(center, this.metricData[e.target.feature.id] || {});
+                                    });
                                 });
-                            }, 300);
+                            }, 500);
                         }
                     });
                 }
             });
+
+            // 툴팁 내용 생성 함수 (기존 showTooltip에서 사용한 로직)
+            createTooltipContent(data) {
+                const format = (v) => isNaN(Number(v)) ? '0.00' : Math.abs(Number(v)).toFixed(2);
+                const isInbound = this.currentMode === 'inbound';
+                const delay = isInbound ? data.inboundDelay : data.outboundDelay;
+                const dwellValue = isInbound ? data.dwellInbound : data.dwellOutbound;
+            
+                return `
+                    <h4>${data.name || 'Unknown'}</h4>
+                    <div>
+                        <strong>Truck Movement</strong>
+                        <p class="${delay >= 0 ? 'truck-positive' : 'truck-negative'}">
+                            ${delay >= 0 ? '↑' : '↓'} ${format(delay)}%
+                            <span class="truck-normal-text">${delay >= 0 ? 'above' : 'below'} 2-week avg</span>
+                        </p>
+                    </div>
+                    <div>
+                        <strong>Dwell Time</strong>
+                        <p class="${dwellValue >= 0 ? 'truck-positive' : 'truck-negative'}">
+                            ${dwellValue >= 0 ? '↑' : '↓'} ${format(dwellValue)}%
+                            <span class="truck-normal-text">${dwellValue >= 0 ? 'above' : 'below'} 2-week avg</span>
+                        </p>
+                    </div>
+                `;
+            }
     
             L.DomEvent.disableClickPropagation(div);
             L.DomEvent.disableScrollPropagation(div);
