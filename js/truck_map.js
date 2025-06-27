@@ -1,659 +1,288 @@
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600&display=swap');
-
-/* =====================================
-   1. Base Styles & Typography
-   ===================================== */
-html, body {
-    height: 100%;
-    margin: 0;
-    padding: 0;
-    overflow: hidden; /* Prevent body scroll, map handles its own scroll */
-    font-family: 'Noto Sans KR', sans-serif;
-    color: #333; /* Default text color */
-}
-
-/* =====================================
-   2. Global Leaflet Overrides
-   ===================================== */
-/* Leaflet default control box style override (remove default background/padding/shadow) */
-.leaflet-control {
-    background: none !important;
-    padding: 0 !important;
-    border: none !important;
-    box-shadow: none !important;
-}
-
-/* Adjusted Leaflet Popups' structural styles */
-.leaflet-popup {
-    /* pointer-events: none; /* Allows clicks to pass through to map when popup is not active - REMOVED */
-}
-
-.leaflet-popup-content-wrapper {
-    background-color: white !important;
-    border-radius: 8px !important;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2) !important;
-    padding: 0 !important; /* Managed by .leaflet-popup-content */
-    overflow: hidden;
-    font-family: 'Noto Sans KR', sans-serif !important;
-    min-width: 220px !important;
-}
-
-.leaflet-popup-content {
-    margin: 0 !important;
-    padding: 16px !important; /* Actual padding for popup content */
-}
-
-.leaflet-popup-tip-container {
-    margin-top: -1px !important; /* Adjust tip position */
-}
-
-.leaflet-popup-tip {
-    background-color: white !important;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2) !important;
-}
-
-/* Leaflet Tooltip general override (Removed conflicting positioning styles) */
-/*
-.leaflet-tooltip {
-    transform: translate(-50%, 0) !important;
-    left: 50% !important;
-    margin-top: 15px !important;
-}
-*/
-
-/* Specific border-radius for left (-) button (zoom-out, since flex-direction: row-reverse) */
-.leaflet-control-zoom-out {
-    border-radius: 6px 0 0 6px !important;
-}
-
-/* Specific border-radius for right (+) button (zoom-in, since flex-direction: row-reverse) */
-.leaflet-control-zoom-in {
-    border-radius: 0 6px 6px 0 !important;
-    border-right: none !important;
-}
-
-/* Removed hover effects for zoom buttons to prevent inconsistent shadows */
-.leaflet-control-zoom a:hover {
-    background-color: #f5f5f5 !important;
-    transform: none !important;
-}
-
-/* Ensure no shadow or transform on active (click) state for zoom buttons */
-.leaflet-control-zoom a:active {
-    background-color: #f5f5f5 !important;
-    transform: none !important;
-}
-
-/* Remove margin between zoom buttons for horizontal layout */
-.leaflet-control-zoom-in + .leaflet-control-zoom-out {
-    margin-top: 0 !important; /* 원래 세로 스택용 마진 제거 */
-}
-
-
-/* =====================================
-   3. Tab Menu Styles
-   ===================================== */
-.transport-tab-container {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 5%;
-    min-height: 40px;
-    z-index: 1000;
-    display: flex;
-    background: white;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-}
-
-.transport-tab {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: none;
-    background: white;
-    cursor: pointer;
-    font-family: 'Noto Sans KR', sans-serif;
-    font-weight: 400;
-    font-size: 14px;
-    color: black;
-    position: relative;
-    transition: all 0.3s ease;
-    padding: 0;
-    margin: 0;
-}
-
-.transport-tab::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: 3px;
-    background-color: #00657E; /* Accent color for active tab indicator */
-    opacity: 0;
-    transition: opacity 0.3s ease;
-}
-
-.transport-tab.active {
-    font-weight: 600;
-    color: #003A52; /* Darker accent for active text */
-}
-
-.transport-tab.active::after {
-    opacity: 1;
-}
-
-.transport-tab:not(.active):hover::after {
-    opacity: 0.5; /* Subtle hover effect for inactive tabs */
-}
-
-/* =====================================
-   4. Map Container Styles
-   ===================================== */
-.transport-map {
-    position: fixed;
-    top: 5%; /* Below the tab menu */
-    left: 0;
-    width: 100%;
-    height: 95%; /* Remaining height */
-    display: none; /* Hidden by default, activated by JS */
-}
-
-.transport-map.active {
-    display: block; /* Show active map */
-}
-
-/* =====================================
-   5. Control Styles (Common & Specific)
-   ===================================== */
-
-/* Common styling for control boxes (Reset button, Filter box) */
-.map-control-group-right {
-    background: white;
-    padding: 8px 12px;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.15);
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 8px; /* 모든 컨트롤 간의 간격을 8px로 통일 */
-    width: 100%;
-    box-sizing: border-box;
-}
-
-/* Leaflet Zoom Control Styling */
-.leaflet-control-zoom {
-    display: flex;
-    flex-direction: row-reverse; /* 변경: 순서 반전 (- +) */
-    width: 100%;
-    height: 34px;
-    background: transparent !important;
-    padding: 0 !important;
-    border-radius: 0;
-    box-shadow: none;
-    border: none;
-    margin: 0 !important; /* 기존 마진 제거 */
-}
-
-/* 줌 버튼 텍스트 가운데 정렬 수정 */
-.leaflet-control-zoom a {
-    width: 50% !important;
-    height: 34px !important;
-    background-color: white !important;
-    border: 1px solid #e0e0e0 !important;
-    text-decoration: none !important;
-    font-family: 'Noto Sans KR', sans-serif;
-    font-weight: 500 !important;
-    font-size: 13px !important;
-    color: #333 !important;
-    box-sizing: border-box;
-    
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    line-height: 1 !important; /* 기존 line-height 제거 */
-    padding-top: 0 !important; /* 상단 패딩 초기화 */
-}
-
-/* Reset Button Style */
-.reset-btn {
-    width: 100%; /* 부모(.map-control-group-right)의 너비를 채움 */
-    padding: 0 15px;
-    background: white; /* 개별 버튼 배경 유지 */
-    border: 1px solid #e0e0e0;
-    border-radius: 6px;
-    cursor: pointer;
-    font-family: 'Noto Sans KR', sans-serif;
-    font-weight: 500;
-    font-size: 13px;
-    box-shadow: none; /* 그림자 제거 */
-    height: 34px;
-    white-space: nowrap;
-    transition: all 0.2s;
-    color: #333;
-}
-
-.reset-btn:hover {
-    background: #f5f5f5;
-    transform: translateY(-1px);
-}
-
-/* Filter Control Select Style */
-.filter-control select,
-.map-control-group-right select {
-    width: 100%; /* 부모(.map-control-group-right)의 너비를 채움 */
-    padding: 8px 12px;
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    font-size: 13px;
-    font-family: 'Noto Sans KR', sans-serif;
-    font-weight: 500;
-    background-color: #f9f9f9; /* 개별 셀렉트 배경 유지 */
-    transition: all 0.2s;
-    color: #333;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='%23003A52'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 10px center;
-    padding-right: 30px; /* Custom arrow 공간 확보 */
-    appearance: none;
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    box-shadow: none; /* 셀렉트 자체 그림자 제거 */
-}
-
-.filter-control select:focus,
-.map-control-group-right select:focus {
-    outline: none;
-    border-color: #00657E;
-    box-shadow: 0 0 0 2px rgba(0,101,126,0.2); /* 포커스 시 테두리 그림자는 유지 */
-}
-
-/* ========== 트럭 토글 버튼 컨테이너 스타일 (HTML에 있는 요소) ========== */
-.truck-toggle-map-control {
-    position: absolute; /* 다른 컨트롤과 독립적으로 위치 */
-    left: 50%; /* 수평 중앙 정렬 */
-    transform: translateX(-50%); /* 수평 중앙 정렬을 위한 조정 */
-    top: 50px !important; /* 상단 탭바 아래에 적절한 위치 설정 */
-    width: auto; /* 내용물에 따라 너비 자동 조정 */
-    z-index: 1005 !important; /* 다른 컨트롤보다 위에 표시되도록 z-index 상향 */
-    
-    display: flex; /* 내부 버튼들을 가로로 나란히 정렬 */
-    height: 34px; /* 버튼의 높이와 일관되게 설정 */
-    margin: 0;
-    padding: 0;
-    background: white; /* 배경색 추가 */
-    border-radius: 6px; /* 테두리 둥글게 */
-    box-shadow: 0 2px 10px rgba(0,0,0,0.15); /* 그림자 추가 */
-    box-sizing: border-box; /* 패딩과 보더를 너비에 포함 */
-}
-
-.truck-toggle-btn {
-    height: 34px !important;
-    min-width: 85px;
-    padding: 0 16px;
-    background: white;
-    border: 1px solid #e0e0e0;
-    font-family: 'Noto Sans KR', sans-serif;
-    font-size: 13px;
-    font-weight: 500;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-sizing: border-box;
-    flex-grow: 1; /* 버튼이 컨테이너 너비를 채우도록 설정 */
-    transition: all 0.2s;
-    color: #333;
-    cursor: pointer;
-}
-
-.truck-toggle-btn:first-child {
-    border-radius: 6px 0 0 6px !important;
-}
-
-.truck-toggle-btn:last-child {
-    border-radius: 0 6px 6px 0 !important;
-    border-left: none !important;
-}
-
-.truck-toggle-btn.truck-active {
-    background: #00657E !important;
-    color: white !important;
-    border-color: #00657E !important;
-}
-
-/* 트럭 맵이 아닐 때 토글 컨트롤 숨기기 위한 클래스 (JavaScript에서 제어) */
-.truck-toggle-map-control:not(.truck-active-control) {
-    display: none !important;
-}
-
-/* Control Position Adjustments */
-/* Top right for all Leaflet controls */
-.leaflet-top.leaflet-right {
-    display: flex;
-    flex-direction: column;
-    gap: 8px; /* 컨트롤 그룹 사이의 간격 */
-    top: 10px !important;
-    right: 10px !important;
-    width: 160px;
-    background: none;
-    padding: 0;
-    border-radius: 0;
-    box-shadow: none;
-    z-index: 1000; /* 트럭 토글보다 낮은 z-index */
-}
-
-/* Top left (originally for zoom buttons) - now hidden/reset */
-.leaflet-top.leaflet-left {
-    display: none !important; /* 줌 컨트롤이 우측 상단으로 이동했으므로 이 컨테이너 숨김 */
-    top: auto !important; /* Reset */
-    left: auto !important; /* Reset */
-    transform: none !important; /* Reset */
-    width: auto; /* Reset */
-    height: auto; /* Reset */
-}
-
-/* Bottom right (for legend - if uncommented) */
-.leaflet-bottom.leaflet-right {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    bottom: 10px !important;
-    right: 10px !important;
-    width: auto;
-    height: auto;
-}
-
-/* Bottom left (for last updated info) - Now last-updated-info is in bottom-right, this can be simplified */
-.leaflet-bottom.leaflet-left {
-    bottom: 10px !important;
-    left: 10px !important;
-    width: auto;
-    height: auto;
-    margin-bottom: 0;
-    /* z-index: 9999 !important; /* No longer specifically for last-updated-info */
-    /* pointer-events: none; /* No longer specifically for last-updated-info */
-}
-
-
-/* =====================================
-   6. Popup & Tooltip Styles
-   ==================================== */
-
-/* Common Popup Content Styles */
-.leaflet-popup-content h4 {
-    margin: 0 0 12px 0;
-    font-size: 16px;
-    font-weight: 600;
-    color: #222;
-    border-bottom: 1px solid #eee;
-    padding-bottom: 8px;
-}
-
-.leaflet-popup-content p {
-    margin: 10px 0;
-    font-size: 14px;
-    line-height: 1.4;
-}
-
-.leaflet-popup-content strong {
-    color: #444;
-    font-weight: 500;
-}
-
-/* Single marker popup styling (detailed information) */
-.single-marker-popup .leaflet-popup-content-wrapper {
-    background: white;
-    color: #333;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    font-family: 'Noto Sans KR', sans-serif; /* Consistent font */
-}
-
-/* The tip shares the background of the wrapper */
-.single-marker-popup .leaflet-popup-tip {
-    background: white;
-}
-
-.single-marker-popup .location-info h5 {
-    margin-top: 0;
-    margin-bottom: 8px;
-    font-size: 18px;
-    color: #003A52;
-    border-bottom: 1px solid #eee;
-    padding-bottom: 5px;
-}
-
-.single-marker-popup .location-info p {
-    margin-bottom: 5px;
-    font-size: 14px;
-    line-height: 1.4;
-}
-
-.single-marker-popup .location-info strong {
-    color: #555;
-}
-
-/* Optional: Styling for hr separator in multi-item popups */
-.single-marker-popup .location-info hr {
-    border: 0;
-    border-top: 1px dashed #ddd;
-    margin: 10px 0;
-}
-
-/* Truck specific text colors in popup content (if used for truck map) */
-.truck-positive {
-    color: #27ae60; /* Green for positive indicators */
-    font-weight: 600;
-}
-
-.truck-negative {
-    color: #e74c3c; /* Red for negative indicators */
-    font-weight: 600;
-}
-
-.truck-normal-text {
-    font-weight: 400;
-    color: #555;
-}
-
-/* Cluster popup header (when multiple items are shown in a popup after spiderfy) */
-.cluster-popup-header {
-    margin-bottom: 10px;
-    border-bottom: 1px solid #eee; /* Separator for header */
-    padding-bottom: 5px;
-}
-
-.cluster-popup-header h4, .cluster-popup-header p {
-    margin: 0;
-    padding: 0;
-}
-
-.cluster-popup-content {
-    max-height: 250px; /* Max height for scrollable content */
-    overflow-y: auto;
-    padding-right: 5px; /* Space for scrollbar */
-}
-
-.location-info {
-    margin: 10px 0;
-}
-
-.location-info h5 {
-    margin-bottom: 5px;
-    color: #333;
-}
-
-
-/* =====================================
-   7. Information & Error Messages
-   ===================================== */
-
-/* Error message control */
-.error-message {
-    background-color: #ffe0e0; /* Light red */
-    color: #d63031; /* Darker red text */
-    padding: 10px 15px;
-    border-radius: 5px;
-    border: 1px solid #d63031;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-    font-weight: bold;
-    font-size: 14px;
-    text-align: center;
-    z-index: 9999; /* Ensure it's on top */
-    font-family: 'Noto Sans KR', sans-serif;
-}
-
-/* =====================================
-   8. Custom Marker Icons
-   ===================================== */
-/* Base style for custom DivIcons (used for individual markers) */
-.custom-div-icon {
-    /* No specific styles here as the inner div handles visual properties.
-        This class can be used for debugging or additional outer wrappers. */
-}
-
-/* Style for the actual circular marker inside custom-div-icon */
-.custom-div-icon div {
-    border: 1.5px solid white; /* White border for the circle */
-    box-shadow: 0 0 3px rgba(0,0,0,0.5); /* Subtle shadow for depth */
-    box-sizing: border-box; /* Include padding and border in element's total width and height */
-    display: flex; /* Use flexbox to center any content if added later */
-    align-items: center;
-    justify-content: center;
-    /* background-color, width, height, border-radius are set inline by JS */
-}
-
-/* Style for marker cluster icons */
-.marker-cluster-custom {
-    background-color: transparent; /* Background is handled by the inner div */
-}
-
-.marker-cluster-custom div {
-    border-radius: 50%; /* Make it circular */
-    color: white;
-    font-weight: bold;
-    text-align: center;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 0 3px rgba(0,0,0,0.5); /* Shadow for cluster icon */
-    /* width, height, line-height, background-color are set inline by JS */
-}
-
-/* Custom Tooltip Styling for visibility and appearance */
-.custom-marker-tooltip {
-    background-color: rgba(0, 0, 0, 0.7); /* Dark background */
-    color: white; /* White text */
-    padding: 5px 8px; /* Some padding */
-    border-radius: 4px; /* Slightly rounded corners */
-    font-size: 12px; /* Readable font size */
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2); /* Subtle shadow */
-    white-space: nowrap; /* Keep content on one line */
-    z-index: 10000; /* Ensure it's above other elements */
-    pointer-events: none; /* Allow clicks to pass through to the map */
-}
-
-/* Ensure the tooltip is always displayed if bound, overriding any potential hidden states */
-/* This rule forces visibility and resets common negative transforms */
-.leaflet-tooltip {
-    display: block !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-    left: 0 !important; /* Reset any negative left transforms */
-    top: 0 !important; /* Reset any negative top transforms */
-    transform: none !important; /* Ensure no unwanted transforms hide it */
-}
-
-
-/* =====================================
-   9. Responsive Design (Media Queries)
-   ===================================== */
-
-/* Mobile devices (max-width: 768px) */
-@media (max-width: 768px) {
-    .transport-tab-container {
-        height: 7%;
-        min-height: 36px;
+class TruckCongestionMap {
+    constructor(mapElementId) {
+        this.map = L.map(mapElementId).setView([37.8, -96], 4);
+        this.stateLayer = null;
+        this.currentMode = 'inbound';
+        this.metricData = null;
+        this.geoJsonData = null;
+        this.initialized = false;
+        this.errorControl = null;
+
+        // 지도 타일 레이어를 CartoDB Light All로 변경하여 영어 지명 통일
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+            maxZoom: 18,
+            minZoom: 3
+        }).addTo(this.map);
+
+        this.map.setMaxBounds([
+            [-85, -180],
+            [85, 180]
+        ]);
+
+        this.map.on('zoomend', () => {
+            const currentZoom = this.map.getZoom();
+            if (currentZoom < this.map.getMinZoom()) {
+                this.map.setZoom(this.map.getMinZoom());
+            }
+        });
+
+        this.init();
     }
 
-    .transport-tab {
-        font-size: 12px;
-        padding: 0 3px;
+    async init() {
+        try {
+            const [geoJson, sheetData] = await Promise.all([
+                fetch('data/us-states.json').then(res => {
+                    if (!res.ok) throw new Error("GeoJSON fetch error");
+                    return res.json();
+                }),
+                this.fetchSheetData()
+            ]);
+
+            this.geoJsonData = geoJson;
+            this.metricData = sheetData;
+
+            this.renderMap();
+            // 리셋 버튼과 필터 드롭다운 컨트롤 (상단 우측)
+            this.addRightControls(); 
+            // INBOUND/OUTBOUND 토글 버튼 컨트롤 (HTML에 이미 존재하며, JS에서 이벤트만 추가)
+            this.addTruckToggleControls();
+            this.initialized = true;
+        } catch (err) {
+            console.error("Initialization failed:", err);
+            this.showError("Failed to load truck data. Please try again later.");
+        }
     }
 
-    .transport-map {
-        top: 7%;
-        height: 93%;
+    async fetchSheetData() {
+        try {
+            const res = await fetch('data/us-truck.json');
+            if (!res.ok) throw new Error("Truck data fetch error");
+            return await res.json();
+        } catch (err) {
+            console.warn("Truck data fetch failed, using fallback data.");
+            return {
+                'AL': { name: 'Alabama', inboundDelay: 0, inboundColor: 0, outboundDelay: 0, outboundColor: 0, dwellInbound: 0, dwellOutbound: 0 },
+                'TN': { name: 'Tennessee', inboundDelay: 0, inboundColor: 0, outboundDelay: 0, outboundColor: 0, dwellInbound: 0, dwellOutbound: 0 }
+            };
+        }
     }
 
-    /* Controls: Adjust for mobile */
-    .leaflet-top.leaflet-right {
-        top: 10px !important; /* 모바일에서도 일관된 상단 위치 */
-        gap: 8px; /* 모바일에서도 컨트롤 블록 간의 간격 유지 */
-        width: calc(100% - 20px); /* 화면 너비에 맞춰 10px 좌우 패딩/마진 확보 */
-        max-width: 160px; /* PC 크기보다 넓어지지 않도록 고정 */
-        right: 10px !important;
-        margin-left: auto; /* 우측 정렬 */
-        padding: 0; /* 모바일에서 전체 컨트롤 블록의 패딩 제거 */
+    renderMap() {
+        if (this.stateLayer) this.map.removeLayer(this.stateLayer);
+
+        this.stateLayer = L.geoJSON(this.geoJsonData, {
+            style: this.getStyle.bind(this),
+            onEachFeature: this.bindEvents.bind(this)
+        }).addTo(this.map);
     }
 
-    .map-control-container,
-    .map-control-group-right {
-        width: 100%; /* 부모(.leaflet-top.leaflet-right) 너비에 맞춰 확장 */
-        padding: 0; /* 내부 패딩 제거 */
-        gap: 6px; /* 모바일에서 리셋/셀렉트 버튼 간의 내부 간격 조정 */
+    getStyle(feature) {
+        const stateCode = feature.id;
+        const data = this.metricData[stateCode] || {};
+        const colorValue = this.currentMode === 'inbound'
+            ? data.inboundColor
+            : data.outboundColor;
+
+        return {
+            fillColor: this.getColor(colorValue),
+            weight: 1,
+            opacity: 1,
+            color: 'white', // 기본 테두리 색상은 흰색
+            fillOpacity: 0.7
+        };
     }
 
-    .reset-btn,
-    .map-control-group-right select {
-        height: 30px; /* 모바일에서 버튼/셀렉트 높이 조정 */
-        font-size: 12px; /* 모바일에서 폰트 크기 조정 */
-        padding: 0 10px; /* 모바일에서 패딩 조정 */
+    getColor(value) {
+        const colors = {
+            '-3': '#d73027',
+            '-2': '#f46d43',
+            '-1': '#fdae61',
+            '0': '#ffffbf',
+            '1': '#a6d96a',
+            '2': '#66bd63',
+            '3': '#1a9850'
+        };
+        return colors[value] || '#cccccc';
     }
 
-    .truck-toggle-map-control {
-        top: 48px !important; /* 모바일 환경에 맞춰 상단 위치 조정 */
-        height: 30px !important;
+    bindEvents(feature, layer) {
+        const stateCode = feature.id;
+        const data = this.metricData[stateCode] || {};
+
+        layer.on({
+            mouseover: (e) => {
+                const center = layer.getBounds().getCenter();
+                this.showTooltip(center, data);
+                layer.setStyle({
+                    weight: 2, // 호버 시 테두리 두께를 2로 변경
+                    color: 'white', // 호버 시에도 테두리 색상은 흰색 유지
+                    dashArray: '',
+                    fillOpacity: 0.9
+                });
+            },
+            mouseout: (e) => {
+                this.map.closePopup();
+                this.stateLayer.resetStyle(layer); // 원래 스타일로 복원 (weight: 1, color: 'white')
+            },
+            click: () => this.zoomToState(feature)
+        });
     }
-    .truck-toggle-btn {
-        height: 30px !important;
-        font-size: 12px !important;
-        padding: 0 12px !important;
+
+    showTooltip(latlng, data) {
+        if (!this.initialized) return;
+
+        const format = (v) => isNaN(Number(v)) ? '0.00' : Math.abs(Number(v)).toFixed(2);
+        const isInbound = this.currentMode === 'inbound';
+        const delay = isInbound ? data.inboundDelay : data.outboundDelay;
+        // us-truck.json 스키마에 따라 'dwellOutbound'를 'outboundDwell'로 수정했습니다.
+        // Google Sheet의 실제 열 이름에 맞춰 다시 'dwellOutbound'로 변경해야 할 수 있습니다.
+        const dwellValue = isInbound ? data.dwellInbound : data.dwellOutbound; 
+
+        const content = `
+            <h4>${data.name || 'Unknown'}</h4>
+            <div>
+                <strong>Truck Movement</strong>
+                <p class="${delay >= 0 ? 'truck-positive' : 'truck-negative'}">
+                    ${delay >= 0 ? '↑' : '↓'} ${format(delay)}%
+                    <span class="truck-normal-text">${delay >= 0 ? 'above' : 'below'} 2-week avg</span>
+                </p>
+            </div>
+            <div>
+                <strong>Dwell Time</strong>
+                <p class="${dwellValue >= 0 ? 'truck-positive' : 'truck-negative'}">
+                    ${dwellValue >= 0 ? '↑' : '↓'} ${format(dwellValue)}%
+                    <span class="truck-normal-text">${dwellValue >= 0 ? 'above' : 'below'} 2-week avg</span>
+                </p>
+            </div>
+        `;
+
+        L.popup({
+            className: 'truck-tooltip-container',
+            maxWidth: 300,
+            autoClose: false,
+            closeButton: false,
+            closeOnClick: false,
+            offset: L.point(0, -10)
+        })
+        .setLatLng(latlng)
+        .setContent(content)
+        .openOn(this.map);
     }
-    
-    /* Zoom buttons on mobile */
-    .leaflet-control-zoom {
-        height: 30px; /* 모바일에서 줌 버튼 높이 조정 */
-        padding: 0; /* 모바일에서 줌 컨트롤 자체의 패딩 제거 */
+
+    zoomToState(feature) {
+        const bounds = L.geoJSON(feature).getBounds();
+        const center = bounds.getCenter();
+        const fixedZoomLevel = 7; // 모든 주에 대해 동일한 줌 레벨을 적용합니다.
+
+        this.map.setView(center, fixedZoomLevel);
     }
-    .leaflet-control-zoom a {
-        height: 30px !important;
-        font-size: 12px !important;
+
+    // INBOUND/OUTBOUND 토글 버튼에 이벤트 리스너를 추가하는 함수 (HTML에 이미 존재함)
+    addTruckToggleControls() {
+        // HTML에 이미 존재하는 .truck-toggle-map-control 요소를 찾습니다.
+        const truckToggleControl = document.querySelector('.truck-toggle-map-control');
+        if (!truckToggleControl) {
+            console.error("Error: .truck-toggle-map-control element not found in HTML.");
+            return;
+        }
+
+        // 맵 이벤트 전파 방지
+        L.DomEvent.disableClickPropagation(truckToggleControl);
+        L.DomEvent.disableScrollPropagation(truckToggleControl);
+
+        truckToggleControl.querySelectorAll('.truck-toggle-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                this.currentMode = btn.dataset.mode;
+                // 모든 토글 버튼의 active 클래스 제거 후 현재 클릭된 버튼에만 추가
+                truckToggleControl.querySelectorAll('.truck-toggle-btn').forEach(innerBtn => {
+                    innerBtn.classList.remove('truck-active');
+                });
+                btn.classList.add('truck-active');
+                this.stateLayer.setStyle(this.getStyle.bind(this)); // 지도 스타일 업데이트
+            });
+        });
+    }
+
+
+    // 리셋 버튼과 필터 드롭다운 컨트롤 (상단 우측에 나란히 배치)
+    addRightControls() {
+        const control = L.control({ position: 'topright' });
+
+        control.onAdd = () => {
+            const div = L.DomUtil.create('div', 'map-control-group-right');
+
+            // 주 선택 필터 드롭다운 추가 (먼저 삽입)
+            const states = this.geoJsonData.features
+                .map(f => ({
+                    id: f.id,
+                    name: f.properties.name
+                }))
+                .sort((a, b) => a.name.localeCompare(b.name));
+
+            const filterDropdownHtml = `
+                <select class="state-filter">
+                    <option value="">Select State</option>
+                    ${states.map(state =>
+                        `<option value="${state.id}">${state.name}</option>`
+                    ).join('')}
+                </select>
+            `;
+            div.insertAdjacentHTML('beforeend', filterDropdownHtml); // 드롭다운 먼저 추가
+
+            // 리셋 버튼 추가 (나중에 삽입)
+            const resetButtonHtml = `
+                <button class="truck-reset-btn reset-btn">Reset View</button>
+            `;
+            div.insertAdjacentHTML('beforeend', resetButtonHtml); // 리셋 버튼 추가
+
+            // 이벤트 리스너 추가 (요소들이 DOM에 추가된 후 참조)
+            div.querySelector('.truck-reset-btn').addEventListener('click', () => {
+                this.map.setView([37.8, -96], 4);
+                const stateFilter = div.querySelector('.state-filter'); // 현재 div 내에서 찾음
+                if (stateFilter) stateFilter.value = '';
+            });
+
+            div.querySelector('.state-filter').addEventListener('change', (e) => {
+                const stateId = e.target.value;
+                if (!stateId) {
+                    this.map.setView([37.8, -96], 4);
+                    return;
+                }
+
+                const state = this.geoJsonData.features.find(f => f.id === stateId);
+                if (state) {
+                    const bounds = L.geoJSON(state).getBounds();
+                    const center = bounds.getCenter();
+                    const fixedZoomLevel = 7;
+
+                    this.map.setView(center, fixedZoomLevel);
+                }
+            });
+
+            L.DomEvent.disableClickPropagation(div);
+            L.DomEvent.disableScrollPropagation(div);
+
+            return div;
+        };
+        control.addTo(this.map);
+    }
+
+    showError(message) {
+        if (this.errorControl) {
+            this.map.removeControl(this.errorControl);
+        }
+
+        const errorControl = L.control({ position: 'topleft' });
+        errorControl.onAdd = function() {
+            const div = L.DomUtil.create('div', 'error-message');
+            div.innerHTML = message;
+            return div;
+        };
+        errorControl.addTo(this.map);
+        this.errorControl = errorControl;
     }
 }
 
-/* Very Small Screens (max-width: 480px) */
-@media (max-width: 480px) {
-    .transport-tab {
-        font-size: 11px;
-    }
-
-    .leaflet-top.leaflet-right {
-        top: 10px !important; /* 일관된 상단 위치 */
-    }
-    .leaflet-top.leaflet-left { /* Ensure hidden */
-        display: none !important;
-    }
-    
-    .truck-toggle-map-control {
-        top: 48px !important; /* 모바일 환경에 맞춰 상단 위치 조정 */
-        min-width: 70px !important;
-        padding: 0 8px !important;
-    }
-    
-    .leaflet-bottom.leaflet-right {
-        bottom: 20px !important;
-    }
-}
+window.TruckCongestionMap = TruckCongestionMap;
