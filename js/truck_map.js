@@ -136,8 +136,6 @@ class TruckCongestionMap {
         const format = (v) => isNaN(Number(v)) ? '0.00' : Math.abs(Number(v)).toFixed(2);
         const isInbound = this.currentMode === 'inbound';
         const delay = isInbound ? data.inboundDelay : data.outboundDelay;
-        // us-truck.json 스키마에 따라 'dwellOutbound'를 'outboundDwell'로 수정했습니다.
-        // Google Sheet의 실제 열 이름에 맞춰 다시 'dwellOutbound'로 변경해야 할 수 있습니다.
         const dwellValue = isInbound ? data.dwellInbound : data.dwellOutbound; 
 
         const content = `
@@ -179,9 +177,8 @@ class TruckCongestionMap {
         this.map.setView(center, fixedZoomLevel);
     }
 
-    // INBOUND/OUTBOUND 토글 버튼에 이벤트 리스너를 추가하는 함수 (HTML에 이미 존재함)
+    // INBOUND/OUTBOUND 토글 버튼에 이벤트 리스너를 추가하고 초기 활성화를 설정하는 함수
     addTruckToggleControls() {
-        // HTML에 이미 존재하는 .truck-toggle-map-control 요소를 찾습니다.
         const truckToggleControl = document.querySelector('.truck-toggle-map-control');
         if (!truckToggleControl) {
             console.error("Error: .truck-toggle-map-control element not found in HTML.");
@@ -191,6 +188,14 @@ class TruckCongestionMap {
         // 맵 이벤트 전파 방지
         L.DomEvent.disableClickPropagation(truckToggleControl);
         L.DomEvent.disableScrollPropagation(truckToggleControl);
+
+        const inboundBtn = truckToggleControl.querySelector('[data-mode="inbound"]');
+        const outboundBtn = truckToggleControl.querySelector('[data-mode="outbound"]');
+
+        // 초기 로드 시 'inbound' 버튼 활성화
+        if (inboundBtn) {
+            inboundBtn.classList.add('truck-active');
+        }
 
         truckToggleControl.querySelectorAll('.truck-toggle-btn').forEach(btn => {
             btn.addEventListener('click', () => {
@@ -204,7 +209,6 @@ class TruckCongestionMap {
             });
         });
     }
-
 
     // 리셋 버튼과 필터 드롭다운 컨트롤 (상단 우측에 나란히 배치)
     addRightControls() {
