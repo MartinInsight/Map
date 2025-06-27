@@ -44,8 +44,10 @@ class TruckCongestionMap {
             this.metricData = sheetData;
 
             this.renderMap();
-            // INBOUND/OUTBOUND 토글 버튼과 리셋 버튼 및 필터 드롭다운을 하나의 Leaflet 컨트롤로 통합
-            this.addCombinedRightControls(); 
+            // 리셋 버튼과 필터 드롭다운 컨트롤 (상단 우측)
+            this.addRightControls(); 
+            // INBOUND/OUTBOUND 토글 버튼 컨트롤 (HTML에 이미 존재하며, JS에서 이벤트만 추가)
+            this.addTruckToggleControls();
             this.initialized = true;
         } catch (err) {
             console.error("Initialization failed:", err);
@@ -134,7 +136,9 @@ class TruckCongestionMap {
         const format = (v) => isNaN(Number(v)) ? '0.00' : Math.abs(Number(v)).toFixed(2);
         const isInbound = this.currentMode === 'inbound';
         const delay = isInbound ? data.inboundDelay : data.outboundDelay;
-        const dwellValue = isInbound ? data.dwellInbound : data.outboundDwell; // Fixed: dwellOutbound to outboundDwell as per us-truck.json schema. If your sheet uses 'dwellOutbound', keep that.
+        // us-truck.json 스키마에 따라 'dwellOutbound'를 'outboundDwell'로 수정했습니다.
+        // Google Sheet의 실제 열 이름에 맞춰 다시 'dwellOutbound'로 변경해야 할 수 있습니다.
+        const dwellValue = isInbound ? data.dwellInbound : data.dwellOutbound; 
 
         const content = `
             <h4>${data.name || 'Unknown'}</h4>
@@ -175,23 +179,41 @@ class TruckCongestionMap {
         this.map.setView(center, fixedZoomLevel);
     }
 
-    // 모든 우측 상단 컨트롤을 통합하여 추가
-    addCombinedRightControls() {
+    // INBOUND/OUTBOUND 토글 버튼에 이벤트 리스너를 추가하는 함수 (HTML에 이미 존재함)
+    addTruckToggleControls() {
+        // HTML에 이미 존재하는 .truck-toggle-map-control 요소를 찾습니다.
+        const truckToggleControl = document.querySelector('.truck-toggle-map-control');
+        if (!truckToggleControl) {
+            console.error("Error: .truck-toggle-map-control element not found in HTML.");
+            return;
+        }
+
+        // 맵 이벤트 전파 방지
+        L.DomEvent.disableClickPropagation(truckToggleControl);
+        L.DomEvent.disableScrollPropagation(truckToggleControl);
+
+        truckToggleControl.querySelectorAll('.truck-toggle-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                this.currentMode = btn.dataset.mode;
+                // 모든 토글 버튼의 active 클래스 제거 후 현재 클릭된 버튼에만 추가
+                truckToggleControl.querySelectorAll('.truck-toggle-btn').forEach(innerBtn => {
+                    innerBtn.classList.remove('truck-active');
+                });
+                btn.classList.add('truck-active');
+                this.stateLayer.setStyle(this.getStyle.bind(this)); // 지도 스타일 업데이트
+            });
+        });
+    }
+
+
+    // 리셋 버튼과 필터 드롭다운 컨트롤 (상단 우측에 나란히 배치)
+    addRightControls() {
         const control = L.control({ position: 'topright' });
 
         control.onAdd = () => {
             const div = L.DomUtil.create('div', 'map-control-group-right');
 
-            // 1. INBOUND/OUTBOUND 토글 버튼 섹션
-            const toggleButtonsHtml = `
-                <div class="truck-toggle-container">
-                    <button class="truck-toggle-btn ${this.currentMode === 'inbound' ? 'truck-active' : ''}" data-mode="inbound">INBOUND</button>
-                    <button class="truck-toggle-btn ${this.currentMode === 'outbound' ? 'truck-active' : ''}" data-mode="outbound">OUTBOUND</button>
-                </div>
-            `;
-            div.insertAdjacentHTML('beforeend', toggleButtonsHtml);
-
-            // 2. 주 선택 필터 드롭다운
+            // 주 선택 필터 드롭다운 추가 (먼저 삽입)
             const states = this.geoJsonData.features
                 .map(f => ({
                     id: f.id,
@@ -207,18 +229,18 @@ class TruckCongestionMap {
                     ).join('')}
                 </select>
             `;
-            div.insertAdjacentHTML('beforeend', filterDropdownHtml);
+            div.insertAdjacentHTML('beforeend', filterDropdownHtml); // 드롭다운 먼저 추가
 
-            // 3. 리셋 버튼
+            // 리셋 버튼 추가 (나중에 삽입)
             const resetButtonHtml = `
                 <button class="truck-reset-btn reset-btn">Reset View</button>
             `;
-            div.insertAdjacentHTML('beforeend', resetButtonHtml);
+            div.insertAdjacentHTML('beforeend', resetButtonHtml); // 리셋 버튼 추가
 
-            // 이벤트 리스너 추가
+            // 이벤트 리스너 추가 (요소들이 DOM에 추가된 후 참조)
             div.querySelector('.truck-reset-btn').addEventListener('click', () => {
                 this.map.setView([37.8, -96], 4);
-                const stateFilter = div.querySelector('.state-filter');
+                const stateFilter = div.querySelector('.state-filter'); // 현재 div 내에서 찾음
                 if (stateFilter) stateFilter.value = '';
             });
 
@@ -237,19 +259,6 @@ class TruckCongestionMap {
 
                     this.map.setView(center, fixedZoomLevel);
                 }
-            });
-
-            // 토글 버튼 이벤트 리스너
-            div.querySelectorAll('.truck-toggle-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    this.currentMode = btn.dataset.mode;
-                    // 모든 토글 버튼의 active 클래스 제거 후 현재 클릭된 버튼에만 추가
-                    div.querySelectorAll('.truck-toggle-btn').forEach(innerBtn => {
-                        innerBtn.classList.remove('truck-active');
-                    });
-                    btn.classList.add('truck-active');
-                    this.stateLayer.setStyle(this.getStyle.bind(this)); // 지도 스타일 업데이트
-                });
             });
 
             L.DomEvent.disableClickPropagation(div);
