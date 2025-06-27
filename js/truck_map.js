@@ -1,6 +1,8 @@
 class TruckCongestionMap {
     constructor(mapElementId) {
-        this.map = L.map(mapElementId).setView([37.8, -96], 4);
+        this.map = L.map(mapElementId, {
+            zoomControl: false // 기본 줌 컨트롤 비활성화
+        }).setView([37.8, -96], 4);
         this.stateLayer = null;
         this.currentMode = 'inbound';
         this.metricData = null;
@@ -33,6 +35,7 @@ class TruckCongestionMap {
 
     async init() {
         try {
+            // us-truck.json 파일 경로 수정 (프로젝트 구조에 맞게)
             const [geoJson, sheetData] = await Promise.all([
                 fetch('data/us-states.json').then(res => {
                     if (!res.ok) throw new Error("GeoJSON fetch error");
@@ -56,6 +59,7 @@ class TruckCongestionMap {
 
     async fetchSheetData() {
         try {
+            // data 폴더에 있는 us-truck.json을 fetch하도록 경로 수정
             const res = await fetch('data/us-truck.json');
             if (!res.ok) throw new Error("Truck data fetch error");
             return await res.json();
@@ -103,7 +107,7 @@ class TruckCongestionMap {
             '2': '#66bd63',
             '3': '#1a9850'
         };
-        return colors[value] || '#cccccc';
+        return colors[String(value)] || '#cccccc';
     }
 
     bindEvents(feature, layer) {
@@ -130,7 +134,7 @@ class TruckCongestionMap {
     }
 
     showTooltip(latlng, data) {
-        if (!this.initialized) return;
+        if (!this.initialized || !data.name) return; // 데이터가 없으면 툴팁 표시 안 함
 
         const format = (v) => isNaN(Number(v)) ? '0.00' : Math.abs(Number(v)).toFixed(2);
         const isInbound = this.currentMode === 'inbound';
@@ -176,24 +180,18 @@ class TruckCongestionMap {
         this.map.setView(center, fixedZoomLevel);
     }
 
-    // INBOUND/OUTBOUND 토글 버튼 컨트롤 (상단 중앙 배치)
     addToggleControls() {
-        // Leaflet 컨트롤 시스템 대신, 직접 지도 컨테이너에 div를 추가하여 중앙 정렬 CSS가 작동하도록 함
-        // 이 div가 유일한 박스/배경/그림자 래퍼가 됨
         const centeredToggleDiv = L.DomUtil.create('div', 'map-control-container truck-toggle-map-control');
-        this.map.getContainer().appendChild(centeredToggleDiv); // 지도의 DOM 요소에 직접 추가
+        this.map.getContainer().appendChild(centeredToggleDiv); 
 
-        this.controlDiv = centeredToggleDiv; // 이 div를 참조하도록 설정
+        this.controlDiv = centeredToggleDiv;
         this.renderToggleButtons();
 
-        // 맵 이벤트 전파 방지
         L.DomEvent.disableClickPropagation(centeredToggleDiv);
         L.DomEvent.disableScrollPropagation(centeredToggleDiv);
     }
 
     renderToggleButtons() {
-        // 불필요한 이중 래퍼 (truck-toggle-container, truck-toggle-wrapper)를 제거하고
-        // 버튼들을 직접 this.controlDiv (map-control-container) 안에 삽입
         this.controlDiv.innerHTML = `
             <button class="truck-toggle-btn ${this.currentMode === 'inbound' ? 'truck-active' : ''}" data-mode="inbound">INBOUND</button>
             <button class="truck-toggle-btn ${this.currentMode === 'outbound' ? 'truck-active' : ''}" data-mode="outbound">OUTBOUND</button>
@@ -202,13 +200,12 @@ class TruckCongestionMap {
         this.controlDiv.querySelectorAll('.truck-toggle-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 this.currentMode = btn.dataset.mode;
-                this.renderToggleButtons(); // 토글 버튼 상태 업데이트
+                this.renderToggleButtons();
                 this.stateLayer.setStyle(this.getStyle.bind(this));
             });
         });
     }
 
-    // 리셋 버튼과 필터 드롭다운 컨트롤 (상단 우측에 나란히 배치)
     addRightControls() {
         if (this.filterControlInstance) {
             this.map.removeControl(this.filterControlInstance);
@@ -220,24 +217,26 @@ class TruckCongestionMap {
             const div = L.DomUtil.create('div', 'map-control-group-right');
             
             // 커스텀 줌 컨트롤 추가
-            const zoomControl = L.DomUtil.create('div', 'leaflet-control-zoom');
+            const zoomControl = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-custom');
             zoomControl.innerHTML = `
-                <a class="leaflet-control-zoom-in" href="#" title="Zoom in">+</a>
-                <a class="leaflet-control-zoom-out" href="#" title="Zoom out">-</a>
+                <a class="leaflet-control-zoom-in" href="#" title="Zoom in" role="button" aria-label="Zoom in">+</a>
+                <a class="leaflet-control-zoom-out" href="#" title="Zoom out" role="button" aria-label="Zoom out">-</a>
             `;
             div.appendChild(zoomControl);
             
             // 줌 버튼 이벤트 핸들러
             zoomControl.querySelector('.leaflet-control-zoom-in').addEventListener('click', (e) => {
                 e.preventDefault();
+                e.stopPropagation();
                 this.map.zoomIn();
             });
             
             zoomControl.querySelector('.leaflet-control-zoom-out').addEventListener('click', (e) => {
                 e.preventDefault();
+                e.stopPropagation();
                 this.map.zoomOut();
             });
-    
+
             // 주 선택 필터 드롭다운 추가
             const states = this.geoJsonData.features
                 .map(f => ({
@@ -245,7 +244,7 @@ class TruckCongestionMap {
                     name: f.properties.name
                 }))
                 .sort((a, b) => a.name.localeCompare(b.name));
-    
+
             const filterDropdownHtml = `
                 <select class="state-filter">
                     <option value="">Select State</option>
@@ -255,13 +254,13 @@ class TruckCongestionMap {
                 </select>
             `;
             div.insertAdjacentHTML('beforeend', filterDropdownHtml);
-    
+
             // 리셋 버튼 추가
             const resetButtonHtml = `
                 <button class="truck-reset-btn reset-btn">Reset View</button>
             `;
             div.insertAdjacentHTML('beforeend', resetButtonHtml);
-    
+
             // 이벤트 리스너 추가
             div.querySelector('.truck-reset-btn').addEventListener('click', () => {
                 this.map.setView([37.8, -96], 4);
@@ -269,60 +268,48 @@ class TruckCongestionMap {
                 if (stateFilter) stateFilter.value = '';
                 this.map.closePopup(); // 리셋 시 툴팁 닫기
             });
-    
+
+            // ======================================================================
+            // BUG FIX: 필터 변경 이벤트 핸들러 수정
+            // ======================================================================
             div.querySelector('.state-filter').addEventListener('change', (e) => {
                 const stateId = e.target.value;
+
+                // 1. 어떤 동작이든 시작하기 전에 열려있는 팝업을 먼저 닫습니다.
+                this.map.closePopup();
+
                 if (!stateId) {
+                    // "Select State"를 선택하면 기본 뷰로 리셋합니다.
                     this.map.setView([37.8, -96], 4);
-                    this.map.closePopup(); // "Select State" 선택 시 툴팁 닫기
                     return;
                 }
-    
+
                 const state = this.geoJsonData.features.find(f => f.id === stateId);
                 if (state) {
                     const bounds = L.geoJSON(state).getBounds();
                     const center = bounds.getCenter();
                     const fixedZoomLevel = 7;
-    
+                    const stateData = this.metricData[stateId] || {};
+
+                    // 2. 지도 이동/줌 애니메이션이 끝난 후 'moveend' 이벤트를 한 번만 수신합니다.
+                    this.map.once('moveend', () => {
+                        // 3. 애니메이션이 끝난 후, 해당 주의 툴팁을 정확한 위치에 표시합니다.
+                        this.showTooltip(center, stateData);
+                    });
+
+                    // 4. 지도 이동을 시작합니다.
                     this.map.setView(center, fixedZoomLevel);
-                    
-                    // 주를 선택한 후 해당 주의 툴팁 표시 (레일 지도와 유사한 동작)
-                    setTimeout(() => {
-                        const stateLayer = this.findStateLayer(stateId);
-                        if (stateLayer) {
-                            // 마우스 오버 이벤트를 트리거하여 툴팁 표시
-                            stateLayer.fire('mouseover');
-                            
-                            // 일정 시간 후 툴팁이 열리지 않으면 강제로 표시
-                            setTimeout(() => {
-                                if (!this.map.getPopup() || !this.map.getPopup().isOpen()) {
-                                    this.showTooltip(center, this.metricData[stateId] || {});
-                                }
-                            }, 500);
-                        }
-                    }, 300); // 지도 이동이 완료될 시간을 주기 위해 약간의 지연 추가
                 }
             });
-    
+
             L.DomEvent.disableClickPropagation(div);
             L.DomEvent.disableScrollPropagation(div);
-    
+
             this.filterControlInstance = control;
             return div;
         };
         
         control.addTo(this.map);
-    }
-    
-    // 주 레이어를 찾는 헬퍼 메소드 추가
-    findStateLayer(stateId) {
-        let targetLayer = null;
-        this.stateLayer.eachLayer((layer) => {
-            if (layer.feature && layer.feature.id === stateId) {
-                targetLayer = layer;
-            }
-        });
-        return targetLayer;
     }
     
     showError(message) {
