@@ -209,68 +209,92 @@ class TruckCongestionMap {
     }
 
     // 리셋 버튼과 필터 드롭다운 컨트롤 (상단 우측에 나란히 배치)
-    addRightControls() {
-        const control = L.control({ position: 'topright' });
-
-        control.onAdd = () => {
-            const div = L.DomUtil.create('div', 'map-control-group-right');
-
-            // 주 선택 필터 드롭다운 추가 (먼저 삽입)
-            const states = this.geoJsonData.features
-                .map(f => ({
-                    id: f.id,
-                    name: f.properties.name
-                }))
-                .sort((a, b) => a.name.localeCompare(b.name));
-
-            const filterDropdownHtml = `
-                <select class="state-filter">
-                    <option value="">Select State</option>
-                    ${states.map(state =>
-                        `<option value="${state.id}">${state.name}</option>`
-                    ).join('')}
-                </select>
-            `;
-            div.insertAdjacentHTML('beforeend', filterDropdownHtml); // 드롭다운 먼저 추가
-
-            // 리셋 버튼 추가 (나중에 삽입)
-            const resetButtonHtml = `
-                <button class="truck-reset-btn reset-btn">Reset View</button>
-            `;
-            div.insertAdjacentHTML('beforeend', resetButtonHtml); // 리셋 버튼 추가
-
-            // 이벤트 리스너 추가 (요소들이 DOM에 추가된 후 참조)
-            div.querySelector('.truck-reset-btn').addEventListener('click', () => {
-                this.map.setView([37.8, -96], 4);
-                const stateFilter = div.querySelector('.state-filter'); // 현재 div 내에서 찾음
-                if (stateFilter) stateFilter.value = '';
-            });
-
-            div.querySelector('.state-filter').addEventListener('change', (e) => {
-                const stateId = e.target.value;
-                if (!stateId) {
-                    this.map.setView([37.8, -96], 4);
-                    return;
-                }
-
-                const state = this.geoJsonData.features.find(f => f.id === stateId);
-                if (state) {
-                    const bounds = L.geoJSON(state).getBounds();
-                    const center = bounds.getCenter();
-                    const fixedZoomLevel = 7;
-
-                    this.map.setView(center, fixedZoomLevel);
-                }
-            });
-
-            L.DomEvent.disableClickPropagation(div);
-            L.DomEvent.disableScrollPropagation(div);
-
-            this.filterControlInstance = control; // 이제 전체 그룹핑 컨트롤이 됨
-            return div;
-        };
-        control.addTo(this.map);
+addRightControls() {
+    if (this.filterControlInstance) {
+        this.map.removeControl(this.filterControlInstance);
     }
+    
+    const control = L.control({ position: 'topright' });
+    
+    control.onAdd = () => {
+        const div = L.DomUtil.create('div', 'map-control-group-right');
+        
+        // 커스텀 줌 컨트롤 추가 (레일 지도와 동일한 구조)
+        const zoomControl = L.DomUtil.create('div', 'leaflet-control-zoom');
+        zoomControl.innerHTML = `
+            <a class="leaflet-control-zoom-in" href="#" title="Zoom in">+</a>
+            <a class="leaflet-control-zoom-out" href="#" title="Zoom out">-</a>
+        `;
+        div.appendChild(zoomControl);
+        
+        // 줌 버튼 이벤트 핸들러
+        zoomControl.querySelector('.leaflet-control-zoom-in').addEventListener('click', (e) => {
+            e.preventDefault();
+            this.map.zoomIn();
+        });
+        
+        zoomControl.querySelector('.leaflet-control-zoom-out').addEventListener('click', (e) => {
+            e.preventDefault();
+            this.map.zoomOut();
+        });
+
+        // 주 선택 필터 드롭다운 추가 (기존 코드 유지)
+        const states = this.geoJsonData.features
+            .map(f => ({
+                id: f.id,
+                name: f.properties.name
+            }))
+            .sort((a, b) => a.name.localeCompare(b.name));
+
+        const filterDropdownHtml = `
+            <select class="state-filter">
+                <option value="">Select State</option>
+                ${states.map(state =>
+                    `<option value="${state.id}">${state.name}</option>`
+                ).join('')}
+            </select>
+        `;
+        div.insertAdjacentHTML('beforeend', filterDropdownHtml);
+
+        // 리셋 버튼 추가 (기존 코드 유지)
+        const resetButtonHtml = `
+            <button class="truck-reset-btn reset-btn">Reset View</button>
+        `;
+        div.insertAdjacentHTML('beforeend', resetButtonHtml);
+
+        // 이벤트 리스너 추가 (기존 코드 유지)
+        div.querySelector('.truck-reset-btn').addEventListener('click', () => {
+            this.map.setView([37.8, -96], 4);
+            const stateFilter = div.querySelector('.state-filter');
+            if (stateFilter) stateFilter.value = '';
+        });
+
+        div.querySelector('.state-filter').addEventListener('change', (e) => {
+            const stateId = e.target.value;
+            if (!stateId) {
+                this.map.setView([37.8, -96], 4);
+                return;
+            }
+
+            const state = this.geoJsonData.features.find(f => f.id === stateId);
+            if (state) {
+                const bounds = L.geoJSON(state).getBounds();
+                const center = bounds.getCenter();
+                const fixedZoomLevel = 7;
+
+                this.map.setView(center, fixedZoomLevel);
+            }
+        });
+
+        L.DomEvent.disableClickPropagation(div);
+        L.DomEvent.disableScrollPropagation(div);
+
+        this.filterControlInstance = control;
+        return div;
+    };
+    
+    control.addTo(this.map);
+}
 
     showError(message) {
         if (this.errorControl) {
