@@ -283,26 +283,35 @@ class TruckCongestionMap {
                     // 1. 기존 툴팁 강제 닫기
                     this.map.closePopup();
                     
-                    // 2. 이동 중 툴팁 차단을 위해 일시적 이벤트 제거
-                    const originalMouseOver = this.stateLayer._events?.mouseover;
-                    this.stateLayer.off('mouseover');
+                    // 2. 이동 중 툴팁 차단을 위해 일시적으로 모든 주의 mouseover 이벤트 제거
+                    const originalMouseOverHandlers = [];
+                    this.stateLayer.eachLayer(layer => {
+                        originalMouseOverHandlers.push({
+                            layer: layer,
+                            handler: layer._events.mouseover[0].fn
+                        });
+                        layer.off('mouseover');
+                    });
             
                     const bounds = L.geoJSON(state).getBounds();
                     const center = bounds.getCenter();
                     
-                    // 3. 이동 실행
+                    // 3. 부드러운 이동 시작
                     this.map.flyTo(center, 7, {
                         duration: 0.5,
                         onEnd: () => {
-                            // 4. 이동 완료 후 원하는 주의 툴팁만 표시
-                            this.showTooltip(center, this.metricData[stateId] || {});
+                            // 4. 이동 완료 후 선택한 주의 툴팁 강제 표시
+                            const targetLayer = this.findStateLayer(stateId);
+                            if (targetLayer) {
+                                this.showTooltip(center, this.metricData[stateId] || {});
+                            }
                             
-                            // 5. 0.5초 후 기존 마우스 이벤트 복원
+                            // 5. 0.3초 후 기존 mouseover 이벤트 복원
                             setTimeout(() => {
-                                if (originalMouseOver) {
-                                    this.stateLayer.on('mouseover', originalMouseOver[0].fn);
-                                }
-                            }, 500);
+                                originalMouseOverHandlers.forEach(item => {
+                                    item.layer.on('mouseover', item.handler);
+                                });
+                            }, 300);
                         }
                     });
                 }
