@@ -313,8 +313,8 @@ html, body {
 /* 좌측 상단 컨트롤 컨테이너 (INBOUND/OUTBOUND 토글 포함) */
 .leaflet-top.leaflet-left {
     display: block !important; /* 다시 보이도록 설정 */
-    /* PC: 상단 탭 (60px) 아래 5px 여백에 위치하도록 조정 */
-    top: 65px !important; 
+    /* PC: 상단 탭 (60px) 바로 아래 (0px 여백)로 올림 */
+    top: 60px !important; 
     left: 50% !important; /* 가로 중앙 정렬 */
     transform: translateX(-50%) !important; /* 정확한 중앙 정렬 */
     width: auto; /* 내용물에 따라 너비 조정 */
@@ -332,8 +332,8 @@ html, body {
     display: flex;
     flex-direction: column;
     gap: 8px; /* 컨트롤 그룹 사이의 간격 */
-    /* PC: 상단 탭 (60px) 아래 5px 여백에 위치하도록 조정 */
-    top: 65px !important; 
+    /* PC: 상단 탭 (60px) 바로 아래 (0px 여백)로 올림 */
+    top: 60px !important; 
     right: 10px !important;
     width: 160px; /* 컨트롤 그룹 전체 너비 고정 */
     background: none;
@@ -550,16 +550,16 @@ html, body {
     /* 컨트롤: 모바일 조정 */
     /* 좌측 상단 컨트롤 컨테이너 (INBOUND/OUTBOUND 토글 포함) */
     .leaflet-top.leaflet-left {
-        /* 상단 탭 (50px)과 5px 여백을 고려하여 위치 조정 */
-        top: 55px !important; /* 모바일 버전: 50px (탭 높이) + 5px (원하는 여백) */
+        /* 상단 탭 (50px) 바로 아래 (0px 여백)로 올림 */
+        top: 50px !important; 
         left: 50% !important;
         transform: translateX(-50%) !important;
     }
     
     /* 우측 상단 컨트롤 컨테이너 (줌, 리셋, 필터 포함) */
     .leaflet-top.leaflet-right {
-        /* 상단 탭 (50px)과 5px 여백을 고려하여 위치 조정 */
-        top: 55px !important; /* 모바일 버전: 50px (탭 높이) + 5px (원하는 여백) */
+        /* 상단 탭 (50px) 바로 아래 (0px 여백)로 올림 */
+        top: 50px !important; 
         gap: 8px; /* 컨트롤 블록 내부 간격 */
         width: calc(100% - 20px); /* 화면 너비에 맞춰 10px 좌우 패딩/마진 확보 */
         max-width: 160px; /* PC 크기보다 넓어지지 않도록 고정 */
@@ -612,10 +612,10 @@ html, body {
 
     /* 좌측 상단 컨트롤 컨테이너 (INBOUND/OUTBOUND 토글 포함) */
     .leaflet-top.leaflet-left {
-        top: 55px !important; /* 탭 높이(50px) 아래 5px 여백 유지 */
+        top: 50px !important; /* 탭 높이(50px) 바로 아래 (0px 여백) 유지 */
     }
     /* 우측 상단 컨트롤 컨테이너 (줌, 리셋, 필터 포함) */
     .leaflet-top.leaflet-right {
-        top: 55px !important; /* 탭 높이(50px) 아래 5px 여백 유지 */
+        top: 50px !important; /* 탭 높이(50px) 바로 아래 (0px 여백) 유지 */
     }
 }
