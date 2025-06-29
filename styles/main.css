@@ -71,7 +71,7 @@ html, body {
    ===================================== */
 .transport-tab-container {
     position: fixed;
-    top: 0;
+    top: -30px;
     left: 0;
     width: 100%;
     /* 상단 탭 높이 증가 */
@@ -333,7 +333,7 @@ html, body {
     flex-direction: column;
     gap: 8px; /* 컨트롤 그룹 사이의 간격 */
     /* 상단 탭 (60px) 아래 10px 여백에 위치 */
-    top: 70px !important; /* PC 버전: 60px (탭 높이) + 10px (원하는 여백) */
+    top: 40px !important; /* PC 버전: 60px (탭 높이) + 10px (원하는 여백) */
     right: 10px !important;
     width: 160px; /* 컨트롤 그룹 전체 너비 고정 */
     background: none;
