@@ -313,10 +313,11 @@ html, body {
 /* 좌측 상단 컨트롤 컨테이너 (INBOUND/OUTBOUND 토글 포함) */
 .leaflet-top.leaflet-left {
     display: block !important;
+    bottom: auto !important; /* 하단 고정 해제 */
+    left: 10px !important; /* 화면 좌측에서 10px */
+    transform: none !important; /* 중앙 정렬 해제 */
     /* PC: 상단 탭 (60px) 아래 5px 여백 */
     top: 65px !important; 
-    left: 50% !important; /* 가로 중앙 정렬 유지 */
-    transform: translateX(-50%) !important; /* 정확한 중앙 정렬 유지 */
     width: auto;
     height: auto;
     padding: 0;
@@ -553,8 +554,8 @@ html, body {
         /* 모바일: 상단 탭 (50px) 아래 5px 여백 */
         top: 55px !important; 
         bottom: auto !important; /* 하단 고정 해제 */
-        left: 50% !important; /* 가로 중앙 정렬 유지 */
-        transform: translateX(-50%) !important; /* 정확한 중앙 정렬 유지 */
+        left: 10px !important; /* 화면 좌측에서 10px */
+        transform: none !important; /* 중앙 정렬 해제 */
     }
     
     /* 우측 상단 컨트롤 컨테이너 (줌, 리셋, 필터 포함) */
