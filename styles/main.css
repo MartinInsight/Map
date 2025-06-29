@@ -313,11 +313,10 @@ html, body {
 /* 좌측 상단 컨트롤 컨테이너 (INBOUND/OUTBOUND 토글 포함) */
 .leaflet-top.leaflet-left {
     display: block !important;
-    /* 최하단 가운데 배치 */
-    top: auto !important; /* 상단 고정 해제 */
-    bottom: 10px !important; /* 화면 하단에서 10px 위로 */
-    left: 50% !important; /* 가로 중앙 정렬 */
-    transform: translateX(-50%) !important; /* 정확한 중앙 정렬 */
+    /* PC: 상단 탭 (60px) 아래 5px 여백 */
+    top: 65px !important; 
+    left: 50% !important; /* 가로 중앙 정렬 유지 */
+    transform: translateX(-50%) !important; /* 정확한 중앙 정렬 유지 */
     width: auto;
     height: auto;
     padding: 0;
@@ -333,8 +332,8 @@ html, body {
     display: flex;
     flex-direction: column;
     gap: 8px; /* 컨트롤 그룹 사이의 간격 */
-    /* PC: 상단 탭 (60px) 바로 아래 5px 여백 */
-    top: 65px !important; 
+    /* PC: 상단 탭 (60px) 바로 아래 0px 여백 (5px 더 올림) */
+    top: 60px !important; 
     right: 10px !important;
     width: 160px; /* 컨트롤 그룹 전체 너비 고정 */
     background: none;
@@ -551,17 +550,17 @@ html, body {
     /* 컨트롤: 모바일 조정 */
     /* 좌측 상단 컨트롤 컨테이너 (INBOUND/OUTBOUND 토글 포함) */
     .leaflet-top.leaflet-left {
-        /* 모바일 최하단 가운데 배치 */
-        top: auto !important; /* 상단 고정 해제 */
-        bottom: 10px !important; /* 화면 하단에서 10px 위로 */
-        left: 50% !important; /* 가로 중앙 정렬 */
-        transform: translateX(-50%) !important; /* 정확한 중앙 정렬 */
+        /* 모바일: 상단 탭 (50px) 아래 5px 여백 */
+        top: 55px !important; 
+        bottom: auto !important; /* 하단 고정 해제 */
+        left: 50% !important; /* 가로 중앙 정렬 유지 */
+        transform: translateX(-50%) !important; /* 정확한 중앙 정렬 유지 */
     }
     
     /* 우측 상단 컨트롤 컨테이너 (줌, 리셋, 필터 포함) */
     .leaflet-top.leaflet-right {
-        /* 모바일: 상단 탭 (50px) 바로 아래 5px 여백 */
-        top: 55px !important; 
+        /* 모바일: 상단 탭 (50px) 바로 아래 0px 여백 (5px 더 올림) */
+        top: 50px !important; 
         gap: 8px; /* 컨트롤 블록 내부 간격 */
         width: calc(100% - 20px); /* 화면 너비에 맞춰 10px 좌우 패딩/마진 확보 */
         max-width: 160px; /* PC 크기보다 넓어지지 않도록 고정 */
@@ -613,9 +612,8 @@ html, body {
     }
 
     /* 좌측 상단 컨트롤 컨테이너 (INBOUND/OUTBOUND 토글 포함) */
-    /* bottom: 10px; 설정은 768px 미디어 쿼리에서 이미 적용되므로 여기서 다시 명시할 필요 없음 */
-    /* top 속성은 제거되어 있으므로 그대로 둠 */
+    /* top: 55px; 설정은 768px 미디어 쿼리에서 이미 적용되므로 여기서 다시 명시할 필요 없음 */
 
     /* 우측 상단 컨트롤 컨테이너 (줌, 리셋, 필터 포함) */
-    /* top: 55px; 설정은 768px 미디어 쿼리에서 이미 적용되므로 여기서 다시 명시할 필요 없음 */
+    /* top: 50px; 설정은 768px 미디어 쿼리에서 이미 적용되므로 여기서 다시 명시할 필요 없음 */
 }
