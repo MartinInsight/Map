@@ -1,494 +1,533 @@
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600&display=swap');
 
 /* =====================================
-   1. Base Styles & Typography
-   ===================================== */
+   1. Base Styles & Typography
+   ===================================== */
 html, body {
-    height: 100%;
-    margin: 0;
-    padding: 0;
-    overflow: hidden; /* Prevent body scroll, map handles its own scroll */
-    font-family: 'Noto Sans KR', sans-serif;
-    color: #333; /* Default text color */
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden; /* Prevent body scroll, map handles its own scroll */
+    font-family: 'Noto Sans KR', sans-serif;
+    color: #333; /* Default text color */
 }
 
 /* =====================================
-   2. Global Leaflet Overrides
-   ===================================== */
+   2. Global Leaflet Overrides
+   ===================================== */
+/* Leaflet 기본 컨트롤 박스 스타일 재정의 (기본 배경/패딩/그림자 제거) */
 .leaflet-control {
-    background: none !important;
-    padding: 0 !important;
-    border: none !important;
-    box-shadow: none !important;
+    background: none !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
 }
 
+/* Leaflet 팝업의 구조적 스타일 조정 */
 .leaflet-popup-content-wrapper {
-    background-color: white !important;
-    border-radius: 8px !important;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2) !important;
-    padding: 0 !important; /* Padding is managed in .leaflet-popup-content */
-    overflow: hidden;
-    font-family: 'Noto Sans KR', sans-serif !important;
-    min-width: 220px !important;
+    background-color: white !important;
+    border-radius: 8px !important;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2) !important;
+    padding: 0 !important; /* .leaflet-popup-content에서 패딩 관리 */
+    overflow: hidden;
+    font-family: 'Noto Sans KR', sans-serif !important;
+    min-width: 220px !important;
 }
 
 .leaflet-popup-content {
-    margin: 0 !important;
-    padding: 16px !important;
+    margin: 0 !important;
+    padding: 16px !important; /* 실제 팝업 내용 패딩 */
 }
 
 .leaflet-popup-tip-container {
-    margin-top: -1px !important;
+    margin-top: -1px !important; /* 팁 위치 조정 */
 }
 
 .leaflet-popup-tip {
-    background-color: white !important;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2) !important;
+    background-color: white !important;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2) !important;
 }
 
+/* 줌 아웃 (-) 버튼에 대한 특정 border-radius (row-reverse로 인해 좌측) */
 .leaflet-control-zoom-out {
-    border-radius: 6px 0 0 6px !important;
+    border-radius: 6px 0 0 6px !important;
 }
 
+/* 줌 인 (+) 버튼에 대한 특정 border-radius (row-reverse로 인해 우측) */
 .leaflet-control-zoom-in {
-    border-radius: 0 6px 6px 0 !important;
-    border-right: none !important;
+    border-radius: 0 6px 6px 0 !important;
+    border-right: none !important; /* 두 버튼 사이의 중복 테두리 제거 */
 }
 
+/* 줌 버튼 호버/클릭 효과 제거 */
 .leaflet-control-zoom a:hover,
 .leaflet-control-zoom a:active {
-    background-color: #f5f5f5 !important;
-    transform: none !important;
+    background-color: #f5f5f5 !important;
+    transform: none !important; /* 변형 효과 제거 */
 }
 
 /* =====================================
-   3. Tab Menu Styles
-   ===================================== */
+   3. Tab Menu Styles
+   ===================================== */
 .transport-tab-container {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 60px; /* PC tab height */
-    z-index: 1000;
-    display: flex;
-    background: white;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    /* 상단 탭 높이 증가 */
+    height: 60px; /* PC 기본 탭 높이 고정 */
+    z-index: 1000;
+    display: flex;
+    background: white;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 }
 
 .transport-tab {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: none;
-    background: white;
-    cursor: pointer;
-    font-family: 'Noto Sans KR', sans-serif;
-    font-weight: 400;
-    font-size: 16px; /* Adjusted PC font size */
-    color: black;
-    position: relative;
-    transition: all 0.3s ease;
-    padding: 0;
-    margin: 0;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: white;
+    cursor: pointer;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-weight: 400;
+    /* 폰트 크기 증가 */
+    font-size: 18px; /* PC 폰트 크기 */
+    color: black;
+    position: relative;
+    transition: all 0.3s ease;
+    padding: 0;
+    margin: 0;
 }
 
 .transport-tab::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: 3px;
-    background-color: #00657E;
-    opacity: 0;
-    transition: opacity 0.3s ease;
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background-color: #00657E; /* 활성 탭 표시기 색상 */
+    opacity: 0;
+    transition: opacity 0.3s ease;
 }
 
 .transport-tab.active {
-    font-weight: 600;
-    color: #003A52;
+    font-weight: 600;
+    color: #003A52; /* 활성 텍스트 색상 */
 }
 
 .transport-tab.active::after {
-    opacity: 1;
+    opacity: 1;
 }
 
 .transport-tab:not(.active):hover::after {
-    opacity: 0.5;
+    opacity: 0.5; /* 비활성 탭에 대한 미묘한 호버 효과 */
 }
 
 /* =====================================
-   4. Map Container Styles
-   ===================================== */
+   4. Map Container Styles
+   ===================================== */
 .transport-map {
-    position: fixed;
-    top: 60px;
-    left: 0;
-    width: 100%;
-    height: calc(100% - 60px);
-    display: none;
-    background-color: #F8F8F8;
+    position: fixed;
+    top: 60px; /* 탭 높이만큼 아래로 이동 */
+    left: 0;
+    width: 100%;
+    height: calc(100% - 60px); /* 탭 높이를 제외한 나머지 높이 */
+    display: none; /* 기본적으로 숨김, JS로 활성화 */
+    background-color: #F8F8F8;
 }
 
 .transport-map.active {
-    display: block;
+    display: block; /* 활성 지도 표시 */
 }
 
 /* =====================================
-   5. Control Styles (Common & Specific)
-   ===================================== */
+   5. Control Styles (Common & Specific)
+   ===================================== */
+
+/* 우측 상단 컨트롤 그룹 (줌, 리셋, 필터) */
 .map-control-group-right {
-    background: white;
-    padding: 8px 12px;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.15);
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 8px;
-    width: 100%;
-    box-sizing: border-box;
+    background: white;
+    padding: 8px 12px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+    display: flex;
+    flex-direction: column; /* 자식 요소들을 세로로 정렬 */
+    align-items: stretch; /* 자식 요소들을 컨테이너 너비에 맞게 늘림 */
+    gap: 8px; /* 모든 컨트롤 간의 간격을 8px로 통일 */
+    width: 100%; /* 부모에 맞춰 너비 설정 */
+    box-sizing: border-box;
 }
 
+/* Leaflet 줌 컨트롤 스타일링 (줌 버튼 컨테이너) */
 .leaflet-control-zoom {
-    display: flex;
-    flex-direction: row-reverse;
-    width: 100%;
-    height: 34px;
-    background: transparent !important;
-    padding: 0 !important;
-    border-radius: 0;
-    box-shadow: none;
-    border: none;
-    margin: 0 !important;
+    display: flex;
+    flex-direction: row-reverse; /* 변경: 순서 반전 (- +) */
+    width: 100%; /* 부모(.map-control-group-right) 너비에 맞춤 */
+    height: 34px; /* 높이 고정 */
+    background: transparent !important; /* 배경 투명 */
+    padding: 0 !important;
+    border-radius: 0;
+    box-shadow: none;
+    border: none;
+    margin: 0 !important; /* 기존 마진 제거 */
 }
 
+/* 줌 버튼 (+) (-) 개별 스타일 조정 */
 .leaflet-control-zoom a {
-    flex: 1;
-    height: 34px !important;
-    background-color: white !important;
-    border: 1px solid #e0e0e0 !important;
-    text-decoration: none !important;
-    font-family: 'Noto Sans KR', sans-serif;
-    font-weight: 500 !important;
-    font-size: 13px !important;
-    color: #333 !important;
-    box-sizing: border-box;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    line-height: 1 !important;
-    padding-top: 0 !important;
+    flex: 1; /* 가로 공간을 균등하게 분할 */
+    height: 34px !important; /* 높이 고정 */
+    background-color: white !important;
+    border: 1px solid #e0e0e0 !important;
+    text-decoration: none !important;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-weight: 500 !important;
+    font-size: 13px !important;
+    color: #333 !important;
+    box-sizing: border-box;
+    
+    /* 텍스트 가운데 정렬 */
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    line-height: 1 !important; /* 기존 line-height 제거 */
+    padding-top: 0 !important; /* 상단 패딩 초기화 */
 }
 
+/* 리셋 버튼 스타일 */
 .reset-btn {
-    width: 100%;
-    padding: 0 15px;
-    background: white;
-    border: 1px solid #e0e0e0;
-    border-radius: 6px;
-    cursor: pointer;
-    font-family: 'Noto Sans KR', sans-serif;
-    font-weight: 500;
-    font-size: 13px;
-    box-shadow: none;
-    height: 34px;
-    white-space: nowrap;
-    transition: all 0.2s;
-    color: #333;
+    width: 100%; /* 부모(.map-control-group-right)의 너비를 채움 */
+    padding: 0 15px;
+    background: white; /* 개별 버튼 배경 유지 */
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-weight: 500;
+    font-size: 13px;
+    box-shadow: none; /* 그림자 제거 */
+    height: 34px; /* 높이 고정 */
+    white-space: nowrap;
+    transition: all 0.2s;
+    color: #333;
 }
 
 .reset-btn:hover {
-    background: #f5f5f5;
-    transform: translateY(-1px);
+    background: #f5f5f5;
+    transform: translateY(-1px);
 }
 
+/* 필터 드롭다운 스타일 */
 .filter-control select,
 .map-control-group-right select {
-    width: 100%;
-    padding: 8px 12px;
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    font-size: 13px;
-    font-family: 'Noto Sans KR', sans-serif;
-    font-weight: 500;
-    background-color: #f9f9f9;
-    transition: all 0.2s;
-    color: #333;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='%23003A52'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 10px center;
-    padding-right: 30px;
-    appearance: none;
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    box-shadow: none;
-    height: 34px;
+    width: 100%; /* 부모(.map-control-group-right)의 너비를 채움 */
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 13px;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-weight: 500;
+    background-color: #f9f9f9; /* 개별 셀렉트 배경 유지 */
+    transition: all 0.2s;
+    color: #333;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='%23003A52'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    padding-right: 30px; /* 커스텀 화살표 공간 확보 */
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    box-shadow: none; /* 셀렉트 자체 그림자 제거 */
+    height: 34px; /* 높이 고정 */
 }
 
 .filter-control select:focus,
 .map-control-group-right select:focus {
-    outline: none;
-    border-color: #00657E;
-    box-shadow: 0 0 0 2px rgba(0,101,126,0.2);
+    outline: none;
+    border-color: #00657E;
+    box-shadow: 0 0 0 2px rgba(0,101,126,0.2); /* 포커스 시 테두리 그림자는 유지 */
 }
 
+/* 트럭 맵 토글 버튼 (INBOUND/OUTBOUND) */
 .truck-toggle-map-control {
-    background: transparent !important;
-    box-shadow: none !important;
-    z-index: 1000;
-    display: flex;
-    flex-wrap: nowrap;
-    gap: 0 !important;
-    padding: 0 !important;
+    background: transparent !important; /* 배경 및 그림자 완전 제거 */
+    box-shadow: none !important;
+    z-index: 1000;
+    display: flex; /* Ensure flexbox is applied */
+    flex-wrap: nowrap; /* Prevent wrapping onto new line */
+    gap: 0 !important; /* Ensure no gap between flex items */
+    padding: 0 !important; /* 패딩도 제거 */
 }
 
 .truck-toggle-btn {
-    padding: 0 16px;
-    border: 1px solid #e0e0e0;
-    background: white;
-    cursor: pointer;
-    font-family: 'Noto Sans KR', sans-serif;
-    font-weight: 500;
-    font-size: 13px;
-    height: 34px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #333;
-    box-sizing: border-box;
-    margin: 0 !important;
-    flex-shrink: 0;
-    min-width: fit-content;
+    padding: 0 16px;
+    border: 1px solid #e0e0e0;
+    background: white; /* 각 버튼에 개별 배경 */
+    cursor: pointer;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-weight: 500;
+    font-size: 13px; /* Base font size, will be overridden by mobile media query if specified */
+    height: 34px; /* PC height for consistency */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #333;
+    box-sizing: border-box;
+    margin: 0 !important; /* Ensure no margin */
+    flex-shrink: 0; /* Prevent buttons from shrinking */
+    min-width: fit-content; /* Ensure content fits */
 }
 
+/* 첫 번째 토글 버튼 왼쪽 모서리 둥글게 */
 .truck-toggle-btn:first-child {
-    border-top-left-radius: 6px;
-    border-bottom-left-radius: 6px;
+    border-top-left-radius: 6px;
+    border-bottom-left-radius: 6px;
 }
 
+/* 마지막 토글 버튼 오른쪽 모서리 둥글게 */
 .truck-toggle-btn:last-child {
-    border-top-right-radius: 6px;
-    border-bottom-right-radius: 6px;
+    border-top-right-radius: 6px;
+    border-bottom-right-radius: 6px;
 }
 
+/* 토글 버튼 간 경계선 중복 제거 */
 .truck-toggle-btn:not(:first-child) {
-    border-left: none;
+    border-left: none;
 }
 
+/* 활성 토글 버튼 스타일 */
 .truck-toggle-btn.truck-active {
-    background: #00657E;
-    color: white;
-    border-color: #00657E;
+    background: #00657E;
+    color: white;
+    border-color: #00657E; /* active 시 테두리 색상 통일 */
 }
 
 .truck-toggle-btn:not(.truck-active):hover {
-    background: #f0f0f0;
+    background: #f0f0f0;
 }
 
+/* 컨트롤 위치 조정 - Leaflet이 생성하는 최상위 위치 컨테이너를 직접 제어 */
+/* 좌측 상단 컨트롤 컨테이너 (INBOUND/OUTBOUND 토글 포함) */
 .leaflet-top.leaflet-left {
-    display: block !important;
-    bottom: auto !important;
-    top: 75px !important; /* PC: 60px header + 15px gap */
-    left: 10px !important; /* Default for mobile */
-    transform: none !important; /* Default for mobile */
-    width: auto;
-    height: auto;
-    padding: 0;
-    margin: 0;
-    background: none;
-    box-shadow: none;
-    z-index: 999;
+    display: block !important;
+    top: 65px !important; /* PC 버전: 60px (탭 높이) + 5px (원하는 여백) */
+    left: 50% !important; /* 가로 중앙 정렬 */
+    transform: translateX(-50%) !important; /* 정확한 중앙 정렬 */
+    width: auto;
+    height: auto;
+    padding: 0;
+    margin: 0;
+    background: none;
+    box-shadow: none;
+    z-index: 999;
 }
 
+
+/* 우측 상단 컨트롤 컨테이너 (줌, 리셋, 필터 포함) */
 .leaflet-top.leaflet-right {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    top: 75px !important; /* PC: 60px header + 15px gap */
-    right: 10px !important;
-    width: 160px;
-    background: none;
-    padding: 0;
-    border-radius: 0;
-    box-shadow: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px; /* 컨트롤 그룹 사이의 간격 */
+    top: 65px !important; /* PC 버전: 60px (탭 높이) + 5px (원하는 여백) */
+    right: 10px !important;
+    width: 160px; /* 컨트롤 그룹 전체 너비 고정 */
+    background: none;
+    padding: 0;
+    border-radius: 0;
+    box-shadow: none;
 }
 
 /* =====================================
-   6. Popup & Tooltip Styles
-   ==================================== */
+   6. Popup & Tooltip Styles
+   ==================================== */
+
+/* 일반 팝업 내용 스타일 */
 .leaflet-popup-content h4 {
-    margin: 0 0 12px 0;
-    font-size: 16px;
-    font-weight: 600;
-    color: #222;
-    border-bottom: 1px solid #eee;
-    padding-bottom: 8px;
+    margin: 0 0 12px 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #222;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 8px;
 }
 
 .leaflet-popup-content p {
-    margin: 10px 0;
-    font-size: 14px;
-    line-height: 1.4;
+    margin: 10px 0;
+    font-size: 14px;
+    line-height: 1.4;
 }
 
 .leaflet-popup-content strong {
-    color: #444;
-    font-weight: 500;
+    color: #444;
+    font-weight: 500;
 }
 
+/* 단일 마커 팝업 스타일링 (상세 정보) */
 .single-marker-popup .leaflet-popup-content-wrapper {
-    background: white;
-    color: #333;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    font-family: 'Noto Sans KR', sans-serif;
+    background: white;
+    color: #333;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    font-family: 'Noto Sans KR', sans-serif; /* 일관된 폰트 */
 }
 
+/* 팁 부분 배경색 통일 */
 .single-marker-popup .leaflet-popup-tip {
-    background: white;
+    background: white;
 }
 
 .single-marker-popup .location-info h5 {
-    margin-top: 0;
-    margin-bottom: 8px;
-    font-size: 18px;
-    color: #003A52;
-    border-bottom: 1px solid #eee;
-    padding-bottom: 5px;
+    margin-top: 0;
+    margin-bottom: 8px;
+    font-size: 18px;
+    color: #003A52;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 5px;
 }
 
 .single-marker-popup .location-info p {
-    margin-bottom: 5px;
-    font-size: 14px;
-    line-height: 1.4;
+    margin-bottom: 5px;
+    font-size: 14px;
+    line-height: 1.4;
 }
 
 .single-marker-popup .location-info strong {
-    color: #555;
+    color: #555;
 }
 
+/* 선택 사항: 여러 항목 팝업의 구분선 */
 .single-marker-popup .location-info hr {
-    border: 0;
-    border-top: 1px dashed #ddd;
-    margin: 10px 0;
+    border: 0;
+    border-top: 1px dashed #ddd;
+    margin: 10px 0;
 }
 
+/* 트럭 맵 팝업 내용의 특정 텍스트 색상 */
 .truck-positive {
-    color: #27ae60;
-    font-weight: 600;
+    color: #27ae60; /* 긍정적 지표에 대한 녹색 */
+    font-weight: 600;
 }
 
 .truck-negative {
-    color: #e74c3c;
-    font-weight: 600;
+    color: #e74c3c; /* 부정적 지표에 대한 빨간색 */
+    font-weight: 600;
 }
 
 .truck-normal-text {
-    font-weight: 400;
-    color: #555;
+    font-weight: 400;
+    color: #555;
 }
 
+/* 클러스터 팝업 헤더 (스파이더파이 후 여러 항목 표시될 때) */
 .cluster-popup-header {
-    margin-bottom: 10px;
-    border-bottom: 1px solid #eee;
-    padding-bottom: 5px;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #eee; /* 헤더 구분선 */
+    padding-bottom: 5px;
 }
 
 .cluster-popup-header h4, .cluster-popup-header p {
-    margin: 0;
-    padding: 0;
+    margin: 0;
+    padding: 0;
 }
 
 .cluster-popup-content {
-    max-height: 250px;
-    overflow-y: auto;
-    padding-right: 5px;
+    max-height: 250px; /* 스크롤 가능한 콘텐츠의 최대 높이 */
+    overflow-y: auto;
+    padding-right: 5px; /* 스크롤바 공간 확보 */
 }
 
 .location-info {
-    margin: 10px 0;
+    margin: 10px 0;
 }
 
 .location-info h5 {
-    margin-bottom: 5px;
-    color: #333;
+    margin-bottom: 5px;
+    color: #333;
 }
 
 
 /* =====================================
-   7. Information & Error Messages
-   ===================================== */
+   7. Information & Error Messages
+   ===================================== */
+
+/* 에러 메시지 컨트롤 */
 .error-message {
-    background-color: #ffe0e0;
-    color: #d63031;
-    padding: 10px 15px;
-    border-radius: 5px;
-    border: 1px solid #d63031;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-    font-weight: bold;
-    font-size: 14px;
-    text-align: center;
-    z-index: 9999;
-    font-family: 'Noto Sans KR', sans-serif;
+    background-color: #ffe0e0; /* 연한 빨강 */
+    color: #d63031; /* 진한 빨강 텍스트 */
+    padding: 10px 15px;
+    border-radius: 5px;
+    border: 1px solid #d63031;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    font-weight: bold;
+    font-size: 14px;
+    text-align: center;
+    z-index: 9999; /* 다른 요소 위에 표시되도록 */
+    font-family: 'Noto Sans KR', sans-serif;
 }
 
 /* =====================================
-   8. Custom Marker Icons
-   ===================================== */
+   8. Custom Marker Icons
+   ===================================== */
+/* 커스텀 DivIcons의 기본 스타일 (개별 마커에 사용) */
 .custom-div-icon {
-    /* No specific styles here, the inner div handles visuals */
+    /* 내부 div가 시각적 속성을 처리하므로 여기에 특정 스타일 없음 */
 }
 
+/* custom-div-icon 내부의 실제 원형 마커 스타일 */
 .custom-div-icon div {
-    border: 1.5px solid white;
-    box-shadow: 0 0 3px rgba(0,0,0,0.5);
-    box-sizing: border-box;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    border: 1.5px solid white; /* 흰색 테두리 */
+    box-shadow: 0 0 3px rgba(0,0,0,0.5); /* 미묘한 그림자 */
+    box-sizing: border-box; /* 패딩과 보더가 요소의 총 너비/높이에 포함되도록 */
+    display: flex; /* 내용이 추가될 경우 중앙 정렬을 위해 flexbox 사용 */
+    align-items: center;
+    justify-content: center;
+    /* background-color, width, height, border-radius는 JS에서 인라인으로 설정 */
 }
 
+/* 마커 클러스터 아이콘 스타일 */
 .marker-cluster-custom {
-    border-radius: 50%;
-    color: white;
-    font-weight: bold;
-    text-align: center;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 0 3px rgba(0,0,0,0.5);
+    border-radius: 50%; /* 원형 */
+    color: white;
+    font-weight: bold;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 3px rgba(0,0,0,0.5); /* 클러스터 아이콘 그림자 */
+    /* width, height, line-height, background-color는 JS에서 인라인으로 설정 */
 }
 
+/* 커스텀 툴팁 스타일링 */
 .custom-marker-tooltip {
-    background-color: rgba(0, 0, 0, 0.7);
-    color: white;
-    padding: 5px 8px;
-    border-radius: 4px;
-    font-size: 12px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-    white-space: nowrap;
-    z-index: 10000;
-    pointer-events: none;
+    background-color: rgba(0, 0, 0, 0.7); /* 어두운 배경 */
+    color: white; /* 흰색 텍스트 */
+    padding: 5px 8px; /* 패딩 */
+    border-radius: 4px; /* 약간 둥근 모서리 */
+    font-size: 12px; /* 가독성 있는 폰트 크기 */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2); /* 미묘한 그림자 */
+    white-space: nowrap; /* 내용을 한 줄에 유지 */
+    z-index: 10000; /* 다른 요소 위에 표시되도록 */
+    pointer-events: none; /* 맵으로 클릭 전달 허용 */
 }
 
+/* 툴팁이 항상 표시되도록 강제, 잠재적 숨김 상태 재정의 */
 .leaflet-tooltip {
-    display: block !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-    left: 0 !important;
-    top: 0 !important;
-    transform: none !important;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    left: 0 !important; /* 음수 left 변형 재설정 */
+    top: 0 !important; /* 음수 top 변형 재설정 */
+    transform: none !important; /* 원치 않는 변형 제거 */
 }
 
 
 /* =====================================
-   9. Responsive Design (Media Queries)
-   ===================================== */
+   9. Responsive Design (Media Queries)
+   ===================================== */
 
-/* For PC screens */
+/* PC 기기 (최소 너비: 769px) */
 @media (min-width: 769px) {
     .leaflet-top.leaflet-left {
         left: 50% !important;
@@ -496,76 +535,90 @@ html, body {
     }
 }
 
-/* For Mobile devices */
+/* 모바일 기기 (최대 너비: 768px) */
 @media (max-width: 768px) {
-    .transport-tab-container {
-        height: 50px;
-    }
+    .transport-tab-container {
+        height: 50px; /* 모바일 기본 탭 높이로 고정 */
+    }
 
-    .transport-tab {
-        font-size: 15px;
-        padding: 0 3px;
-    }
+    .transport-tab {
+        font-size: 16px; /* 모바일 폰트 크기 */
+        padding: 0 3px;
+    }
 
-    .transport-map {
-        top: 50px;
-        height: calc(100% - 50px);
-    }
+    .transport-map {
+        top: 50px; /* 탭 높이만큼 아래로 이동 */
+        height: calc(100% - 50px); /* 탭 높이를 제외한 나머지 높이 */
+    }
 
-    .leaflet-top.leaflet-left {
-        top: 60px !important;  /* Mobile: 50px header + 10px gap */
-        bottom: auto !important;
-        left: 10px !important;
-        transform: none !important;
-    }
-    
-    .leaflet-top.leaflet-right {
-        top: 60px !important; /* Mobile: 50px header + 10px gap */
-        gap: 8px;
-        width: calc(100% - 20px);
-        max-width: 160px;
-        right: 10px !important;
-        margin-left: auto;
-        padding: 6px 8px;
-    }
+    /* 컨트롤: 모바일 조정 */
+    /* 좌측 상단 컨트롤 컨테이너 (INBOUND/OUTBOUND 토글 포함) */
+    .leaflet-top.leaflet-left {
+        /* 탭 높이(50px) + 5px 여백 */
+        top: 55px !important;
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+    }
+    
+    /* 우측 상단 컨트롤 컨테이너 (줌, 리셋, 필터 포함) */
+    .leaflet-top.leaflet-right {
+        /* 탭 높이(50px) + 5px 여백 */
+        top: 55px !important;
+        gap: 8px; /* 컨트롤 블록 내부 간격 */
+        width: calc(100% - 20px); /* 화면 너비에 맞춰 10px 좌우 패딩/마진 확보 */
+        max-width: 160px; /* PC 크기보다 넓어지지 않도록 고정 */
+        right: 10px !important;
+        margin-left: auto; /* 우측 정렬 */
+        padding: 6px 8px; /* 전체 컨트롤 블록의 패딩 */
+    }
 
-    .map-control-container,
-    .map-control-group-right {
-        width: 100%;
-        padding: 0;
-        gap: 6px;
-    }
+    .map-control-container,
+    .map-control-group-right {
+        width: 100%; /* 부모(.leaflet-top.leaflet-right) 너비에 맞춰 확장 */
+        padding: 0; /* 내부 패딩 제거 */
+        gap: 6px; /* 리셋/셀렉트 버튼 간의 내부 간격 */
+    }
 
-    .reset-btn,
-    .map-control-group-right select,
-    .leaflet-control-zoom a,
-    .truck-toggle-btn {
-        height: 34px !important;
-        font-size: 13px !important;
-    }
-    .leaflet-control-zoom {
-        height: 34px;
-    }
-    
-    .truck-toggle-map-control {
-        gap: 0 !important;
-        flex-wrap: nowrap;
-    }
-    .truck-toggle-btn:not(:first-child) {
-        border-left: none;
-    }
-    .truck-toggle-btn {
-        margin: 0 !important;
-        flex-shrink: 0;
-        min-width: fit-content;
-        padding: 0 12px;
-        font-size: 13px;
-    }
+    /* 모든 버튼 및 셀렉트의 높이를 34px로 통일 */
+    .reset-btn,
+    .map-control-group-right select,
+    .leaflet-control-zoom a,
+    .truck-toggle-btn {
+        height: 34px !important; /* 모든 버튼 높이 34px로 통일 */
+        font-size: 13px !important; /* 폰트 크기도 통일 */
+    }
+    .leaflet-control-zoom {
+        height: 34px; /* 줌 컨트롤 컨테이너 높이도 버튼 높이에 맞춤 */
+    }
+    
+    /* 모바일에서 버튼 간 공백 제거 (이전 코드에서 이미 있었지만 재강조) */
+    .truck-toggle-map-control {
+        gap: 0 !important; /* 버튼 간 간격 없음 */
+        flex-wrap: nowrap; /* 줄바꿈 방지 */
+    }
+    .truck-toggle-btn:not(:first-child) {
+        border-left: none; /* 중복 테두리 제거로 공백 방지 */
+    }
+    .truck-toggle-btn {
+        margin: 0 !important; /* 버튼 자체 마진 제거 */
+        flex-shrink: 0; /* 버튼이 축소되지 않도록 함 */
+        min-width: fit-content; /* 내용에 맞게 최소 너비 유지 */
+        padding: 0 12px; /* 모바일 버튼의 패딩을 약간 조정하여 컴팩트하게 */
+        font-size: 13px; /* 토글 버튼 폰트 크기 명시 */
+    }
 }
 
-/* For very small screens */
+/* 아주 작은 화면 (최대 너비: 480px) */
 @media (max-width: 480px) {
-    .transport-tab {
-        font-size: 14px;
+    .transport-tab {
+        font-size: 14px; /* 폰트 크기 조정 */
+    }
+    /* 아주 작은 화면에서 좌측 컨트롤 위치 조정 */
+    .leaflet-top.leaflet-left {
+        top: 55px !important; /* 탭 높이(50px) + 5px 여백 유지 */
+    }
+    /* 아주 작은 화면에서 우측 컨트롤 위치 조정 */
+    .leaflet-top.leaflet-right {
+        top: 55px !important; /* 탭 높이(50px) + 5px 여백 유지 */
     }
 }
