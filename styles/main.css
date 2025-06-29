@@ -312,18 +312,19 @@ html, body {
 /* 컨트롤 위치 조정 - 이제 Leaflet이 생성하는 최상위 위치 컨테이너를 직접 제어 */
 /* 좌측 상단 컨트롤 컨테이너 (INBOUND/OUTBOUND 토글 포함) */
 .leaflet-top.leaflet-left {
-    display: block !important; /* 다시 보이도록 설정 */
-    /* PC: 상단에서 10px 위치 (상단 탭과 겹칠 수 있음) */
-    top: 10px !important; 
+    display: block !important;
+    /* 최하단 가운데 배치 */
+    top: auto !important; /* 상단 고정 해제 */
+    bottom: 10px !important; /* 화면 하단에서 10px 위로 */
     left: 50% !important; /* 가로 중앙 정렬 */
     transform: translateX(-50%) !important; /* 정확한 중앙 정렬 */
-    width: auto; /* 내용물에 따라 너비 조정 */
-    height: auto; /* 내용물에 따라 높이 조정 */
+    width: auto;
+    height: auto;
     padding: 0;
     margin: 0;
-    background: none; /* Leaflet 기본 배경 제거 */
-    box-shadow: none; /* Leaflet 기본 그림자 제거 */
-    z-index: 999; /* 다른 컨트롤 위에 오도록 */
+    background: none;
+    box-shadow: none;
+    z-index: 999;
 }
 
 
@@ -332,8 +333,8 @@ html, body {
     display: flex;
     flex-direction: column;
     gap: 8px; /* 컨트롤 그룹 사이의 간격 */
-    /* PC: 상단에서 10px 위치 (상단 탭과 겹칠 수 있음) */
-    top: 10px !important; 
+    /* PC: 상단 탭 (60px) 바로 아래 5px 여백 */
+    top: 65px !important; 
     right: 10px !important;
     width: 160px; /* 컨트롤 그룹 전체 너비 고정 */
     background: none;
@@ -550,16 +551,17 @@ html, body {
     /* 컨트롤: 모바일 조정 */
     /* 좌측 상단 컨트롤 컨테이너 (INBOUND/OUTBOUND 토글 포함) */
     .leaflet-top.leaflet-left {
-        /* 상단에서 10px 위치 (상단 탭과 겹칠 수 있음) */
-        top: 10px !important; 
-        left: 50% !important;
-        transform: translateX(-50%) !important;
+        /* 모바일 최하단 가운데 배치 */
+        top: auto !important; /* 상단 고정 해제 */
+        bottom: 10px !important; /* 화면 하단에서 10px 위로 */
+        left: 50% !important; /* 가로 중앙 정렬 */
+        transform: translateX(-50%) !important; /* 정확한 중앙 정렬 */
     }
     
     /* 우측 상단 컨트롤 컨테이너 (줌, 리셋, 필터 포함) */
     .leaflet-top.leaflet-right {
-        /* 상단에서 10px 위치 (상단 탭과 겹칠 수 있음) */
-        top: 10px !important; 
+        /* 모바일: 상단 탭 (50px) 바로 아래 5px 여백 */
+        top: 55px !important; 
         gap: 8px; /* 컨트롤 블록 내부 간격 */
         width: calc(100% - 20px); /* 화면 너비에 맞춰 10px 좌우 패딩/마진 확보 */
         max-width: 160px; /* PC 크기보다 넓어지지 않도록 고정 */
@@ -611,11 +613,9 @@ html, body {
     }
 
     /* 좌측 상단 컨트롤 컨테이너 (INBOUND/OUTBOUND 토글 포함) */
-    .leaflet-top.leaflet-left {
-        top: 10px !important; /* 탭 높이(50px) 바로 아래 (0px 여백) 유지 */
-    }
+    /* bottom: 10px; 설정은 768px 미디어 쿼리에서 이미 적용되므로 여기서 다시 명시할 필요 없음 */
+    /* top 속성은 제거되어 있으므로 그대로 둠 */
+
     /* 우측 상단 컨트롤 컨테이너 (줌, 리셋, 필터 포함) */
-    .leaflet-top.leaflet-right {
-        top: 10px !important; /* 탭 높이(50px) 바로 아래 (0px 여백) 유지 */
-    }
+    /* top: 55px; 설정은 768px 미디어 쿼리에서 이미 적용되므로 여기서 다시 명시할 필요 없음 */
 }
