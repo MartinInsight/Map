@@ -21,8 +21,8 @@ class AirCongestionMap {
             disableClusteringAtZoom: 9,
             spiderfyOnMaxZoom: true,
             spiderfyDistanceMultiplier: 2,
-            // Removed showCoverageOnHover and showCoverageOnClick as they are not standard L.markerClusterGroup options
-            // and don't directly control individual marker popup behavior.
+            // showCoverageOnHover and showCoverageOnClick are not standard L.markerClusterGroup options
+            // and don't directly control individual marker popup behavior, so they remain removed.
 
             iconCreateFunction: (cluster) => {
                 const childMarkers = cluster.getAllChildMarkers();
@@ -315,8 +315,8 @@ class AirCongestionMap {
 
         const popupOptions = {
             closeButton: true,
-            autoClose: false, // IMPORTANT: Do NOT automatically close when another popup opens or map is clicked
-            closeOnClick: false, // IMPORTANT: Do NOT automatically close when map background is clicked
+            autoClose: true, // Re-enabled autoClose for hover popups
+            closeOnClick: false, // Keep false for hover popups; map click handles closing.
             maxHeight: 300,
             maxWidth: 300,
             className: 'single-marker-popup' // Add class for individual marker popup
@@ -325,8 +325,20 @@ class AirCongestionMap {
         // Bind the individual marker's popup with its data
         marker.bindPopup(this.createPopupContent([item]), popupOptions);
 
-        // Removed mouseover and mouseout events to disable "tooltip on hover" behavior.
-        // The popup will now only open on click.
+        // Display popup on mouse hover and close on mouse out
+        marker.on('mouseover', (e) => {
+            // Close other popups first to ensure only one hover popup is open at a time
+            this.map.closePopup();
+            e.target.openPopup();
+        });
+
+        marker.on('mouseout', (e) => {
+            // Only close if the mouse is truly out of the popup and marker area
+            // Leaflet handles preventing closure if mouse moves into the popup itself
+            if (e.target.getPopup().isOpen()) {
+                e.target.closePopup();
+            }
+        });
 
         // Adjust z-index and prevent click/scroll propagation when popup opens
         marker.on('popupopen', (e) => {
@@ -348,11 +360,11 @@ class AirCongestionMap {
             }
         });
 
-        // Define behavior on marker click
+        // Define behavior on marker click (remains for specific interaction/zoom)
         marker.on('click', (e) => {
             console.log(`Clicked/Tapped marker: ${item.Airport}. Current popup state: ${marker.getPopup().isOpen()}`);
 
-            // Close other popups first before opening a new one
+            // Ensure hover popup is closed before click behavior
             this.map.closePopup();
 
             // zoomToShowLayer is useful when marker is hidden in a cluster
