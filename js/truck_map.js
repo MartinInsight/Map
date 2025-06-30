@@ -179,12 +179,12 @@ class TruckCongestionMap {
                     const filter = document.querySelector('.state-filter');
                     if (filter) filter.value = '';
                 }
-                
+
                 // 클릭된 주로 확대 (maxZoom 통일)
                 const bounds = L.geoJSON(feature).getBounds();
                 if (clickedStateId === 'AK') {
                     // 알래스카는 고정 뷰로 이동 (툴팁 위치와 동일하게)
-                    this.map.setView([62.0, -150.0], 4); 
+                    this.map.setView([62.0, -150.0], 4);
                 } else {
                     this.map.fitBounds(bounds, {
                         paddingTopLeft: [50, 50],
@@ -196,13 +196,16 @@ class TruckCongestionMap {
 
                 // 확대 후 이동이 끝나면 툴팁 표시
                 this.map.once('moveend', () => {
-                    setTimeout(() => { // 충분한 시간 지연
-                        let center = L.geoJSON(feature).getBounds().getCenter();
-                        if (clickedStateId === 'AK') {
-                            center = L.latLng(62.0, -150.0); // 알래스카 툴팁 위치 조정
-                        }
-                        // 팝업을 열기 직전, 지도의 크기 정보를 강제로 업데이트
-                        this.map.invalidateSize(true); // true를 인자로 주어 애니메이션 없이 업데이트
+                    // 팝업을 열기 직전, 지도의 크기 정보를 강제로 업데이트
+                    this.map.invalidateSize(true); // true를 인자로 주어 애니메이션 없이 업데이트
+
+                    // 툴팁 위치 조정 로직
+                    let center = L.geoJSON(feature).getBounds().getCenter();
+                    if (clickedStateId === 'AK') {
+                        center = L.latLng(62.0, -150.0); // 알래스카 툴팁 위치 조정
+                    }
+                    // setTimeout을 사용하여 맵 렌더링이 완료될 시간을 충분히 벌어줍니다.
+                    setTimeout(() => {
                         this.showTooltip(center, stateData);
                     }, 200); // 200ms 지연
                 });
@@ -357,8 +360,12 @@ class TruckCongestionMap {
                             if (this.lockedStateId === 'AK') {
                                 center = L.latLng(62.0, -150.0);
                             }
+                            // 팝업을 열기 직전, 지도의 크기 정보를 강제로 업데이트
                             this.map.invalidateSize(true); // invalidateSize 추가
-                            this.showTooltip(center, stateData);
+                            // setTimeout을 사용하여 맵 렌더링이 완료될 시간을 충분히 벌어줍니다.
+                            setTimeout(() => {
+                                this.showTooltip(center, stateData);
+                            }, 100); // 100ms 지연
                         }
                     }
                 });
@@ -418,12 +425,17 @@ class TruckCongestionMap {
                     }
 
                     this.map.once('moveend', () => {
-                        // Leaflet이 지도를 완전히 렌더링할 시간을 벌기 위해 setTimeout을 사용합니다.
-                        setTimeout(() => {
-                            // 팝업을 열기 직전, 지도의 크기 정보를 강제로 업데이트
-                            this.map.invalidateSize(true); // invalidateSize 추가
-                            this.showTooltip(center, stateData);
+                        // 팝업을 열기 직전, 지도의 크기 정보를 강제로 업데이트
+                        this.map.invalidateSize(true); // invalidateSize 추가
 
+                        // 툴팁 위치 조정 로직
+                        let tooltipCenter = L.geoJSON(state).getBounds().getCenter(); // 툴팁 중심 계산
+                        if (stateId === 'AK') {
+                            tooltipCenter = L.latLng(62.0, -150.0); // 알래스카 툴팁 위치 조정
+                        }
+                        // setTimeout을 사용하여 맵 렌더링이 완료될 시간을 충분히 벌어줍니다.
+                        setTimeout(() => {
+                            this.showTooltip(tooltipCenter, stateData); // 툴팁을 표시할 때 조정된 중심 사용
                             // 선택된 주의 스타일을 강조
                             this.stateLayer.eachLayer(layer => {
                                 if (layer.feature.id === stateId) {
@@ -450,10 +462,10 @@ class TruckCongestionMap {
             this.rightControlsInstance = control; // L.control 인스턴스를 저장
             return div;
         };
-        
+
         control.addTo(this.map);
     }
-    
+
     showError(message) {
         if (this.errorControl) {
             this.map.removeControl(this.errorControl);
