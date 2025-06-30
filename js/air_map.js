@@ -58,7 +58,8 @@ class AirCongestionMap {
         this.currentData = null; // Currently loaded data
         this.filterControlInstance = null; // Filter control instance
         this.errorControl = null; // Error message control
-        this.markerToOpenAfterMove = null; // Airport name for popup to open after map move
+        // 이 부분을 변경합니다: 이제 로케이션 선택 시 로케이션 문자열을 저장합니다.
+        this.locationToOpenAfterMove = null; // Location string for popup to open after map move
         this.lastOpenedMarker = null; // Reference to the last opened popup's marker
 
         // Add map tile layer (CARTO Light All)
@@ -104,38 +105,42 @@ class AirCongestionMap {
 
         // Map move end event handler
         this.map.on('moveend', () => {
-            if (this.markerToOpenAfterMove) {
-                console.log('Map animation ended, attempting to open queued popup with polling.');
-                const airportName = this.markerToOpenAfterMove;
-                this.markerToOpenAfterMove = null; // Reset
-                this.pollForMarkerAndOpenPopup(airportName);
+            // markerToOpenAfterMove 대신 locationToOpenAfterMove를 사용
+            if (this.locationToOpenAfterMove) {
+                console.log('Map animation ended, attempting to open queued popup with polling for location.');
+                const selectedLocation = this.locationToOpenAfterMove;
+                this.locationToOpenAfterMove = null; // Reset
+                this.pollForLocationMarkerAndOpenPopup(selectedLocation); // 새로운 함수 호출
             }
         });
     }
 
     /**
-     * Finds the marker for a specific airport name and opens its popup using polling
+     * Finds a marker for a specific location (municipality, iso_region) and opens its popup using polling
      * once the marker is ready (rendered on the map).
-     * @param {string} airportName - The name of the airport whose popup should be opened.
+     * @param {string} locationString - The location string (e.g., "Los Angeles, CA") for which a marker's popup should be opened.
      */
-    pollForMarkerAndOpenPopup(airportName) {
+    pollForLocationMarkerAndOpenPopup(locationString) {
         let targetMarker = null;
-        // Find the marker within the cluster group
+        const [municipality, regionCode] = locationString.split(', ').map(s => s.trim());
+
+        // 해당 로케이션의 첫 번째 마커를 찾습니다.
         this.allMarkers.eachLayer(layer => {
-            if (layer.options.itemData && layer.options.itemData.Airport === airportName) {
+            const itemData = layer.options.itemData;
+            if (itemData && itemData.municipality === municipality && itemData.iso_region.endsWith(`-${regionCode}`)) {
                 targetMarker = layer;
-                return; // Leaflet eachLayer's return acts as a break
+                return true; // Leaflet eachLayer's return acts as a break
             }
         });
 
         if (!targetMarker) {
-            console.warn(`pollForMarkerAndOpenPopup: Marker for airport '${airportName}' not found in current layers (might be in a cluster).`);
+            console.warn(`pollForLocationMarkerAndOpenPopup: Marker for location '${locationString}' not found in current layers (might be in a cluster).`);
             return;
         }
 
         // Check if a popup is already bound to the marker
         if (!targetMarker.getPopup()) {
-            console.warn("pollForMarkerAndOpenPopup: Invalid marker or no popup associated.");
+            console.warn("pollForLocationMarkerAndOpenPopup: Invalid marker or no popup associated.");
             return;
         }
 
@@ -149,7 +154,7 @@ class AirCongestionMap {
         const checkAndOpen = () => {
             // Check if the marker's _icon is added to the DOM and belongs to the map
             if (targetMarker._icon && targetMarker._map) {
-                console.log(`Poll success for ${targetMarker.options.itemData.Airport} (Attempt ${attempts + 1}). Opening popup.`);
+                console.log(`Poll success for ${targetMarker.options.itemData.Airport} at ${locationString} (Attempt ${attempts + 1}). Opening popup.`);
                 targetMarker.openPopup(); // Attempt to open popup directly on marker
 
                 // Verify if the popup actually opened (for stability with filtering)
@@ -158,16 +163,21 @@ class AirCongestionMap {
                     this.map.openPopup(targetMarker.getPopup());
                 }
             } else if (attempts < maxAttempts) {
-                console.log(`Polling for ${targetMarker.options.itemData.Airport} (Attempt ${attempts + 1}): Marker not ready. Retrying...`);
+                console.log(`Polling for ${targetString} (Attempt ${attempts + 1}): Marker not ready. Retrying...`);
                 attempts++;
                 setTimeout(checkAndOpen, retryInterval);
             } else {
-                console.error(`Failed to open popup for ${targetMarker.options.itemData.Airport} after max polling attempts.`);
+                console.error(`Failed to open popup for ${targetString} after max polling attempts.`);
             }
         };
 
-        setTimeout(checkAndOpen, 50); // First attempt after a slight delay
+        // this.allMarkers.zoomToShowLayer를 호출하여 마커를 드러내고 팝업을 엽니다.
+        // 이를 통해 마커가 클러스터 안에 있어도 정확히 찾아 팝업을 띄울 수 있습니다.
+        this.allMarkers.zoomToShowLayer(targetMarker, () => {
+            setTimeout(checkAndOpen, 50); // 줌 이동 후 팝업을 엽니다.
+        });
     }
+
 
     /**
      * Loads air data asynchronously from `data/us-air.json`.
@@ -487,9 +497,9 @@ class AirCongestionMap {
                     const regionCode = item.iso_region.split('-').pop(); // 'US-CA' -> 'CA'
                     return `${item.municipality}, ${regionCode}`;
                 });
-    
+        
             const locations = [...new Set(validLocations)].sort((a, b) => a.localeCompare(b));
-    
+        
             const filterDropdownHtml = `
                 <select class="airport-filter">
                     <option value="" disabled selected hidden>Select Location</option>
@@ -505,41 +515,51 @@ class AirCongestionMap {
             div.insertAdjacentHTML('beforeend', filterDropdownHtml);
 
             div.querySelector('.airport-filter').addEventListener('change', (e) => {
-                const airportName = e.target.value;
-                if (airportName === "All") {
-                    console.log("Filter: All Airports selected. Resetting view.");
+                const selectedLocation = e.target.value; // 로케이션 문자열을 가져옵니다.
+                if (selectedLocation === "All") {
+                    console.log("Filter: All Locations selected. Resetting view.");
                     this.map.setView([37.8, -96], 4);
                     this.map.closePopup();
-                    this.markerToOpenAfterMove = null;
-                } else if (airportName) {
-                    console.log(`Filter selected: ${airportName}`);
-                    const airportDataForFilter = this.currentData.filter(item => item.Airport === airportName);
-                    if (airportDataForFilter.length > 0) {
+                    this.locationToOpenAfterMove = null; // 초기화
+                } else if (selectedLocation) {
+                    console.log(`Filter selected: ${selectedLocation}`);
+                    const [municipality, regionCode] = selectedLocation.split(', ').map(s => s.trim());
+                    
+                    // 선택된 로케이션에 해당하는 모든 데이터 항목을 찾습니다.
+                    const dataForSelectedLocation = this.currentData.filter(item => 
+                        item.municipality === municipality && item.iso_region.endsWith(`-${regionCode}`)
+                    );
+
+                    if (dataForSelectedLocation.length > 0) {
+                        // 해당 로케이션의 첫 번째 마커를 찾으려고 시도합니다.
                         let foundMarker = null;
+                        // 모든 마커 레이어를 순회하며 해당 로케이션의 마커를 찾습니다.
                         this.allMarkers.eachLayer(layer => {
-                            if (layer.options.itemData && layer.options.itemData.Airport === airportName) {
+                            const itemData = layer.options.itemData;
+                            if (itemData && itemData.municipality === municipality && itemData.iso_region.endsWith(`-${regionCode}`)) {
                                 foundMarker = layer;
-                                return;
+                                return true; // Leaflet eachLayer의 break와 유사
                             }
                         });
 
                         if (foundMarker) {
-                            console.log(`Found marker for filter: ${airportName}. Using zoomToShowLayer.`);
-                            this.map.closePopup(); // Close other popups first
+                            console.log(`Found marker for location: ${selectedLocation}. Using zoomToShowLayer.`);
+                            this.map.closePopup(); // 다른 팝업 먼저 닫기
                             this.allMarkers.zoomToShowLayer(foundMarker, () => {
-                                // Open popup after zoomToShowLayer completes
+                                // zoomToShowLayer 완료 후 팝업 열기
                                 foundMarker.openPopup();
-                                console.log(`Popup for ${airportName} opened after zoomToShowLayer.`);
+                                console.log(`Popup for ${foundMarker.options.itemData.Airport} at ${selectedLocation} opened after zoomToShowLayer.`);
                             });
-                            this.markerToOpenAfterMove = null; // Successfully handled, so reset
+                            this.locationToOpenAfterMove = null; // 성공적으로 처리했으므로 초기화
                         } else {
-                            console.warn(`Marker object for airport '${airportName}' not immediately found. Falling back to fitBounds and polling.`);
-                            const bounds = L.latLngBounds(airportDataForFilter.map(item => [item.lat, item.lng]));
+                            // 마커가 즉시 보이지 않을 경우 (예: 아직 클러스터링 해제되지 않음)
+                            console.warn(`Marker object for location '${selectedLocation}' not immediately found. Falling back to fitBounds and polling.`);
+                            const bounds = L.latLngBounds(dataForSelectedLocation.map(item => [item.lat, item.lng]));
                             this.map.fitBounds(bounds.pad(0.5), { maxZoom: this.allMarkers.options.disableClusteringAtZoom + 1 });
-                            this.markerToOpenAfterMove = airportName; // Save airport name to open after moveend
+                            this.locationToOpenAfterMove = selectedLocation; // moveend 후 열도록 로케이션 문자열 저장
                         }
                     } else {
-                        console.warn(`No data found for airport '${airportName}'.`);
+                        console.warn(`No data found for location '${selectedLocation}'.`);
                     }
                 }
             });
@@ -548,7 +568,7 @@ class AirCongestionMap {
                 console.log("Reset button clicked.");
                 this.map.setView([37.8, -96], 4);
                 this.map.closePopup();
-                this.markerToOpenAfterMove = null;
+                this.locationToOpenAfterMove = null;
                 const airportFilter = div.querySelector('.airport-filter');
                 if (airportFilter) {
                     airportFilter.value = '';
