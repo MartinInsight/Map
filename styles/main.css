@@ -154,8 +154,8 @@ html, body {
 .leaflet-top.leaflet-right {
     display: flex;
     flex-direction: column; /* 자식 요소들을 세로로 정렬 */
-    gap: 5px !important; /* 각 주요 컨트롤 그룹 간의 간격을 5px로 변경 (요청사항 반영) */
-    top: 70px !important; /* PC 버전: 탭 메뉴 높이(60px) + 10px 여백 */
+    gap: 5px !important; /* 각 주요 컨트롤 그룹 간의 간격을 5px로 변경 */
+    top: 60px !important; /* <--- 이 부분을 60px로 변경합니다 (기존 70px) */
     right: 10px !important;
     width: 160px; /* 컨트롤 그룹 전체 너비 고정 */
     background: none !important; /* Leaflet 기본 배경 제거 */
@@ -551,7 +551,7 @@ html, body {
 
     /* 우측 상단 컨트롤 컨테이너 (모든 컨트롤 통합) */
     .leaflet-top.leaflet-right {
-        top: 60px !important; /* 모바일 버전: 탭 메뉴 높이(50px) + 10px 여백 */
+        top: 50px !important; /* 모바일 버전: 탭 메뉴 높이(50px) + 10px 여백 */
         gap: 5px !important; /* 모바일에서도 5px 간격 */
         width: calc(100% - 20px); /* 화면 너비에 맞춰 10px 좌우 패딩/마진 확보 */
         max-width: 160px; /* PC 크기보다 넓어지지 않도록 고정 */
@@ -610,6 +610,6 @@ html, body {
 
     /* 우측 상단 컨트롤 컨테이너 (줌, 리셋, 필터 포함) */
     .leaflet-top.leaflet-right {
-        top: 60px !important; /* 아주 작은 화면도 모바일과 동일하게 60px 유지 */
+        top: 50px !important; /* 아주 작은 화면도 모바일과 동일하게 60px 유지 */
     }
 }
