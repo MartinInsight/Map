@@ -185,7 +185,7 @@ class TruckCongestionMap {
                 const bounds = L.geoJSON(feature).getBounds();
                 if (clickedStateId === 'AK') {
                     // 알래스카는 고정 뷰로 이동 (툴팁 위치와 동일하게, 줌 레벨 5로 변경)
-                    this.map.setView([62.0, -150.0], 5);
+                    this.map.setView([62.0, -150.0], 4);
                 } else {
                     this.map.fitBounds(bounds, {
                         paddingTopLeft: [50, 50],
