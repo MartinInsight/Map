@@ -150,15 +150,15 @@ html, body {
 .leaflet-top.leaflet-right {
     display: flex;
     flex-direction: column; /* 자식 요소들을 세로로 정렬 */
-    gap: 8px; /* 각 주요 컨트롤 그룹 간의 간격 */
-    top: 70px !important; /* PC 버전: 탭 메뉴 아래 70px (탭 60px + 여백 10px) */
+    gap: 5px !important; /* 각 주요 컨트롤 그룹 간의 간격을 8px → 5px로 변경 */
+    top: 15px !important; /* PC 버전: 탭 메뉴 아래 15px로 변경 (원래 70px) */
     right: 10px !important;
     width: 160px; /* 컨트롤 그룹 전체 너비 고정 */
-    background: none !important; /* 흰색 박스 제거: 배경 제거 */
-    padding: 0 !important; /* 흰색 박스 제거: 패딩 제거 */
-    border-radius: 0 !important; /* 흰색 박스 제거: 둥근 모서리 제거 */
-    box-shadow: none !important; /* 흰색 박스 제거: 그림자 제거 */
-    z-index: 999; /* 다른 요소 위에 오도록 */
+    background: none !important;
+    padding: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    z-index: 999;
 }
 
 /* 좌측 상단 컨트롤 컨테이너 (이제 사용 안함) */
@@ -526,4 +526,7 @@ html, body {
 
     /* 우측 상단 컨트롤 컨테이너 (모든 컨트롤 통합) */
     .leaflet-top.leaflet-right {
-        top: 60px !important; /* 모바일 버전: 탭
+        top: 15px !important; /* 모바일 버전: 탭 메뉴 아래 15px로 변경 (원래 60px) */
+        gap: 5px !important;
+    }
+}
