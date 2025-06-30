@@ -1,6 +1,3 @@
-/**
- * OceanCongestionMap manages ocean shipping congestion map using Leaflet and Leaflet.markercluster.
- */
 class OceanCongestionMap {
     /**
      * Constructor for OceanCongestionMap.
@@ -463,12 +460,12 @@ class OceanCongestionMap {
         control.onAdd = () => {
             const div = L.DomUtil.create('div', 'map-control-group-right');
 
-            // Custom Zoom Controls
+            // 1. Custom Zoom Controls (First element)
             const zoomControl = L.DomUtil.create('div', 'leaflet-control-zoom');
             zoomControl.innerHTML = `
-                        <a class="leaflet-control-zoom-in" href="#" title="Zoom in">+</a>
-                        <a class="leaflet-control-zoom-out" href="#" title="Zoom out">-</a>
-                    `;
+                <a class="leaflet-control-zoom-in" href="#" title="Zoom in">+</a>
+                <a class="leaflet-control-zoom-out" href="#" title="Zoom out">-</a>
+            `;
             div.appendChild(zoomControl);
 
             // Zoom button event handlers
@@ -482,33 +479,36 @@ class OceanCongestionMap {
                 this.map.zoomOut();
             });
 
+            // 2. Reset View Button (Second element)
+            div.insertAdjacentHTML('beforeend', `
+                <button class="ocean-reset-btn reset-btn">Reset View</button>
+            `);
+
             // Get unique sorted countries from currentData
             const allCountries = [...new Set(this.currentData
                 .map(item => item.country)
                 .filter(c => c && c.trim() !== '')
             )].sort((a, b) => a.localeCompare(b));
 
+            // 3. Country Filter (Third element)
             const countryFilterHtml = `
-                        <select class="country-filter">
-                            <option value="" disabled selected hidden>Select Country</option>
-                            <option value="All">All Countries</option>
-                            ${allCountries.map(country =>
-                                `<option value="${country}">${country}</option>`
-                            ).join('')}
-                        </select>
-                    `;
+                <select class="country-filter">
+                    <option value="" disabled selected hidden>Select Country</option>
+                    <option value="All">All Countries</option>
+                    ${allCountries.map(country =>
+                        `<option value="${country}">${country}</option>`
+                    ).join('')}
+                </select>
+            `;
             div.insertAdjacentHTML('beforeend', countryFilterHtml);
 
+            // 4. Port Filter (Fourth element)
             const portFilterHtml = `
-                        <select class="port-filter" disabled>
-                            <option value="" disabled selected hidden>Select Port</option>
-                        </select>
-                    `;
+                <select class="port-filter" disabled>
+                    <option value="" disabled selected hidden>Select Port</option>
+                </select>
+            `;
             div.insertAdjacentHTML('beforeend', portFilterHtml);
-
-            div.insertAdjacentHTML('beforeend', `
-                        <button class="ocean-reset-btn reset-btn">Reset View</button>
-                    `);
 
             const countryFilter = div.querySelector('.country-filter');
             const portFilter = div.querySelector('.port-filter');
@@ -695,15 +695,14 @@ class OceanCongestionMap {
             'High': '#e65100',       // Darker orange
             'Average': '#616161',    // Darker gray
             'Low': '#2196F3',        // Darker light blue
-            'Very Low': '#1976D2',   // Darker blue
-            'Unknown': '#5e5e5e'     // Darker default gray
+            'Very Low': '#1976D2',   // Darker
         };
 
-        return isText ? textColors[level] : circleColors[level];
+        return isText ? (textColors[level] || textColors['Unknown']) : (circleColors[level] || circleColors['Unknown']);
     }
 
     /**
-     * Displays a temporary error message on the map.
+     * Displays an error message on the map.
      * @param {string} message - The error message to display.
      */
     displayErrorMessage(message) {
@@ -719,15 +718,5 @@ class OceanCongestionMap {
         };
         errorControl.addTo(this.map);
         this.errorControl = errorControl;
-
-        // Automatically remove message after 5 seconds
-        setTimeout(() => {
-            if (this.map.hasControl(this.errorControl)) {
-                this.map.removeControl(this.errorControl);
-            }
-        }, 5000);
     }
 }
-
-// Expose OceanCongestionMap class to the global scope
-window.OceanCongestionMap = OceanCongestionMap;
