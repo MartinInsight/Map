@@ -21,8 +21,8 @@ class AirCongestionMap {
             disableClusteringAtZoom: 9,
             spiderfyOnMaxZoom: true,
             spiderfyDistanceMultiplier: 2,
-            showCoverageOnHover: false,
-            showCoverageOnClick: false,
+            // Removed showCoverageOnHover and showCoverageOnClick as they are not standard L.markerClusterGroup options
+            // and don't directly control individual marker popup behavior.
 
             iconCreateFunction: (cluster) => {
                 const childMarkers = cluster.getAllChildMarkers();
@@ -93,17 +93,10 @@ class AirCongestionMap {
             }
         });
 
-        // Map click event handler adjustment
+        // Map click event handler adjustment (for clicking on map background)
         this.map.on('click', (e) => {
-            // If a marker popup is open or about to open, ignore map click
-            if (this.lastOpenedMarker && this.lastOpenedMarker.getPopup().isOpen()) {
-                console.log('Map click: A marker popup is already open. Ignoring.');
-            }
-            if (this.markerToOpenAfterMove) { // If waiting to open popup after move
-                console.log('Map click: Waiting to open a marker popup. Ignoring.');
-                return;
-            }
-            // Close existing popups on map background click
+            // Close existing popups when map background is clicked
+            // This ensures only one popup is open at a time (if a marker's popup was opened manually)
             console.log('Map background clicked. Closing any open popups.');
             this.map.closePopup();
             this.lastOpenedMarker = null;
@@ -322,8 +315,8 @@ class AirCongestionMap {
 
         const popupOptions = {
             closeButton: true,
-            autoClose: true, // IMPORTANT: automatically close when another popup opens or map is clicked
-            closeOnClick: true, // IMPORTANT: automatically close when map background is clicked
+            autoClose: false, // IMPORTANT: Do NOT automatically close when another popup opens or map is clicked
+            closeOnClick: false, // IMPORTANT: Do NOT automatically close when map background is clicked
             maxHeight: 300,
             maxWidth: 300,
             className: 'single-marker-popup' // Add class for individual marker popup
@@ -332,20 +325,8 @@ class AirCongestionMap {
         // Bind the individual marker's popup with its data
         marker.bindPopup(this.createPopupContent([item]), popupOptions);
 
-        // Display popup on mouse hover and close on mouse out
-        marker.on('mouseover', (e) => {
-            // Close other popups first
-            this.map.closePopup();
-            e.target.openPopup();
-        });
-
-        marker.on('mouseout', (e) => {
-            // If popup is open and mouse moves out of marker area, close it
-            // Leaflet handles preventing closure if mouse moves into the popup itself
-            if (e.target.getPopup().isOpen()) {
-                e.target.closePopup();
-            }
-        });
+        // Removed mouseover and mouseout events to disable "tooltip on hover" behavior.
+        // The popup will now only open on click.
 
         // Adjust z-index and prevent click/scroll propagation when popup opens
         marker.on('popupopen', (e) => {
@@ -371,13 +352,14 @@ class AirCongestionMap {
         marker.on('click', (e) => {
             console.log(`Clicked/Tapped marker: ${item.Airport}. Current popup state: ${marker.getPopup().isOpen()}`);
 
-            this.map.closePopup(); // Close other popups first (always close existing before opening new)
+            // Close other popups first before opening a new one
+            this.map.closePopup();
 
             // zoomToShowLayer is useful when marker is hidden in a cluster
             if (this.allMarkers.hasLayer(marker)) { // If marker belongs to cluster group (can be clustered)
                 this.allMarkers.zoomToShowLayer(marker, () => {
                     // Open popup after zoomToShowLayer completes
-                    foundMarker.openPopup(); // Use foundMarker as it's the target for openPopup
+                    marker.openPopup(); // Use marker itself, not a separate 'foundMarker'
                     console.log(`Popup for ${item.Airport} opened after zoomToShowLayer.`);
                 });
             } else {
@@ -682,8 +664,3 @@ class AirCongestionMap {
 
 // Expose AirCongestionMap class to the global scope
 window.AirCongestionMap = AirCongestionMap;
-
-// Initialize the map when the DOM is ready (moved to HTML script block if needed, or external loader)
-// document.addEventListener('DOMContentLoaded', () => {
-//     new AirCongestionMap('map');
-// });
