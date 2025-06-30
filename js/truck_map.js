@@ -398,7 +398,7 @@ class TruckCongestionMap {
                         this.map.fitBounds(bounds, { 
                             paddingTopLeft: [50, 50], 
                             paddingBottomRight: [50, 50],
-                            maxZoom: 5
+                            maxZoom: 6
                         });
                     }
 
