@@ -7,15 +7,14 @@ html, body {
     height: 100%;
     margin: 0;
     padding: 0;
-    overflow: hidden; /* Prevent body scroll, map handles its own scroll */
+    overflow: hidden;
     font-family: 'Noto Sans KR', sans-serif;
-    color: #333; /* Default text color */
+    color: #333;
 }
 
 /* =====================================
    2. Global Leaflet Overrides
    ===================================== */
-/* Leaflet 기본 컨트롤 박스 스타일 재정의 (기본 배경/패딩/그림자 제거) */
 .leaflet-control {
     background: none !important;
     padding: 0 !important;
@@ -23,12 +22,11 @@ html, body {
     box-shadow: none !important;
 }
 
-/* Leaflet 팝업의 구조적 스타일 조정 */
 .leaflet-popup-content-wrapper {
     background-color: white !important;
     border-radius: 8px !important;
     box-shadow: 0 4px 15px rgba(0,0,0,0.2) !important;
-    padding: 0 !important; /* .leaflet-popup-content에서 패딩 관리 */
+    padding: 0 !important;
     overflow: hidden;
     font-family: 'Noto Sans KR', sans-serif !important;
     min-width: 220px !important;
@@ -36,11 +34,11 @@ html, body {
 
 .leaflet-popup-content {
     margin: 0 !important;
-    padding: 16px !important; /* 실제 팝업 내용 패딩 */
+    padding: 16px !important;
 }
 
 .leaflet-popup-tip-container {
-    margin-top: -1px !important; /* 팁 위치 조정 */
+    margin-top: -1px !important;
 }
 
 .leaflet-popup-tip {
@@ -48,22 +46,19 @@ html, body {
     box-shadow: 0 4px 15px rgba(0,0,0,0.2) !important;
 }
 
-/* 줌 아웃 (-) 버튼에 대한 특정 border-radius (row-reverse로 인해 좌측) */
 .leaflet-control-zoom-out {
     border-radius: 6px 0 0 6px !important;
 }
 
-/* 줌 인 (+) 버튼에 대한 특정 border-radius (row-reverse로 인해 우측) */
 .leaflet-control-zoom-in {
     border-radius: 0 6px 6px 0 !important;
-    border-right: none !important; /* 두 버튼 사이의 중복 테두리 제거 */
+    border-right: none !important;
 }
 
-/* 줌 버튼 호버/클릭 효과 제거 */
 .leaflet-control-zoom a:hover,
 .leaflet-control-zoom a:active {
     background-color: #f5f5f5 !important;
-    transform: none !important; /* 변형 효과 제거 */
+    transform: none !important;
 }
 
 /* =====================================
@@ -74,7 +69,7 @@ html, body {
     top: 0;
     left: 0;
     width: 100%;
-    height: 60px; /* PC 기본 탭 높이 고정 */
+    height: 60px;
     z-index: 1000;
     display: flex;
     background: white;
@@ -91,7 +86,7 @@ html, body {
     cursor: pointer;
     font-family: 'Noto Sans KR', sans-serif;
     font-weight: 400;
-    font-size: 18px; /* PC 폰트 크기 (만족 코드 따름) */
+    font-size: 18px;
     color: black;
     position: relative;
     transition: all 0.3s ease;
@@ -106,14 +101,14 @@ html, body {
     left: 0;
     width: 100%;
     height: 3px;
-    background-color: #00657E; /* 활성 탭 표시기 색상 */
+    background-color: #00657E;
     opacity: 0;
     transition: opacity 0.3s ease;
 }
 
 .transport-tab.active {
     font-weight: 600;
-    color: #003A52; /* 활성 텍스트 색상 */
+    color: #003A52;
 }
 
 .transport-tab.active::after {
@@ -121,7 +116,7 @@ html, body {
 }
 
 .transport-tab:not(.active):hover::after {
-    opacity: 0.5; /* 비활성 탭에 대한 미묘한 호버 효과 */
+    opacity: 0.5;
 }
 
 /* =====================================
@@ -129,75 +124,69 @@ html, body {
    ===================================== */
 .transport-map {
     position: fixed;
-    top: 60px; /* PC 버전: 탭 높이만큼 아래로 이동 */
+    top: 60px;
     left: 0;
     width: 100%;
-    height: calc(100% - 60px); /* 탭 높이를 제외한 나머지 높이 */
-    display: none; /* 기본적으로 숨김, JS로 활성화 */
+    height: calc(100% - 60px);
+    display: none;
     background-color: #F8F8F8;
 }
 
 .transport-map.active {
-    display: block; /* 활성 지도 표시 */
+    display: block;
 }
 
 /* =====================================
    5. Control Styles (Common & Specific)
    ===================================== */
 
-/* Leaflet 컨트롤의 최상위 좌측 컨테이너 (사용 안함) */
 .leaflet-top.leaflet-left {
-    display: none !important; /* IN/OUT이 우측으로 이동했으므로 숨김 */
+    display: none !important;
 }
 
-/* 우측 상단 컨트롤 컨테이너 (모든 컨트롤 그룹을 포함) */
 .leaflet-top.leaflet-right {
     display: flex;
-    flex-direction: column; /* 자식 요소들을 세로로 정렬 */
-    gap: 5px !important; /* 각 주요 컨트롤 그룹 간의 간격을 5px로 변경 */
-    top: 10px !important; /* <--- 이 부분을 10px로 변경합니다. */
+    flex-direction: column;
+    gap: 5px !important;
+    top: 10px !important;
     right: 10px !important;
-    width: 160px; /* 컨트롤 그룹 전체 너비 고정 */
-    background: none !important; /* Leaflet 기본 배경 제거 */
+    width: 160px;
+    background: none !important;
     padding: 0 !important;
     border-radius: 0 !important;
     box-shadow: none !important;
     z-index: 999;
 }
 
-/* 우측 상단 컨트롤 그룹 (줌, 리셋, 필터) - 단일 박스 형태 */
 .map-control-group-right {
     background: white;
     padding: 8px 12px;
     border-radius: 8px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.15);
     display: flex;
-    flex-direction: column; /* 자식 요소들을 세로로 정렬 */
-    align-items: stretch; /* 자식 요소들을 컨테이너 너비에 맞게 늘림 */
-    gap: 8px; /* 이 그룹 내부의 컨트롤 간의 간격을 8px로 통일 (만족 코드 따름) */
-    width: 100%; /* 부모(leaflet-top.leaflet-right) 너비에 맞춤 */
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    width: 100%;
     box-sizing: border-box;
 }
 
-/* Leaflet 줌 컨트롤 스타일링 (줌 버튼 컨테이너) */
-/* .map-control-group-right 안에 있으므로 별도 배경/그림자 필요 없음 */
 .leaflet-control-zoom {
     display: flex;
-    flex-direction: row-reverse; /* 순서 반전 (- +) */
-    width: 100%; /* 부모(.map-control-group-right) 너비에 맞춤 */
-    height: 34px; /* 높이 고정 */
-    background: transparent !important; /* 배경 투명 */
+    flex-direction: row-reverse;
+    width: 100%;
+    height: 34px;
+    background: transparent !important;
     padding: 0 !important;
     border-radius: 0;
     box-shadow: none;
     border: none;
-    margin: 0 !important; /* 기존 마진 제거 */
+    margin: 0 !important;
 }
 
-/* 줌 버튼 (+) (-) 개별 스타일 조정 */
 .leaflet-control-zoom a {
-    flex: 1; /* 가로 공간을 균등하게 분할 */
-    height: 34px !important; /* 높이 고정 */
+    flex: 1;
+    height: 34px !important;
     background-color: white !important;
     border: 1px solid #e0e0e0 !important;
     text-decoration: none !important;
@@ -214,20 +203,18 @@ html, body {
     padding-top: 0 !important;
 }
 
-/* 리셋 버튼 스타일 */
-/* .map-control-group-right 안에 있으므로 별도 배경/그림자 필요 없음 */
 .reset-btn {
-    width: 100%; /* 부모(.map-control-group-right)의 너비를 채움 */
+    width: 100%;
     padding: 0 15px;
-    background: white; /* 개별 버튼 배경 유지 */
+    background: white;
     border: 1px solid #e0e0e0;
     border-radius: 6px;
     cursor: pointer;
     font-family: 'Noto Sans KR', sans-serif;
     font-weight: 500;
     font-size: 13px;
-    box-shadow: none; /* 그림자 제거 */
-    height: 34px; /* 높이 고정 */
+    box-shadow: none;
+    height: 34px;
     white-space: nowrap;
     transition: all 0.2s;
     color: #333;
@@ -238,98 +225,89 @@ html, body {
     transform: translateY(-1px);
 }
 
-/* 필터 드롭다운 스타일 */
-/* .map-control-group-right 안에 있으므로 별도 배경/그림자 필요 없음 */
 .filter-control select,
 .map-control-group-right select {
-    width: 100%; /* 부모(.map-control-group-right)의 너비를 채움 */
+    width: 100%;
     padding: 8px 12px;
     border: 1px solid #ddd;
     border-radius: 6px;
     font-size: 13px;
     font-family: 'Noto Sans KR', sans-serif;
     font-weight: 500;
-    background-color: #f9f9f9; /* 개별 셀렉트 배경 유지 */
+    background-color: #f9f9f9;
     transition: all 0.2s;
     color: #333;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='%23003A52'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right 10px center;
-    padding-right: 30px; /* 커스텀 화살표 공간 확보 */
+    padding-right: 30px;
     appearance: none;
     -webkit-appearance: none;
     -moz-appearance: none;
-    box-shadow: none; /* 셀렉트 자체 그림자 제거 */
-    height: 34px; /* 높이 고정 */
+    box-shadow: none;
+    height: 34px;
 }
 
 .filter-control select:focus,
 .map-control-group-right select:focus {
     outline: none;
     border-color: #00657E;
-    box-shadow: 0 0 0 2px rgba(0,101,126,0.2); /* 포커스 시 테두리 그림자는 유지 */
+    box-shadow: 0 0 0 2px rgba(0,101,126,0.2);
 }
 
-/* 트럭 맵 토글 버튼 (INBOUND/OUTBOUND) - 단일 박스 형태로 줌/리셋 그룹 다음 세 번째에 위치 */
 .truck-toggle-map-control {
-    background: white !important; /* 배경 색상 */
-    padding: 0 !important; /* 내부 패딩 없음 */
-    border-radius: 6px !important; /* 둥근 모서리 */
-    box-shadow: 0 2px 10px rgba(0,0,0,0.15) !important; /* 그림자 */
+    background: white !important;
+    padding: 0 !important;
+    border-radius: 6px !important;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.15) !important;
     z-index: 1000;
-    display: flex; /* flex container */
-    flex-wrap: nowrap; /* 줄바꿈 방지 */
-    gap: 0 !important; /* 버튼 사이 간격 없음 */
-    width: 100%; /* 부모(leaflet-top.leaflet-right) 너비에 맞춤 */
-    overflow: hidden; /* 자식 요소가 둥근 모서리 밖으로 나가지 않도록 */
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 0 !important;
+    width: 100%;
+    overflow: hidden;
 }
 
 .truck-toggle-btn {
-    flex: 1; /* 가로 공간을 균등하게 분할 */
+    flex: 1;
     padding: 0 16px;
     border: 1px solid #e0e0e0;
-    background: white; /* 각 버튼에 개별 배경 */
+    background: white;
     cursor: pointer;
     font-family: 'Noto Sans KR', sans-serif;
     font-weight: 500;
     font-size: 13px;
-    height: 34px; /* 높이 고정 */
+    height: 34px;
     display: flex;
     align-items: center;
     justify-content: center;
     color: #333;
     box-sizing: border-box;
-    margin: 0 !important; /* 마진 제거하여 버튼들이 붙도록 함 */
+    margin: 0 !important;
     flex-shrink: 0;
     min-width: fit-content;
-    box-shadow: none; /* 개별 버튼 그림자 제거 (그룹에 그림자 적용) */
-    border-radius: 0 !important; /* 개별 버튼 radius는 0 (그룹 컨테이너가 처리) */
+    box-shadow: none;
+    border-radius: 0 !important;
 }
 
-/* 첫 번째 토글 버튼 왼쪽 모서리 둥글게 */
 .truck-toggle-btn:first-child {
-    /* 그룹 컨테이너에 radius 적용되어 있으므로 여기서는 제거 */
     border-top-left-radius: 0;
     border-bottom-left-radius: 0;
 }
 
-/* 마지막 토글 버튼 오른쪽 모서리 둥글게 */
 .truck-toggle-btn:last-child {
-    /* 그룹 컨테이너에 radius 적용되어 있으므로 여기서는 제거 */
     border-top-right-radius: 0;
     border-bottom-right-radius: 0;
 }
 
-/* 토글 버튼 간 경계선 중복 제거 */
 .truck-toggle-btn:not(:first-child) {
     border-left: none;
 }
 
-/* 활성 토글 버튼 스타일 */
 .truck-toggle-btn.truck-active {
     background: #00657E;
     color: white;
-    border-color: #00657E; /* active 시 테두리 색상 통일 */
+    border-color: #00657E;
 }
 
 .truck-toggle-btn:not(.truck-active):hover {
@@ -341,7 +319,6 @@ html, body {
    6. Popup & Tooltip Styles
    ==================================== */
 
-/* 일반 팝업 내용 스타일 */
 .leaflet-popup-content h4 {
     margin: 0 0 12px 0;
     font-size: 16px;
@@ -362,16 +339,14 @@ html, body {
     font-weight: 500;
 }
 
-/* 단일 마커 팝업 스타일링 (상세 정보) */
 .single-marker-popup .leaflet-popup-content-wrapper {
     background: white;
     color: #333;
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    font-family: 'Noto Sans KR', sans-serif; /* 일관된 폰트 */
+    font-family: 'Noto Sans KR', sans-serif;
 }
 
-/* 팁 부분 배경색 통일 */
 .single-marker-popup .leaflet-popup-tip {
     background: white;
 }
@@ -395,21 +370,19 @@ html, body {
     color: #555;
 }
 
-/* 선택 사항: 여러 항목 팝업의 구분선 */
 .single-marker-popup .location-info hr {
     border: 0;
     border-top: 1px dashed #ddd;
     margin: 10px 0;
 }
 
-/* 트럭 맵 팝업 내용의 특정 텍스트 색상 */
 .truck-positive {
-    color: #27ae60; /* 긍정적 지표에 대한 녹색 */
+    color: #27ae60;
     font-weight: 600;
 }
 
 .truck-negative {
-    color: #e74c3c; /* 부정적 지표에 대한 빨간색 */
+    color: #e74c3c;
     font-weight: 600;
 }
 
@@ -418,10 +391,9 @@ html, body {
     color: #555;
 }
 
-/* 클러스터 팝업 헤더 (스파이더파이 후 여러 항목 표시될 때) */
 .cluster-popup-header {
     margin-bottom: 10px;
-    border-bottom: 1px solid #eee; /* 헤더 구분선 */
+    border-bottom: 1px solid #eee;
     padding-bottom: 5px;
 }
 
@@ -431,9 +403,9 @@ html, body {
 }
 
 .cluster-popup-content {
-    max-height: 250px; /* 스크롤 가능한 콘텐츠의 최대 높이 */
+    max-height: 250px;
     overflow-y: auto;
-    padding-right: 5px; /* 스크롤바 공간 확보 */
+    padding-right: 5px;
 }
 
 .location-info {
@@ -450,10 +422,9 @@ html, body {
    7. Information & Error Messages
    ===================================== */
 
-/* 에러 메시지 컨트롤 */
 .error-message {
-    background-color: #ffe0e0; /* 연한 빨강 */
-    color: #d63031; /* 진한 빨강 텍스트 */
+    background-color: #ffe0e0;
+    color: #d63031;
     padding: 10px 15px;
     border-radius: 5px;
     border: 1px solid #d63031;
@@ -461,63 +432,55 @@ html, body {
     font-weight: bold;
     font-size: 14px;
     text-align: center;
-    z-index: 9999; /* 다른 요소 위에 표시되도록 */
+    z-index: 9999;
     font-family: 'Noto Sans KR', sans-serif;
 }
 
 /* =====================================
    8. Custom Marker Icons
    ===================================== */
-/* 커스텀 DivIcons의 기본 스타일 (개별 마커에 사용) */
 .custom-div-icon {
-    /* 내부 div가 시각적 속성을 처리하므로 여기에 특정 스타일 없음 */
 }
 
-/* custom-div-icon 내부의 실제 원형 마커 스타일 */
 .custom-div-icon div {
-    border: 1.5px solid white; /* 흰색 테두리 */
-    box-shadow: 0 0 3px rgba(0,0,0,0.5); /* 미묘한 그림자 */
-    box-sizing: border-box; /* 패딩과 보더가 요소의 총 너비/높이에 포함되도록 */
-    display: flex; /* 내용이 추가될 경우 중앙 정렬을 위해 flexbox 사용 */
+    border: 1.5px solid white;
+    box-shadow: 0 0 3px rgba(0,0,0,0.5);
+    box-sizing: border-box;
+    display: flex;
     align-items: center;
     justify-content: center;
-    /* background-color, width, height, border-radius는 JS에서 인라인으로 설정 */
 }
 
-/* 마커 클러스터 아이콘 스타일 */
 .marker-cluster-custom {
-    border-radius: 50%; /* 원형 */
+    border-radius: 50%;
     color: white;
     font-weight: bold;
     text-align: center;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 0 3px rgba(0,0,0,0.5); /* 클러스터 아이콘 그림자 */
-    /* width, height, line-height, background-color는 JS에서 인라인으로 설정 */
+    box-shadow: 0 0 3px rgba(0,0,0,0.5);
 }
 
-/* 커스텀 툴팁 스타일링 */
 .custom-marker-tooltip {
-    background-color: rgba(0, 0, 0, 0.7); /* 어두운 배경 */
-    color: white; /* 흰색 텍스트 */
-    padding: 5px 8px; /* 패딩 */
-    border-radius: 4px; /* 약간 둥근 모서리 */
-    font-size: 12px; /* 가독성 있는 폰트 크기 */
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2); /* 미묘한 그림자 */
-    white-space: nowrap; /* 내용을 한 줄에 유지 */
-    z-index: 10000; /* 다른 요소 위에 표시되도록 */
-    pointer-events: none; /* 맵으로 클릭 전달 허용 */
+    background-color: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 5px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    white-space: nowrap;
+    z-index: 10000;
+    pointer-events: none;
 }
 
-/* 툴팁이 항상 표시되도록 강제, 잠재적 숨김 상태 재정의 */
 .leaflet-tooltip {
     display: block !important;
     visibility: visible !important;
     opacity: 1 !important;
-    left: 0 !important; /* 음수 left 변형 재설정 */
-    top: 0 !important; /* 음수 top 변형 재설정 */
-    transform: none !important; /* 원치 않는 변형 제거 */
+    left: 0 !important;
+    top: 0 !important;
+    transform: none !important;
 }
 
 
@@ -525,22 +488,20 @@ html, body {
    9. Responsive Design (Media Queries)
    ===================================== */
 
-/* PC 기기 (최소 너비: 769px) */
 @media (min-width: 769px) {
     .transport-tab {
-        font-size: 16px; 
+        font-size: 16px;
     }
 }
 
-/* 모바일 기기 (최대 너비: 768px) */
 @media (max-width: 768px) {
     .transport-tab-container {
-        height: 50px; /* 모바일 기본 탭 높이로 고정 */
+        height: 50px;
         top: 0;
     }
 
     .transport-tab {
-        font-size: 15px; 
+        font-size: 15px;
         padding: 0 3px;
     }
 
@@ -549,66 +510,58 @@ html, body {
         height: calc(100% - 50px);
     }
 
-    /* 우측 상단 컨트롤 컨테이너 (모든 컨트롤 통합) */
     .leaflet-top.leaflet-right {
-        top: 10px !important; /* <--- 이 부분을 10px로 변경합니다. */
-        gap: 5px !important; /* 모바일에서도 5px 간격 */
-        width: calc(100% - 20px); /* 화면 너비에 맞춰 10px 좌우 패딩/마진 확보 */
-        max-width: 160px; /* PC 크기보다 넓어지지 않도록 고정 */
+        top: 10px !important;
+        gap: 5px !important;
+        width: calc(100% - 20px);
+        max-width: 160px;
         right: 10px !important;
-        margin-left: auto; /* 우측 정렬 */
+        margin-left: auto;
     }
 
-    /* 우측 상단 컨트롤 그룹 (줌/리셋/필터) - 모바일 */
     .map-control-group-right {
-        width: 100%; /* 부모(.leaflet-top.leaflet-right) 너비에 맞춰 확장 */
-        padding: 6px 8px; /* 모바일에서 이 그룹의 패딩 (만족 코드 따름) */
-        gap: 6px; /* 리셋/셀렉트 버튼 간의 내부 간격 (만족 코드 따름) */
+        width: 100%;
+        padding: 6px 8px;
+        gap: 6px;
     }
 
-    /* 트럭 토글 버튼 그룹 (INBOUND/OUTBOUND) - 모바일 */
     .truck-toggle-map-control {
-        width: 100%; /* 부모(.leaflet-top.leaflet-right) 너비에 맞춰 확장 */
-        /* background, padding, border-radius, box-shadow는 PC와 동일하게 유지 */
+        width: 100%;
     }
 
-    /* 모든 버튼 및 셀렉트의 높이를 34px로 통일 */
     .reset-btn,
     .map-control-group-right select,
     .leaflet-control-zoom a,
     .truck-toggle-btn {
-        height: 34px !important; /* 모든 버튼 높이 34px로 통일 */
-        font-size: 13px !important; /* 폰트 크기도 통일 */
+        height: 34px !important;
+        font-size: 13px !important;
     }
     .leaflet-control-zoom {
-        height: 34px; /* 줌 컨트롤 컨테이너 높이도 버튼 높이에 맞춤 */
+        height: 34px;
     }
     
-    /* 모바일에서 버튼 간 공백 제거 (이전 코드에서 이미 있었지만 재강조) */
     .truck-toggle-map-control {
-        gap: 0 !important; /* 버튼 간 간격 없음 */
-        flex-wrap: nowrap; /* 줄바꿈 방지 */
+        gap: 0 !important;
+        flex-wrap: nowrap;
     }
     .truck-toggle-btn:not(:first-child) {
-        border-left: none; /* 중복 테두리 제거로 공백 방지 */
+        border-left: none;
     }
     .truck-toggle-btn {
-        margin: 0 !important; /* 버튼 자체 마진 제거 */
-        flex-shrink: 0; /* 버튼이 축소되지 않도록 함 */
-        min-width: fit-content; /* 내용에 맞게 최소 너비 유지 */
-        padding: 0 12px; /* 모바일 버튼의 패딩을 약간 조정하여 컴팩트하게 */
-        font-size: 13px; /* 토글 버튼 폰트 크기 명시 */
+        margin: 0 !important;
+        flex-shrink: 0;
+        min-width: fit-content;
+        padding: 0 12px;
+        font-size: 13px;
     }
 }
 
-/* 아주 작은 화면 (최대 너비: 480px) */
 @media (max-width: 480px) {
     .transport-tab {
-        font-size: 14px; /* 폰트 크기 조정 */
+        font-size: 14px;
     }
 
-    /* 우측 상단 컨트롤 컨테이너 (줌, 리셋, 필터 포함) */
     .leaflet-top.leaflet-right {
-        top: 10px !important; /* <--- 이 부분을 10px로 변경합니다. */
+        top: 10px !important;
     }
 }
