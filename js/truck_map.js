@@ -125,7 +125,7 @@ class TruckCongestionMap {
 
                 // mouseover 시에는 layer.getBounds().getCenter()를 사용하고, showTooltip 내에서 알래스카 조정
                 let center = layer.getBounds().getCenter();
-                this.showTooltip(center, data); 
+                this.showTooltip(center, data);
                 
                 layer.setStyle({
                     weight: 2,
@@ -148,12 +148,39 @@ class TruckCongestionMap {
                 this.stateLayer.resetStyle(layer);
             },
             click: (e) => {
-                if (this.lockedStateId) {
+                // 알래스카 클릭 시 툴팁 위치로 지도 이동 (기존 로직 유지하며 추가)
+                if (feature.id === 'AK' || feature.properties.name === 'Alaska') {
+                    this.map.setView([62.0, -150.0], 4); // 알래스카 툴팁 위치로 이동 및 줌 레벨 설정
+                    // 이동 후 툴팁 다시 표시
+                    this.map.once('moveend', () => {
+                        this.showTooltip(L.latLng(62.0, -150.0), data);
+                    });
+                } else {
+                    // 다른 주는 기존 로직으로 zoomToState 호출
+                    this.zoomToState(feature);
+                }
+
+                // 클릭된 주를 잠그거나, 이미 잠긴 주를 다시 클릭하면 잠금 해제하는 기존 로직 유지
+                if (this.lockedStateId === feature.id) {
                     this.lockedStateId = null;
                     const filter = document.querySelector('.state-filter');
                     if (filter) filter.value = '';
+                    this.map.setView([37.8, -96], 4); // 전체 맵 뷰로 돌아감
+                    this.map.closePopup();
+                    this.currentOpenPopup = null;
+                    this.stateLayer.resetStyle(); // 모든 주 스타일 리셋
+                } else {
+                    this.lockedStateId = feature.id; // 클릭된 주를 잠금
+                    const filter = document.querySelector('.state-filter');
+                    if (filter) filter.value = feature.id; // 필터 드롭다운도 업데이트
+                    this.map.closePopup();
+                    this.currentOpenPopup = null;
+                    // zoomToState는 위에서 조건부로 이미 호출했거나, 여기서 다시 호출될 수 있음.
+                    // 알래스카가 아닌 경우만 zoomToState를 호출하도록 조정
+                    if (feature.id !== 'AK' && feature.properties.name !== 'Alaska') {
+                         this.zoomToState(feature);
+                    }
                 }
-                this.zoomToState(feature);
             }
         });
     }
@@ -166,6 +193,7 @@ class TruckCongestionMap {
 
         // 알래스카 (Alaska)에 대한 툴팁 위치 수동 조정 로직을 showTooltip 함수 안으로 통합
         let adjustedLatLng = latlng;
+        // feature.id 대신 data.name으로 Alaska인지 확인. geoJsonData.features.id는 'AK'
         if (data.name === 'Alaska' || data.name === 'AK') { // 데이터에 따라 'Alaska' 또는 'AK'로 체크
             adjustedLatLng = L.latLng(62.0, -150.0); // 알래스카에 대한 특정 좌표
         }
@@ -209,8 +237,14 @@ class TruckCongestionMap {
     }
 
     zoomToState(feature) {
-        const bounds = L.geoJSON(feature).getBounds();
-        this.map.fitBounds(bounds, { paddingTopLeft: [50, 50], paddingBottomRight: [50, 50] });
+        // 알래스카 (AK)인 경우 특정 좌표로 이동
+        if (feature.id === 'AK' || feature.properties.name === 'Alaska') {
+            this.map.setView([62.0, -150.0], 4); // 알래스카 툴팁 위치로 이동
+        } else {
+            // 다른 주는 기존 로직 유지 (바운드에 맞게 확대)
+            const bounds = L.geoJSON(feature).getBounds();
+            this.map.fitBounds(bounds, { paddingTopLeft: [50, 50], paddingBottomRight: [50, 50] });
+        }
     }
 
     addRightControls() {
@@ -277,7 +311,7 @@ class TruckCongestionMap {
                             const stateData = this.metricData[this.lockedStateId] || {};
                             // showTooltip 함수 자체에서 알래스카 위치를 조정하므로, 여기서 특별히 할 필요는 없음.
                             // 하지만 명시적으로 L.latLng(62.0, -150.0)을 넘겨줘도 됨.
-                            this.showTooltip(center, stateData); 
+                            this.showTooltip(center, stateData);
                         }
                     }
                 });
@@ -307,30 +341,39 @@ class TruckCongestionMap {
                     this.isZoomingToState = true;
                     this.lockedStateId = stateId;
 
-                    const bounds = L.geoJSON(state).getBounds();
-                    let center = bounds.getCenter(); // 필터 선택 시 기본 중앙값
-
-                    const stateData = this.metricData[stateId] || {};
-
-                    this.map.once('moveend', () => {
-                        this.stateLayer.eachLayer(layer => {
-                            if (layer.feature.id === stateId) {
-                                layer.setStyle({
-                                    weight: 2,
-                                    color: 'white',
-                                    dashArray: '',
-                                    fillOpacity: 0.9
-                                });
-                            } else {
-                                this.stateLayer.resetStyle(layer);
-                            }
+                    // 알래스카 (AK)인 경우 특정 좌표로 이동하고 툴팁 표시
+                    if (state.id === 'AK' || state.properties.name === 'Alaska') {
+                        this.map.setView([62.0, -150.0], 4); // 알래스카 툴팁 위치로 이동
+                        this.map.once('moveend', () => {
+                            const stateData = this.metricData[state.id] || {};
+                            this.showTooltip(L.latLng(62.0, -150.0), stateData);
+                            this.isZoomingToState = false;
                         });
-                        // showTooltip 함수 내에서 알래스카 위치를 조정하므로, 여기서는 기본 center를 넘겨줍니다.
-                        this.showTooltip(center, stateData); 
-                        this.isZoomingToState = false;
-                    });
-                    
-                    this.map.fitBounds(bounds, { paddingTopLeft: [50, 50], paddingBottomRight: [50, 50] });
+                    } else {
+                        // 다른 주는 기존 로직 유지 (바운드에 맞게 확대하고 툴팁 표시)
+                        const bounds = L.geoJSON(state).getBounds();
+                        let center = bounds.getCenter();
+
+                        const stateData = this.metricData[stateId] || {};
+
+                        this.map.once('moveend', () => {
+                            this.stateLayer.eachLayer(layer => {
+                                if (layer.feature.id === stateId) {
+                                    layer.setStyle({
+                                        weight: 2,
+                                        color: 'white',
+                                        dashArray: '',
+                                        fillOpacity: 0.9
+                                    });
+                                } else {
+                                    this.stateLayer.resetStyle(layer);
+                                }
+                            });
+                            this.showTooltip(center, stateData);
+                            this.isZoomingToState = false;
+                        });
+                        this.map.fitBounds(bounds, { paddingTopLeft: [50, 50], paddingBottomRight: [50, 50] });
+                    }
                 }
             });
 
