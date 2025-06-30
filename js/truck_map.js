@@ -8,11 +8,12 @@ class TruckCongestionMap {
         this.metricData = null;
         this.geoJsonData = null;
         this.initialized = false;
-        this.controlDiv = null; // 이제 L.control 인스턴스를 저장할 것입니다.
+        // this.controlDiv = null; // 이제 더 이상 별도의 toggle controlDiv는 필요 없습니다.
         this.errorControl = null;
         this.isZoomingToState = false; // 필터 선택으로 확대 중인지 추적하는 플래그
         this.lockedStateId = null; // 필터로 선택되어 '잠긴' 주의 ID를 추적하는 플래그
         this.currentOpenPopup = null; // 현재 열려있는 팝업에 대한 참조 추가
+        this.rightControlsInstance = null; // 통합된 우측 컨트롤 인스턴스
 
         // 지도 타일 레이어를 CartoDB Light All로 변경하여 영어 지명 통일
         L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', {
@@ -58,7 +59,7 @@ class TruckCongestionMap {
             this.metricData = sheetData;
 
             this.renderMap();
-            this.addToggleControls(); // INBOUND/OUTBOUND 토글 버튼 (상단 중앙)
+            // this.addToggleControls(); // INBOUND/OUTBOUND 토글 버튼 (상단 중앙) -> 이제 addRightControls()에 통합
             this.addRightControls();    // 리셋 버튼과 필터 드롭다운 (상단 우측)
             this.initialized = true;
         } catch (err) {
@@ -132,7 +133,7 @@ class TruckCongestionMap {
                 let center = layer.getBounds().getCenter();
                 // 알래스카 (AK)에 대한 툴팁 위치 수동 조정
                 if (stateCode === 'AK') {
-                    center = L.latLng(62.0, -150.0); 
+                    center = L.latLng(62.0, -150.0);
                 }
 
                 this.showTooltip(center, data);
@@ -221,86 +222,35 @@ class TruckCongestionMap {
         this.map.fitBounds(bounds, { paddingTopLeft: [50, 50], paddingBottomRight: [50, 50] });
     }
 
-    addToggleControls() {
-        if (this.controlDiv) { // 기존 컨트롤이 있다면 제거
-            this.map.removeControl(this.controlDiv);
-        }
-
-        // L.control을 사용하여 Leaflet의 컨트롤 시스템에 통합
-        const toggleControl = L.control({ position: 'topleft' });
-        
-        toggleControl.onAdd = () => {
-            const div = L.DomUtil.create('div', 'map-control-container truck-toggle-map-control');
-            this.controlDivElement = div; // 실제 DOM 요소를 저장
-            this.renderToggleButtons(); // 여기에 버튼 렌더링
-            
-            L.DomEvent.disableClickPropagation(div);
-            L.DomEvent.disableScrollPropagation(div);
-            return div;
-        };
-        
-        toggleControl.addTo(this.map);
-        this.controlDiv = toggleControl; // L.control 인스턴스를 저장
-
-        // 초기 위치 설정 (CSS가 덮어쓸 것이므로 여기서는 필수 아님)
-        // const tabContainer = document.querySelector('.transport-tab-container');
-        // if (tabContainer && this.controlDivElement) {
-        //     const tabHeight = tabContainer.offsetHeight; 
-        //     this.controlDivElement.style.top = `${tabHeight + 10}px`;
-        // } else if (this.controlDivElement) {
-        //     this.controlDivElement.style.top = '50px'; 
-        // }
-    }
-
-    renderToggleButtons() {
-        if (!this.controlDivElement) return; // DOM 요소가 아직 없으면 리턴
-
-        this.controlDivElement.innerHTML = `
-            <button class="truck-toggle-btn ${this.currentMode === 'inbound' ? 'truck-active' : ''}" data-mode="inbound">INBOUND</button>
-            <button class="truck-toggle-btn ${this.currentMode === 'outbound' ? 'truck-active' : ''}" data-mode="outbound">OUTBOUND</button>
-        `;
-
-        this.controlDivElement.querySelectorAll('.truck-toggle-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                this.currentMode = btn.dataset.mode;
-                this.renderToggleButtons();
-                this.stateLayer.setStyle(this.getStyle.bind(this));
-            });
-        });
-    }
+    // addToggleControls() 함수는 이제 사용되지 않습니다.
+    // 모든 컨트롤이 addRightControls()에 통합됩니다.
 
     addRightControls() {
-        if (this.filterControlInstance) {
-            this.map.removeControl(this.filterControlInstance);
+        // 기존 컨트롤이 있다면 제거
+        if (this.rightControlsInstance) {
+            this.map.removeControl(this.rightControlsInstance);
         }
-        
+
         const control = L.control({ position: 'topright' });
-        
+
         control.onAdd = () => {
-            const div = L.DomUtil.create('div', 'map-control-group-right');
-            
-            // 줌 컨트롤 생성
+            const div = L.DomUtil.create('div', 'map-control-group-right'); // 이 div가 모든 컨트롤을 담습니다.
+
+            // 1. 줌 컨트롤 생성
             const zoomControl = L.DomUtil.create('div', 'leaflet-control-zoom');
             zoomControl.innerHTML = `
                 <a class="leaflet-control-zoom-in" href="#" title="Zoom in">+</a>
                 <a class="leaflet-control-zoom-out" href="#" title="Zoom out">-</a>
             `;
             div.appendChild(zoomControl);
-            
-            // 줌 버튼 이벤트 핸들러
+
+            // 줌 버튼 이벤트 핸들러 (div에 직접 추가)
             zoomControl.querySelector('.leaflet-control-zoom-in').addEventListener('click', (e) => { e.preventDefault(); this.map.zoomIn(); });
             zoomControl.querySelector('.leaflet-control-zoom-out').addEventListener('click', (e) => { e.preventDefault(); this.map.zoomOut(); });
 
-            const states = this.geoJsonData.features
-                .map(f => ({ id: f.id, name: f.properties.name }))
-                .sort((a, b) => a.name.localeCompare(b.name));
-
-            const filterDropdownHtml = `<select class="state-filter"><option value="">Select State</option>${states.map(state => `<option value="${state.id}">${state.name}</option>`).join('')}</select>`;
+            // 2. 리셋 버튼
             const resetButtonHtml = `<button class="truck-reset-btn reset-btn">Reset View</button>`;
-
-            // 순서 변경: 리셋 버튼 먼저 추가, 그 다음에 필터 드롭다운 추가
             div.insertAdjacentHTML('beforeend', resetButtonHtml);
-            div.insertAdjacentHTML('beforeend', filterDropdownHtml);
 
             // 리셋 버튼 리스너
             div.querySelector('.truck-reset-btn').addEventListener('click', () => {
@@ -311,6 +261,35 @@ class TruckCongestionMap {
                 this.map.closePopup();
                 this.currentOpenPopup = null; // 리셋 시 팝업 참조 초기화
             });
+
+            // 3. INBOUND/OUTBOUND 토글 버튼
+            const toggleButtonsHtml = `
+                <div class="map-control-container truck-toggle-map-control">
+                    <button class="truck-toggle-btn ${this.currentMode === 'inbound' ? 'truck-active' : ''}" data-mode="inbound">INBOUND</button>
+                    <button class="truck-toggle-btn ${this.currentMode === 'outbound' ? 'truck-active' : ''}" data-mode="outbound">OUTBOUND</button>
+                </div>
+            `;
+            div.insertAdjacentHTML('beforeend', toggleButtonsHtml);
+
+            // 토글 버튼 이벤트 리스너
+            div.querySelectorAll('.truck-toggle-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    this.currentMode = btn.dataset.mode;
+                    // 토글 버튼의 활성 상태를 다시 렌더링 (div 내에서 직접 업데이트)
+                    div.querySelectorAll('.truck-toggle-btn').forEach(innerBtn => {
+                        innerBtn.classList.toggle('truck-active', innerBtn.dataset.mode === this.currentMode);
+                    });
+                    this.stateLayer.setStyle(this.getStyle.bind(this));
+                });
+            });
+
+            // 4. 필터 드롭다운
+            const states = this.geoJsonData.features
+                .map(f => ({ id: f.id, name: f.properties.name }))
+                .sort((a, b) => a.name.localeCompare(b.name));
+
+            const filterDropdownHtml = `<select class="state-filter"><option value="">Select State</option>${states.map(state => `<option value="${state.id}">${state.name}</option>`).join('')}</select>`;
+            div.insertAdjacentHTML('beforeend', filterDropdownHtml);
 
             // 필터 변경 리스너
             div.querySelector('.state-filter').addEventListener('change', (e) => {
@@ -347,7 +326,7 @@ class TruckCongestionMap {
             L.DomEvent.disableClickPropagation(div);
             L.DomEvent.disableScrollPropagation(div);
 
-            this.filterControlInstance = control;
+            this.rightControlsInstance = control; // L.control 인스턴스를 저장
             return div;
         };
         
