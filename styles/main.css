@@ -154,7 +154,7 @@ html, body {
     top: 70px !important; /* PC 버전: 탭 메뉴 높이(60px) + 10px 여백 */
     right: 10px !important;
     width: 160px; /* 컨트롤 그룹 전체 너비 고정 */
-    background: none !important; /* 이제 그룹 자체에 배경/그림자/패딩/border-radius 주지 않음 */
+    background: none !important;
     padding: 0 !important;
     border-radius: 0 !important;
     box-shadow: none !important;
@@ -174,7 +174,7 @@ html, body {
     height: 34px; /* 높이 고정 */
     background: white !important;
     border-radius: 6px !important;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.15); /* 그룹 개별 그림자 */
+    box-shadow: 0 2px 10px rgba(0,0,0,0.15);
     padding: 0 !important;
     border: none !important;
     margin: 0 !important;
@@ -210,7 +210,7 @@ html, body {
     font-family: 'Noto Sans KR', sans-serif;
     font-weight: 500;
     font-size: 13px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.15); /* 그룹 개별 그림자 */
+    box-shadow: 0 2px 10px rgba(0,0,0,0.15);
     height: 34px; /* 높이 고정 */
     white-space: nowrap;
     transition: all 0.2s;
@@ -222,17 +222,31 @@ html, body {
     transform: translateY(-1px);
 }
 
-/* 트럭 맵 토글 버튼 (INBOUND/OUTBOUND) - 이제 가로로 배치 */
+/* 트럭 맵 토글 버튼 (INBOUND/OUTBOUND) - 현재는 분리된 개별 컨트롤임 */
+/* 이전에 이 블록을 삭제했으나, 다시 추가하여 현재 스타일을 유지하도록 합니다. */
+/* 이는 통합된 하나의 박스 안의 버튼이 아니라, 개별적으로 스타일링되는 버튼에 해당합니다. */
 .truck-toggle-map-control {
-    display: flex; /* flex container로 변경 */
-    flex-direction: row; /* 가로로 배치 */
-    gap: 0 !important; /* 버튼 사이 간격 없음 */
-    width: 100%; /* 부모에 맞춰 너비 설정 */
-    box-shadow: 0 2px 10px rgba(0,0,0,0.15); /* 그룹 개별 그림자 */
-    background: white; /* 그룹 개별 배경 */
-    border-radius: 6px; /* 그룹 개별 둥근 모서리 */
-    overflow: hidden; /* 내부 요소가 둥근 모서리를 벗어나지 않도록 */
-    padding: 0 !important; /* 컨테이너 자체 패딩 없음 */
+    /* 기존 스타일을 유지하거나, 각 개별 버튼에 그림자를 적용하는 방식으로 변경될 수 있습니다. */
+    /* 현재 이미지를 보면 INBOUND와 OUTBOUND 각각이 별도의 박스를 가집니다. */
+    /* 따라서 이 .truck-toggle-map-control 자체는 컨트롤 그룹 컨테이너 .leaflet-top.leaflet-right 안에 포함된 */
+    /* 개별 INBOUND 또는 OUTBOUND 컨트롤의 최상위 클래스가 아니라, */
+    /* 이전에 통합을 시도할 때 사용된 개념으로 보입니다. */
+    /* 만약 INBOUND와 OUTBOUND 각각이 .leaflet-control 클래스를 가진 별개의 DOM 요소라면, */
+    /* 이 .truck-toggle-map-control과 .truck-toggle-btn 스타일은 해당 버튼들에 직접 적용되지 않을 수 있습니다. */
+    /* 하지만, 현재 CSS 파일에 존재하므로 그대로 유지하되, 각 버튼의 스타일은 아래 .truck-toggle-btn에서 관리합니다. */
+    display: flex; /* flex container로 변경 (이전 그대로 유지) */
+    flex-direction: row; /* 가로로 배치 (이전 그대로 유지) */
+    gap: 0 !important; /* 버튼 사이 간격 없음 (이전 그대로 유지) */
+    width: 100%; /* 부모에 맞춰 너비 설정 (이전 그대로 유지) */
+    box-shadow: 0 2px 10px rgba(0,0,0,0.15); /* 그룹 전체에 그림자 (이전 그대로 유지) */
+    background: white; /* 그룹 전체에 배경 (이전 그대로 유지) */
+    border-radius: 6px; /* 그룹 전체에 둥근 모서리 (이전 그대로 유지) */
+    overflow: hidden; /* 내부 요소가 둥근 모서리를 벗어나지 않도록 (이전 그대로 유지) */
+    padding: 0 !important; /* 컨테이너 자체 패딩 없음 (이전 그대로 유지) */
+    /* 참고: 만약 실제 DOM 구조가 이 .truck-toggle-map-control을 사용하지 않고 각 버튼이 개별 .leaflet-control이라면, */
+    /* 이 블록은 효과가 없을 수 있습니다. 현재 CSS 파일에 있으므로 유지하되, */
+    /* 중요한 것은 각 버튼이 .leaflet-top.leaflet-right 내에서 간격을 5px 갖는 것입니다. */
+    /* 아래 media query 안의 .truck-toggle-btn이 각 버튼에 적용될 것입니다. */
 }
 
 .truck-toggle-btn {
@@ -253,7 +267,7 @@ html, body {
     margin: 0; /* 마진 제거하여 버튼들이 붙도록 함 */
     flex-shrink: 0;
     min-width: fit-content;
-    box-shadow: none; /* 개별 버튼에서는 그림자 제거 */
+    box-shadow: none; /* 그룹에 그림자 적용했으므로 개별 버튼에서는 그림자 제거 */
     border-radius: 0 !important; /* 개별 버튼의 radius는 0으로 초기화 (그룹 컨테이너가 처리) */
 }
 
@@ -298,7 +312,7 @@ html, body {
     appearance: none;
     -webkit-appearance: none;
     -moz-appearance: none;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.15); /* 그룹 개별 그림자 */
+    box-shadow: 0 2px 10px rgba(0,0,0,0.15);
     height: 34px; /* 높이 고정 */
 }
 
