@@ -5,52 +5,58 @@ import json
 from google.oauth2 import service_account
 
 def safe_convert(val, default=None):
-    """안전한 데이터 변환 함수"""
+    """Safely converts data, returning a default if conversion fails or value is empty."""
     if val in [None, "", " ", "N/A", "NaN"]:
         return default
     try:
+        # Try to convert to float if it contains a decimal point, otherwise to int.
+        # This handles numerical strings that might come from the spreadsheet.
         return float(val) if "." in str(val) else int(val)
     except (ValueError, TypeError):
+        # Return default if conversion to float or int fails.
         return default
 
 def fetch_ocean_data():
-    print("🔵 Ocean 데이터 수집 시작")
+    print("🔵 Starting Ocean Data Collection")
     try:
-        # 인증 설정
+        # Authentication setup for Google Sheets API
         creds_dict = eval(os.environ['GOOGLE_CREDENTIAL_JSON'])
         creds = service_account.Credentials.from_service_account_info(
             creds_dict,
             scopes=['https://www.googleapis.com/auth/spreadsheets']
         )
         gc = gspread.authorize(creds)
-        print("✅ Google 인증 성공")
+        print("✅ Google Authentication Successful")
         
-        # 데이터 로드
-        sheet = gc.open_by_key(os.environ['SPREADSHEET_ID'])
-        worksheet = sheet.worksheet('CONGESTION_OCEAN')
-        records = worksheet.get_all_records()
-        print(f"📝 레코드 개수: {len(records)}")
+        # Load data from the specified Google Sheet
+        spreadsheet_id = os.environ['SPREADSHEET_ID']
+        sheet = gc.open_by_key(spreadsheet_id)
+        worksheet = sheet.worksheet('CONGESTION_OCEAN') # Targeting the 'CONGESTION_OCEAN' worksheet
+        records = worksheet.get_all_records() # Get all data as a list of dictionaries (header as keys)
+        print(f"📝 Number of records fetched: {len(records)}")
         
-        # 데이터 처리
+        # Process fetched data
         result = []
         for row in records:
             try:
-                # 필수 필드 확인
+                # Validate essential fields: Latitude and Longitude
                 lat = safe_convert(row.get('Latitude'))
                 lng = safe_convert(row.get('Longitude'))
                 if None in [lat, lng]:
+                    # Skip rows without valid lat/lng as they cannot be mapped
+                    print(f"⚠️ Skipping row due to missing Latitude/Longitude for Port: {row.get('Port', 'Unknown')}")
                     continue
                 
-                # 데이터 정제
+                # Refine data for output JSON
                 data = {
                     'date': str(row.get('Date', '')).strip(),
                     'port': str(row.get('Port', '')).strip(),
                     'country': str(row.get('Country', '')).strip(),
-                    'country_code': str(row.get('Country Code', '')).strip().lower(),
+                    'country_code': str(row.get('Country Code', '')).strip().lower(), # Storing as lowercase for consistency
                     'port_code': str(row.get('Port Code', '')).strip(),
                     'current_delay_days': safe_convert(row.get('Current Delay (days)')),
-                    'current_delay': str(row.get('Current Delay', '')).strip(),
-                    'delay_level': str(row.get('Delay Level', '')).strip().lower(),
+                    'current_delay': str(row.get('Current Delay', '')).strip(), # Keep original string for display
+                    'delay_level': str(row.get('Delay Level', '')).strip().lower(), # Storing as lowercase for consistency
                     'lat': lat,
                     'lng': lng,
                     'weekly_median_delay': safe_convert(row.get('Weekly Median Delay')),
@@ -64,29 +70,32 @@ def fetch_ocean_data():
                 result.append(data)
                 
             except Exception as e:
-                print(f"⚠️ 행 처리 오류 - {row.get('Port')}: {str(e)}")
+                # Print error for specific row processing issues
+                print(f"⚠️ Error processing row for Port {row.get('Port', 'Unknown')}: {str(e)}")
                 continue
         
-        # JSON 저장
+        # Save processed data to a JSON file
         output_dir = os.path.join(os.path.dirname(__file__), '../data')
         os.makedirs(output_dir, exist_ok=True)
-        output_path = os.path.join(output_dir, 'global-ports.json')
+        # Note: The output file name is 'global-ports.json', not 'us-ocean.json' as implied by the deployment script.
+        output_path = os.path.join(output_dir, 'global-ports.json') 
         
         with open(output_path, 'w', encoding='utf-8') as f:
             json.dump(result, f, indent=2, ensure_ascii=False)
             
-        print(f"✅ Ocean 데이터 저장 완료: {output_path}")
-        print(f"🔄 생성된 데이터 개수: {len(result)}")
+        print(f"✅ Ocean data saved to: {output_path}")
+        print(f"🔄 Number of data entries generated: {len(result)}")
         
-        # 샘플 데이터 출력
+        # Print a sample of the generated data
         if result:
-            print("\n🔍 샘플 데이터:")
+            print("\n🔍 Sample Data:")
             print(json.dumps(result[0], indent=2))
             
         return True
         
     except Exception as e:
-        print(f"❌ 심각한 오류: {str(e)}")
+        # Print a critical error message for overall failures
+        print(f"❌ Critical error during ocean data fetch: {str(e)}")
         return False
 
 if __name__ == "__main__":
