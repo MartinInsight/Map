@@ -26,10 +26,10 @@ jobs:
           GOOGLE_CREDENTIAL_JSON: ${{ secrets.GOOGLE_CREDENTIAL_JSON }}
         run: |
           python scripts/fetch_truck_data.py
-          echo "생성된 파일:"
+          echo "Generated files:"
           ls -la data/
-          echo -e "\nJSON 내용 샘플:"
-          jq '.["TN"]' data/us-truck.json || echo "JSON 파싱 실패"
+          echo -e "\nJSON content sample:"
+          jq '.["TN"]' data/us-truck.json || echo "JSON parsing failed"
 
       - name: Fetch Rail Data
         env:
@@ -64,14 +64,13 @@ jobs:
       - name: Fetch Air Data
         env:
           GOOGLE_CREDENTIAL_JSON: ${{ secrets.GOOGLE_CREDENTIAL_JSON }}
-          SPREADSHEET_ID: ${{ secrets.SPREADSHEET_ID }} # 만약 Air 데이터도 구글 시트를 사용한다면
+          SPREADSHEET_ID: ${{ secrets.SPREADSHEET_ID }}
         run: |
           python scripts/fetch_air_data.py
           echo "Air data file:"
           ls -la data/us-air.json || echo "Air data file not found"
           echo -e "\nAir data sample:"
           if [ -f "data/us-air.json" ]; then
-            # air_map.js에서 사용하는 JSON 구조에 따라 적절한 샘플 출력으로 변경
             jq '.[0]' data/us-air.json
           else
             echo "No air data file exists"
@@ -91,13 +90,13 @@ jobs:
           else
             echo "No rail data file exists"
           fi
-          echo -e "\nAir data sample:" # Air 데이터 샘플 검증 추가
+          echo -e "\nAir data sample:"
           if [ -f "data/us-air.json" ]; then
             jq -r '.[0]' data/us-air.json
           else
             echo "No air data file exists"
           fi
-          echo -e "\n파일 크기:"
+          echo -e "\nFile sizes:"
           ls -lh data/
       
       - name: Deploy to GitHub Pages
