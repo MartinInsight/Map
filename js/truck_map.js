@@ -45,7 +45,6 @@ class TruckCongestionMap {
 
     async init() {
         try {
-            // us-truck.json 파일 경로 수정 (프로젝트 구조에 맞게)
             const [geoJson, sheetData] = await Promise.all([
                 fetch('data/us-states.json').then(res => {
                     if (!res.ok) throw new Error("GeoJSON fetch error");
@@ -58,7 +57,7 @@ class TruckCongestionMap {
             this.metricData = sheetData;
 
             this.renderMap();
-            this.addRightControls(); // 리셋 버튼과 필터 드롭다운 (상단 우측)
+            this.addRightControls();
             this.initialized = true;
         } catch (err) {
             console.error("Initialization failed:", err);
@@ -68,7 +67,6 @@ class TruckCongestionMap {
 
     async fetchSheetData() {
         try {
-            // data 폴더에 있는 us-truck.json을 fetch하도록 경로 수정
             const res = await fetch('data/us-truck.json');
             if (!res.ok) throw new Error("Truck data fetch error");
             return await res.json();
@@ -101,7 +99,7 @@ class TruckCongestionMap {
             fillColor: this.getColor(colorValue),
             weight: 1,
             opacity: 1,
-            color: 'white', // 기본 테두리 색상은 흰색
+            color: 'white',
             fillOpacity: 0.7
         };
     }
@@ -125,13 +123,14 @@ class TruckCongestionMap {
 
         layer.on({
             mouseover: (e) => {
-                // 확대/이동 중이거나 특정 주가 '잠금' 상태일 때는 hover 무시
                 if (this.isZoomingToState || this.lockedStateId) return;
 
                 let center = layer.getBounds().getCenter();
-                // 알래스카 (AK)에 대한 툴팁 위치 수동 조정
+                // 알래스카 (AK)와 하와이 (HI)에 대한 툴팁 위치 수동 조정
                 if (stateCode === 'AK') {
                     center = L.latLng(62.0, -150.0);
+                } else if (stateCode === 'HI') {
+                    center = L.latLng(20.7, -157.5); // 하와이 툴팁 위치 조정
                 }
 
                 this.showTooltip(center, data);
@@ -143,84 +142,84 @@ class TruckCongestionMap {
                 });
             },
             mouseout: (e) => {
-                // 특정 주가 '잠금' 상태일 때는 mouseout 무시
                 if (this.lockedStateId) return;
 
-                // 깜빡임 방지 로직: 마우스가 팝업 안으로 이동하면 닫지 않음
                 if (this.currentOpenPopup) {
                     const toElement = e.originalEvent.relatedTarget;
-                    // 마우스가 팝업의 DOM 요소 내부에 있는지 확인
                     if (this.currentOpenPopup.getElement() && this.currentOpenPopup.getElement().contains(toElement)) {
-                        return; // 마우스가 팝업 내부에 있으므로 리턴
+                        return;
                     }
                 }
 
                 this.map.closePopup();
-                this.currentOpenPopup = null; // 팝업 닫을 때 currentOpenPopup 초기화
+                this.currentOpenPopup = null;
                 this.stateLayer.resetStyle(layer);
             },
             click: (e) => {
                 const clickedStateId = feature.id;
                 const stateData = this.metricData[clickedStateId] || {};
 
-                // 기존 팝업 닫기
                 this.map.closePopup();
                 this.currentOpenPopup = null;
 
-                // 지도의 다른 주를 클릭하면 '잠금' 상태 해제 및 스타일 리셋
                 if (this.lockedStateId && this.lockedStateId !== clickedStateId) {
-                    // 이전에 잠겨있던 주의 스타일을 리셋
                     this.stateLayer.eachLayer(currentLayer => {
                         if (currentLayer.feature.id === this.lockedStateId) {
                             this.stateLayer.resetStyle(currentLayer);
                         }
                     });
-                    this.lockedStateId = null; // 잠금 해제
+                    this.lockedStateId = null;
                     const filter = document.querySelector('.state-filter');
                     if (filter) filter.value = '';
                 }
 
-                // 클릭된 주로 확대 (maxZoom 통일)
-                const bounds = L.geoJSON(feature).getBounds();
+                // 확대/이동 로직 개선: 알래스카, 하와이와 일반 주 구분
+                this.isZoomingToState = true;
+                this.lockedStateId = clickedStateId;
+
                 if (clickedStateId === 'AK') {
-                    // 알래스카는 고정 뷰로 이동 (툴팁 위치와 동일하게)
-                    this.map.setView([62.0, -150.0], 4);
+                    this.map.setView([62.0, -150.0], 4, { animate: true, duration: 0.5 });
+                } else if (clickedStateId === 'HI') {
+                    this.map.setView([20.7, -157.5], 6, { animate: true, duration: 0.5 }); // 하와이는 줌 레벨 6으로 고정
                 } else {
+                    const bounds = L.geoJSON(feature).getBounds();
                     this.map.fitBounds(bounds, {
                         paddingTopLeft: [50, 50],
                         paddingBottomRight: [50, 50],
-                        maxZoom: 6 // 클릭 시에도 maxZoom 6 적용 (필터와 통일)
+                        maxZoom: 6,
+                        animate: true,
+                        duration: 0.5
                     });
                 }
 
-
-                // 확대 후 이동이 끝나면 툴팁 표시
                 this.map.once('moveend', () => {
-                    // 팝업을 열기 직전, 지도의 크기 정보를 강제로 업데이트
-                    this.map.invalidateSize(true); // true를 인자로 주어 애니메이션 없이 업데이트
+                    this.map.invalidateSize(true);
 
-                    // 툴팁 위치 조정 로직
-                    let center = L.geoJSON(feature).getBounds().getCenter();
+                    let tooltipCenter = L.geoJSON(feature).getBounds().getCenter();
                     if (clickedStateId === 'AK') {
-                        center = L.latLng(62.0, -150.0); // 알래스카 툴팁 위치 조정
+                        tooltipCenter = L.latLng(62.0, -150.0);
+                    } else if (clickedStateId === 'HI') {
+                        tooltipCenter = L.latLng(20.7, -157.5);
                     }
-                    // setTimeout을 사용하여 맵 렌더링이 완료될 시간을 충분히 벌어줍니다.
+
                     setTimeout(() => {
-                        this.showTooltip(center, stateData);
-                    }, 200); // 200ms 지연
+                        this.showTooltip(tooltipCenter, stateData);
+                        this.stateLayer.eachLayer(layer => {
+                            if (layer.feature.id === clickedStateId) {
+                                layer.setStyle({
+                                    weight: 2,
+                                    color: 'white',
+                                    dashArray: '',
+                                    fillOpacity: 0.9
+                                });
+                            } else {
+                                this.stateLayer.resetStyle(layer);
+                            }
+                        });
+                        this.isZoomingToState = false;
+                    }, 200); // 충분한 지연
                 });
 
-                // 클릭 시 해당 주의 스타일 강조
-                layer.setStyle({
-                    weight: 2,
-                    color: 'white',
-                    dashArray: '',
-                    fillOpacity: 0.9
-                });
-
-                // 클릭된 주를 lockedStateId로 설정
-                this.lockedStateId = clickedStateId;
-                // 필터 드롭다운도 업데이트
                 const filter = document.querySelector('.state-filter');
                 if (filter) filter.value = clickedStateId;
             }
@@ -230,22 +229,21 @@ class TruckCongestionMap {
     showTooltip(latlng, data) {
         if (!this.initialized || !data.name) return;
 
-        // 기존 팝업이 있으면 닫고 새로 열기 (중복 방지)
         this.map.closePopup();
-        this.currentOpenPopup = null; // 기존 참조 초기화
+        this.currentOpenPopup = null;
 
         let adjustedLatLng = latlng;
-        // 알래스카인 경우 툴팁 위치 조정
+        // 알래스카와 하와이 툴팁 위치 조정 (기존 로직 유지)
         if (data.name === 'Alaska') {
-            adjustedLatLng = L.latLng(62.0, -150.0); // 알래스카에 대한 특정 좌표
+            adjustedLatLng = L.latLng(62.0, -150.0);
+        } else if (data.name === 'Hawaii') {
+            adjustedLatLng = L.latLng(20.7, -157.5);
         }
-        // 다른 문제가 발생하는 주가 있다면 여기에 추가
-
 
         const format = (v) => isNaN(Number(v)) ? '0.00' : Math.abs(Number(v)).toFixed(2);
         const isInbound = this.currentMode === 'inbound';
         const delay = isInbound ? data.inboundDelay : data.outboundDelay;
-        const dwellValue = isInbound ? data.dwellInbound : data.outboundDwell; // 'outboundDwell' 사용
+        const dwellValue = isInbound ? data.dwellInbound : data.outboundDwell;
 
         const content = `
             <h4>${data.name || 'Unknown'}</h4>
@@ -265,7 +263,6 @@ class TruckCongestionMap {
             </div>
         `;
 
-        // 팝업을 생성하고 참조를 저장합니다.
         this.currentOpenPopup = L.popup({
             className: 'truck-tooltip-container',
             maxWidth: 300,
@@ -280,15 +277,12 @@ class TruckCongestionMap {
         this.currentOpenPopup.openOn(this.map);
     }
 
-    // zoomToState는 이제 클릭 이벤트 핸들러 내에서 직접 처리하므로 필요 없음 (제거하지는 않음)
     zoomToState(feature) {
         const bounds = L.geoJSON(feature).getBounds();
-        // 이 함수는 더 이상 maxZoom을 직접 포함하지 않고, 호출하는 곳에서 maxZoom을 제어합니다.
         this.map.fitBounds(bounds, { paddingTopLeft: [50, 50], paddingBottomRight: [50, 50] });
     }
 
     addRightControls() {
-        // 기존 컨트롤이 있다면 제거
         if (this.rightControlsInstance) {
             this.map.removeControl(this.rightControlsInstance);
         }
@@ -296,9 +290,8 @@ class TruckCongestionMap {
         const control = L.control({ position: 'topright' });
 
         control.onAdd = () => {
-            const div = L.DomUtil.create('div', 'map-control-group-right'); // 이 div가 모든 컨트롤을 담습니다.
+            const div = L.DomUtil.create('div', 'map-control-group-right');
 
-            // 1. 줌 컨트롤 생성
             const zoomControl = L.DomUtil.create('div', 'leaflet-control-zoom');
             zoomControl.innerHTML = `
                 <a class="leaflet-control-zoom-in" href="#" title="Zoom in">+</a>
@@ -306,7 +299,6 @@ class TruckCongestionMap {
             `;
             div.appendChild(zoomControl);
 
-            // 줌 버튼 이벤트 핸들러 (div에 직접 추가)
             L.DomEvent.on(zoomControl.querySelector('.leaflet-control-zoom-in'), 'click', (e) => {
                 L.DomEvent.preventDefault(e);
                 this.map.zoomIn();
@@ -316,22 +308,19 @@ class TruckCongestionMap {
                 this.map.zoomOut();
             });
 
-            // 2. 리셋 버튼
             const resetButtonHtml = `<button class="truck-reset-btn reset-btn">Reset View</button>`;
             div.insertAdjacentHTML('beforeend', resetButtonHtml);
 
-            // 리셋 버튼 리스너
             L.DomEvent.on(div.querySelector('.truck-reset-btn'), 'click', () => {
-                this.lockedStateId = null; // 잠금 해제
+                this.lockedStateId = null;
                 this.map.setView([37.8, -96], 4);
                 const stateFilter = div.querySelector('.state-filter');
                 if (stateFilter) stateFilter.value = '';
                 this.map.closePopup();
-                this.currentOpenPopup = null; // 리셋 시 팝업 참조 초기화
-                this.stateLayer.resetStyle(); // 모든 주의 스타일을 기본으로 되돌림
+                this.currentOpenPopup = null;
+                this.stateLayer.resetStyle();
             });
 
-            // 3. INBOUND/OUTBOUND 토글 버튼
             const toggleButtonsHtml = `
                 <div class="map-control-container truck-toggle-map-control">
                     <button class="truck-toggle-btn ${this.currentMode === 'inbound' ? 'truck-active' : ''}" data-mode="inbound">IN</button>
@@ -340,38 +329,34 @@ class TruckCongestionMap {
             `;
             div.insertAdjacentHTML('beforeend', toggleButtonsHtml);
 
-            // 토글 버튼 이벤트 리스너
             div.querySelectorAll('.truck-toggle-btn').forEach(btn => {
                 L.DomEvent.on(btn, 'click', () => {
                     this.currentMode = btn.dataset.mode;
-                    // 토글 버튼의 활성 상태를 다시 렌더링 (div 내에서 직접 업데이트)
                     div.querySelectorAll('.truck-toggle-btn').forEach(innerBtn => {
                         innerBtn.classList.toggle('truck-active', innerBtn.dataset.mode === this.currentMode);
                     });
                     this.stateLayer.setStyle(this.getStyle.bind(this));
-                    this.map.closePopup(); // 모드 변경 시 열려있는 팝업 닫기
+                    this.map.closePopup();
                     this.currentOpenPopup = null;
-                    if (this.lockedStateId) { // 잠긴 주가 있다면 해당 주 팝업 다시 띄우기
+                    if (this.lockedStateId) {
                         const lockedFeature = this.geoJsonData.features.find(f => f.id === this.lockedStateId);
                         if (lockedFeature) {
                             let center = L.geoJSON(lockedFeature).getBounds().getCenter();
-                            const stateData = this.metricData[this.lockedStateId] || {}; // stateData를 올바르게 가져옴
-                            // 알래스카인 경우 툴팁 위치 조정
+                            const stateData = this.metricData[this.lockedStateId] || {};
                             if (this.lockedStateId === 'AK') {
                                 center = L.latLng(62.0, -150.0);
+                            } else if (this.lockedStateId === 'HI') {
+                                center = L.latLng(20.7, -157.5); // 하와이 툴팁 위치 조정
                             }
-                            // 팝업을 열기 직전, 지도의 크기 정보를 강제로 업데이트
-                            this.map.invalidateSize(true); // invalidateSize 추가
-                            // setTimeout을 사용하여 맵 렌더링이 완료될 시간을 충분히 벌어줍니다.
+                            this.map.invalidateSize(true);
                             setTimeout(() => {
                                 this.showTooltip(center, stateData);
-                            }, 100); // 100ms 지연
+                            }, 100);
                         }
                     }
                 });
             });
 
-            // 4. 필터 드롭다운
             const states = this.geoJsonData.features
                 .map(f => ({ id: f.id, name: f.properties.name }))
                 .sort((a, b) => a.name.localeCompare(b.name));
@@ -379,13 +364,11 @@ class TruckCongestionMap {
             const filterDropdownHtml = `<select class="state-filter"><option value="">Select State</option>${states.map(state => `<option value="${state.id}">${state.name}</option>`).join('')}</select>`;
             div.insertAdjacentHTML('beforeend', filterDropdownHtml);
 
-            // 필터 변경 리스너
             L.DomEvent.on(div.querySelector('.state-filter'), 'change', (e) => {
                 const stateId = e.target.value;
                 this.map.closePopup();
-                this.currentOpenPopup = null; // 필터 변경 시 팝업 참조 초기화
+                this.currentOpenPopup = null;
 
-                // 이전에 잠겨있던 주의 스타일을 리셋 (필터가 변경될 때마다)
                 if (this.lockedStateId) {
                     this.stateLayer.eachLayer(currentLayer => {
                         if (currentLayer.feature.id === this.lockedStateId) {
@@ -394,49 +377,44 @@ class TruckCongestionMap {
                     });
                 }
 
-                if (!stateId) { // 'Select State' 선택 시
-                    this.lockedStateId = null; // 잠금 해제
+                if (!stateId) {
+                    this.lockedStateId = null;
                     this.map.setView([37.8, -96], 4);
-                    this.stateLayer.resetStyle(); // 모든 주의 스타일을 기본으로 되돌림
+                    this.stateLayer.resetStyle();
                     return;
                 }
 
                 const state = this.geoJsonData.features.find(f => f.id === stateId);
                 if (state) {
                     this.isZoomingToState = true;
-                    this.lockedStateId = stateId; // 선택한 주를 '잠금'
+                    this.lockedStateId = stateId;
 
-                    const bounds = L.geoJSON(state).getBounds();
-                    let center = bounds.getCenter();
+                    let tooltipCenter;
                     const stateData = this.metricData[stateId] || {};
 
-                    // 알래스카인 경우 툴팁 위치 조정 및 고정된 뷰로 이동 (툴팁 위치와 동일하게)
+                    // 알래스카, 하와이 특별 처리
                     if (stateId === 'AK') {
-                        center = L.latLng(62.0, -150.0);
-                        this.map.setView([62.0, -150.0], 4); // 알래스카 화면 이동 중심 좌표 통일
+                        this.map.setView([62.0, -150.0], 4, { animate: true, duration: 0.5 });
+                        tooltipCenter = L.latLng(62.0, -150.0);
+                    } else if (stateId === 'HI') {
+                        this.map.setView([20.7, -157.5], 6, { animate: true, duration: 0.5 }); // 하와이 줌 레벨 6으로 고정
+                        tooltipCenter = L.latLng(20.7, -157.5);
                     } else {
-                        // setView 대신 fitBounds를 사용하여 줌 레벨을 더 유연하게 조정
-                        // 알래스카를 제외한 모든 주에 maxZoom을 적용하여 줌 레벨을 제한합니다.
+                        const bounds = L.geoJSON(state).getBounds();
                         this.map.fitBounds(bounds, {
                             paddingTopLeft: [50, 50],
                             paddingBottomRight: [50, 50],
-                            maxZoom: 6 // maxZoom 6 통일
+                            maxZoom: 6,
+                            animate: true,
+                            duration: 0.5
                         });
+                        tooltipCenter = bounds.getCenter();
                     }
 
                     this.map.once('moveend', () => {
-                        // 팝업을 열기 직전, 지도의 크기 정보를 강제로 업데이트
-                        this.map.invalidateSize(true); // invalidateSize 추가
-
-                        // 툴팁 위치 조정 로직
-                        let tooltipCenter = L.geoJSON(state).getBounds().getCenter(); // 툴팁 중심 계산
-                        if (stateId === 'AK') {
-                            tooltipCenter = L.latLng(62.0, -150.0); // 알래스카 툴팁 위치 조정
-                        }
-                        // setTimeout을 사용하여 맵 렌더링이 완료될 시간을 충분히 벌어줍니다.
+                        this.map.invalidateSize(true);
                         setTimeout(() => {
-                            this.showTooltip(tooltipCenter, stateData); // 툴팁을 표시할 때 조정된 중심 사용
-                            // 선택된 주의 스타일을 강조
+                            this.showTooltip(tooltipCenter, stateData); // 이미 위에서 계산된 tooltipCenter 사용
                             this.stateLayer.eachLayer(layer => {
                                 if (layer.feature.id === stateId) {
                                     layer.setStyle({
@@ -446,20 +424,19 @@ class TruckCongestionMap {
                                         fillOpacity: 0.9
                                     });
                                 } else {
-                                    this.stateLayer.resetStyle(layer); // 다른 주는 기본 스타일로 되돌림
+                                    this.stateLayer.resetStyle(layer);
                                 }
                             });
                             this.isZoomingToState = false;
-                        }, 100); // 100ms 지연 (필요에 따라 조절)
+                        }, 100);
                     });
                 }
             });
 
-            // 클릭/스크롤 전파 방지
             L.DomEvent.disableClickPropagation(div);
             L.DomEvent.disableScrollPropagation(div);
 
-            this.rightControlsInstance = control; // L.control 인스턴스를 저장
+            this.rightControlsInstance = control;
             return div;
         };
 
