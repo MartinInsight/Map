@@ -127,8 +127,8 @@ class TruckCongestionMap {
 
         layer.on({
             mouseover: (e) => {
-                // 확대/이동 중일 때는 hover 무시 (lockedStateId 조건은 제거)
-                if (this.isZoomingToState) return; 
+                // 확대/이동 중이거나 특정 주가 '잠금' 상태일 때는 hover 무시
+                if (this.isZoomingToState || this.lockedStateId) return;
 
                 let center = layer.getBounds().getCenter();
                 // 알래스카 (AK)에 대한 툴팁 위치 수동 조정
@@ -363,6 +363,15 @@ class TruckCongestionMap {
                 this.map.closePopup();
                 this.currentOpenPopup = null; // 필터 변경 시 팝업 참조 초기화
 
+                // 이전에 잠겨있던 주의 스타일을 리셋 (필터가 변경될 때마다)
+                if (this.lockedStateId) {
+                    this.stateLayer.eachLayer(currentLayer => {
+                        if (currentLayer.feature.id === this.lockedStateId) {
+                            this.stateLayer.resetStyle(currentLayer);
+                        }
+                    });
+                }
+
                 if (!stateId) { // 'Select State' 선택 시
                     this.lockedStateId = null; // 잠금 해제
                     this.map.setView([37.8, -96], 4);
@@ -379,17 +388,17 @@ class TruckCongestionMap {
                     let center = bounds.getCenter();
                     const stateData = this.metricData[stateId] || {};
 
-                    // 알래스카인 경우 툴팁 위치 조정 및 고정 뷰로 이동
+                    // 알래스카인 경우 툴팁 위치 조정 및 고정된 뷰로 이동
                     if (stateId === 'AK') {
                         center = L.latLng(62.0, -150.0);
                         this.map.setView([62.0, -150.0], 4); 
                     } else {
                          // setView 대신 fitBounds를 사용하여 줌 레벨을 더 유연하게 조정
-                         // 여기에서 maxZoom 옵션을 추가하여 줌 레벨을 제한합니다.
+                         // 알래스카를 제외한 모든 주에 maxZoom을 적용하여 줌 레벨을 제한합니다.
                         this.map.fitBounds(bounds, { 
                             paddingTopLeft: [50, 50], 
                             paddingBottomRight: [50, 50],
-                            maxZoom: 8 // 예시: 줌 레벨이 8을 넘지 않도록 제한
+                            maxZoom: 8 // 필터 선택 시 줌 레벨이 8을 넘지 않도록 제한
                         });
                     }
 
