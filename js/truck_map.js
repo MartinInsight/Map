@@ -132,9 +132,8 @@ class TruckCongestionMap {
                 // 알래스카 (AK)에 대한 툴팁 위치 수동 조정
                 if (stateCode === 'AK') {
                     center = L.latLng(62.0, -150.0);
-                } else if (stateCode === 'TX') { // 텍사스도 mouseover 시 수동 위치 적용
-                    center = L.latLng(31.5, -98.0); // 이 좌표는 테스트로 최적화
                 }
+                // 텍사스(TX) mouseover 시 임의 위치 설정 제거
 
                 this.showTooltip(center, data);
                 layer.setStyle({
@@ -185,8 +184,8 @@ class TruckCongestionMap {
                 // 클릭된 주로 확대 (maxZoom 통일)
                 const bounds = L.geoJSON(feature).getBounds();
                 if (clickedStateId === 'AK') {
-                    // 알래스카는 고정 뷰로 이동 (툴팁 위치와 동일하게)
-                    this.map.setView([62.0, -150.0], 4); 
+                    // 알래스카는 고정 뷰로 이동 (툴팁 위치와 동일하게, 줌 레벨 5로 변경)
+                    this.map.setView([62.0, -150.0], 5);
                 } else {
                     this.map.fitBounds(bounds, {
                         paddingTopLeft: [50, 50],
@@ -202,9 +201,9 @@ class TruckCongestionMap {
                         let center = L.geoJSON(feature).getBounds().getCenter();
                         if (clickedStateId === 'AK') {
                             center = L.latLng(62.0, -150.0); // 알래스카 툴팁 위치 조정
-                        } else if (clickedStateId === 'TX') { // 클릭 시에도 텍사스 수동 위치 적용
-                            center = L.latLng(31.5, -98.0); // 이 좌표는 테스트로 최적화
                         }
+                        // 텍사스(TX) 클릭 시 임의 위치 설정 제거
+
                         // 팝업을 열기 직전, 지도의 크기 정보를 강제로 업데이트
                         this.map.invalidateSize(true); // true를 인자로 주어 애니메이션 없이 업데이트
                         this.showTooltip(center, stateData);
@@ -239,10 +238,8 @@ class TruckCongestionMap {
         // 알래스카인 경우 툴팁 위치 조정
         if (data.name === 'Alaska') {
             adjustedLatLng = L.latLng(62.0, -150.0); // 알래스카에 대한 특정 좌표
-        } else if (data.name === 'Texas') {
-            adjustedLatLng = L.latLng(31.5, -98.0); // 텍사스에 대한 특정 좌표 (테스트로 최적화)
         }
-        // 다른 문제가 발생하는 주가 있다면 여기에 추가
+        // 텍사스(TX) 툴팁 위치 임의 설정 제거
 
 
         const format = (v) => isNaN(Number(v)) ? '0.00' : Math.abs(Number(v)).toFixed(2);
@@ -362,9 +359,9 @@ class TruckCongestionMap {
                             // 알래스카인 경우 툴팁 위치 조정
                             if (this.lockedStateId === 'AK') {
                                 center = L.latLng(62.0, -150.0);
-                            } else if (this.lockedStateId === 'TX') {
-                                center = L.latLng(31.5, -98.0);
                             }
+                            // 텍사스(TX) 임의 위치 설정 제거
+
                             this.map.invalidateSize(true); // invalidateSize 추가
                             this.showTooltip(center, stateData);
                         }
@@ -405,16 +402,16 @@ class TruckCongestionMap {
                 const state = this.geoJsonData.features.find(f => f.id === stateId);
                 if (state) {
                     this.isZoomingToState = true;
-                    this.lockedStateId = stateId; // 선택한 주를 '잠금'
+                    this.lockedStateId = stateId;
 
                     const bounds = L.geoJSON(state).getBounds();
                     let center = bounds.getCenter();
                     const stateData = this.metricData[stateId] || {};
 
-                    // 알래스카인 경우 툴팁 위치 조정 및 고정된 뷰로 이동 (툴팁 위치와 동일하게)
+                    // 알래스카인 경우 툴팁 위치 조정 및 고정된 뷰로 이동 (툴팁 위치와 동일하게, 줌 레벨 5로 변경)
                     if (stateId === 'AK') {
                         center = L.latLng(62.0, -150.0);
-                        this.map.setView([62.0, -150.0], 4); // 알래스카 화면 이동 중심 좌표 통일
+                        this.map.setView([62.0, -150.0], 5); // 알래스카 화면 이동 중심 좌표 통일, 줌 레벨 5
                     } else {
                         // setView 대신 fitBounds를 사용하여 줌 레벨을 더 유연하게 조정
                         // 알래스카를 제외한 모든 주에 maxZoom을 적용하여 줌 레벨을 제한합니다.
@@ -428,10 +425,8 @@ class TruckCongestionMap {
                     this.map.once('moveend', () => {
                         // Leaflet이 지도를 완전히 렌더링할 시간을 벌기 위해 setTimeout을 사용합니다.
                         setTimeout(() => {
-                            // 텍사스 등의 경우 여기서도 수동 조정된 center를 사용하도록 로직 추가
-                            if (stateId === 'TX') {
-                                center = L.latLng(31.5, -98.0);
-                            }
+                            // 텍사스(TX) 임의 위치 설정 제거
+
                             // 팝업을 열기 직전, 지도의 크기 정보를 강제로 업데이트
                             this.map.invalidateSize(true); // invalidateSize 추가
                             this.showTooltip(center, stateData);
