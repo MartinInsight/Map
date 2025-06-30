@@ -14,7 +14,7 @@ def safe_convert(val, default=None):
         return default
 
 def fetch_truck_data():
-    print("🚛 Starting Truck Data Collection")
+    print("🔵 Starting Truck Data Collection")
     try:
         creds_dict = eval(os.environ['GOOGLE_CREDENTIAL_JSON'])
         creds = service_account.Credentials.from_service_account_info(
