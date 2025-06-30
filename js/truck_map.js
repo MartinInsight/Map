@@ -95,10 +95,10 @@ class TruckCongestionMap {
 
         return {
             fillColor: this.getColor(colorValue),
-            weight: 1,
+            weight: (this.lockedStateId === stateCode) ? 2 : 1, // 선택된 주는 테두리 두껍게
             opacity: 1,
-            color: 'white',
-            fillOpacity: 0.7
+            color: (this.lockedStateId === stateCode) ? 'white' : 'white', // 선택된 주는 흰색 테두리
+            fillOpacity: (this.lockedStateId === stateCode) ? 0.9 : 0.7 // 선택된 주는 더 불투명하게
         };
     }
 
@@ -147,11 +147,16 @@ class TruckCongestionMap {
                 }
 
                 this.map.closePopup();
-                this.stateLayer.resetStyle(layer);
+                this.currentOpenPopup = null; // 툴팁이 닫혔으니 참조를 null로 설정
+                this.stateLayer.resetStyle(layer); // 해당 레이어만 스타일 리셋
             },
             click: (e) => {
                 const clickedStateId = feature.id;
                 const stateData = this.metricData[clickedStateId] || {};
+
+                // 기존 팝업 닫기 (새로운 팝업이 열릴 것이므로)
+                this.map.closePopup();
+                this.currentOpenPopup = null;
 
                 // 현재 클릭된 주가 이미 잠겨있는 주라면, 잠금 해제 및 초기화
                 if (this.lockedStateId === clickedStateId) {
@@ -159,50 +164,34 @@ class TruckCongestionMap {
                     const filter = document.querySelector('.state-filter');
                     if (filter) filter.value = ''; // 필터 드롭다운 초기화
                     this.map.setView([37.8, -96], 4); // 전체 맵 뷰로 돌아감
-                    this.map.closePopup(); // 팝업 닫기
-                    this.currentOpenPopup = null;
                     this.stateLayer.resetStyle(); // 모든 주 스타일 리셋
-                } else {
-                    // 다른 주를 클릭했거나, 아무 주도 잠겨있지 않은 상태라면
-                    this.lockedStateId = clickedStateId; // 클릭된 주를 잠금
-                    const filter = document.querySelector('.state-filter');
-                    if (filter) filter.value = clickedStateId; // 필터 드롭다운도 업데이트
-                    
-                    this.map.closePopup(); // 기존 팝업 닫기 (새로운 팝업이 열릴 것이므로)
-                    this.currentOpenPopup = null;
-
-                    // 클릭된 주로 확대 및 툴팁 표시
-                    // 알래스카 (AK)인 경우 특정 좌표로 이동
-                    if (clickedStateId === 'AK' || feature.properties.name === 'Alaska') {
-                        this.map.setView([62.0, -150.0], 4); // 알래스카 툴팁 위치로 이동
-                        this.map.once('moveend', () => {
-                            this.showTooltip(L.latLng(62.0, -150.0), stateData); // 툴팁도 조정된 좌표로
-                        });
-                    } else {
-                        // 다른 주는 기존처럼 해당 주의 바운드에 맞게 확대
-                        const bounds = L.geoJSON(feature).getBounds();
-                        this.map.fitBounds(bounds, { paddingTopLeft: [50, 50], paddingBottomRight: [50, 50] });
-                        
-                        const center = bounds.getCenter();
-                        this.map.once('moveend', () => {
-                            this.showTooltip(center, stateData);
-                        });
-                    }
+                    return; // 초기화 후 바로 종료
                 }
-                // 클릭 시 해당 주의 스타일을 강조하는 로직 추가
-                this.stateLayer.eachLayer(currentLayer => {
-                    if (currentLayer.feature.id === clickedStateId) {
-                        currentLayer.setStyle({
-                            weight: 2,
-                            color: 'white',
-                            dashArray: '',
-                            fillOpacity: 0.9
-                        });
-                    } else {
-                        // 선택되지 않은 다른 주의 스타일은 초기화
-                        this.stateLayer.resetStyle(currentLayer);
-                    }
-                });
+
+                // 다른 주를 클릭했거나, 아무 주도 잠겨있지 않은 상태라면
+                this.lockedStateId = clickedStateId; // 클릭된 주를 잠금
+                const filter = document.querySelector('.state-filter');
+                if (filter) filter.value = clickedStateId; // 필터 드롭다운도 업데이트
+                
+                // 클릭된 주로 확대 및 툴팁 표시
+                // 알래스카 (AK)인 경우 특정 좌표로 이동
+                if (clickedStateId === 'AK' || feature.properties.name === 'Alaska') {
+                    this.map.setView([62.0, -150.0], 4); // 알래스카 툴팁 위치로 이동
+                    this.map.once('moveend', () => {
+                        this.showTooltip(L.latLng(62.0, -150.0), stateData); // 툴팁도 조정된 좌표로
+                        this.stateLayer.setStyle(this.getStyle.bind(this)); // 스타일 업데이트
+                    });
+                } else {
+                    // 다른 주는 해당 주의 바운드에 맞게 확대
+                    const bounds = L.geoJSON(feature).getBounds();
+                    this.map.fitBounds(bounds, { paddingTopLeft: [50, 50], paddingBottomRight: [50, 50] });
+                    
+                    const center = bounds.getCenter();
+                    this.map.once('moveend', () => {
+                        this.showTooltip(center, stateData);
+                        this.stateLayer.setStyle(this.getStyle.bind(this)); // 스타일 업데이트
+                    });
+                }
             }
         });
     }
@@ -261,8 +250,8 @@ class TruckCongestionMap {
     }
 
     zoomToState(feature) {
-        // 이 함수는 클릭 이벤트에서 이미 처리되도록 수정되었으므로,
-        // 여기서는 기존의 바운드 확대 로직만 남겨두고 알래스카 특수 처리는 bindEvents에서 합니다.
+        // 이 함수는 bindEvents와 addRightControls에서 이미 알래스카 특수 처리를 포함하여 호출됩니다.
+        // 여기서는 일반적인 바운드 확대 로직만 담당하도록 유지합니다.
         const bounds = L.geoJSON(feature).getBounds();
         this.map.fitBounds(bounds, { paddingTopLeft: [50, 50], paddingBottomRight: [50, 50] });
     }
@@ -303,7 +292,7 @@ class TruckCongestionMap {
                 if (stateFilter) stateFilter.value = '';
                 this.map.closePopup();
                 this.currentOpenPopup = null;
-                this.stateLayer.resetStyle();
+                this.stateLayer.resetStyle(); // 모든 주 스타일 리셋
             });
 
             const toggleButtonsHtml = `
@@ -320,6 +309,7 @@ class TruckCongestionMap {
                     div.querySelectorAll('.truck-toggle-btn').forEach(innerBtn => {
                         innerBtn.classList.toggle('truck-active', innerBtn.dataset.mode === this.currentMode);
                     });
+                    // 모드 변경 시에는 lockedStateId에 따라 스타일만 업데이트 (showTooltip은 아래에서 다시 호출)
                     this.stateLayer.setStyle(this.getStyle.bind(this));
                     this.map.closePopup();
                     this.currentOpenPopup = null;
@@ -327,7 +317,7 @@ class TruckCongestionMap {
                         const lockedFeature = this.geoJsonData.features.find(f => f.id === this.lockedStateId);
                         if (lockedFeature) {
                             // 모드 변경 시에도 알래스카 위치를 고려하여 툴팁 다시 표시
-                            // showTooltip 함수 자체에서 알래스카 위치를 조정하므로, 여기서는 기본 center를 넘겨줍니다.
+                            // showTooltip 함수 자체에서 알래스카 위치를 조정하므로, 여기서 특별히 할 필요는 없음.
                             let center;
                             if (lockedFeature.id === 'AK' || lockedFeature.properties.name === 'Alaska') {
                                 center = L.latLng(62.0, -150.0);
@@ -356,6 +346,7 @@ class TruckCongestionMap {
                 this.map.closePopup();
                 this.currentOpenPopup = null;
 
+                // 'Select State' 선택 시 초기화
                 if (!stateId) {
                     this.lockedStateId = null;
                     this.map.setView([37.8, -96], 4);
@@ -373,6 +364,7 @@ class TruckCongestionMap {
                         this.map.once('moveend', () => {
                             this.showTooltip(L.latLng(62.0, -150.0), stateData);
                             this.isZoomingToState = false;
+                            this.stateLayer.setStyle(this.getStyle.bind(this)); // 스타일 업데이트
                         });
                     } else {
                         // 다른 주는 기존 로직 유지 (바운드에 맞게 확대하고 툴팁 표시)
@@ -383,22 +375,9 @@ class TruckCongestionMap {
                             const center = bounds.getCenter();
                             this.showTooltip(center, stateData);
                             this.isZoomingToState = false;
+                            this.stateLayer.setStyle(this.getStyle.bind(this)); // 스타일 업데이트
                         });
                     }
-                    
-                    // 필터 선택 시 해당 주의 스타일 강조
-                    this.stateLayer.eachLayer(currentLayer => {
-                        if (currentLayer.feature.id === stateId) {
-                            currentLayer.setStyle({
-                                weight: 2,
-                                color: 'white',
-                                dashArray: '',
-                                fillOpacity: 0.9
-                            });
-                        } else {
-                            this.stateLayer.resetStyle(currentLayer);
-                        }
-                    });
                 }
             });
 
