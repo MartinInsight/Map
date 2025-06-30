@@ -21,8 +21,8 @@ class AirCongestionMap {
             disableClusteringAtZoom: 9,
             spiderfyOnMaxZoom: true,
             spiderfyDistanceMultiplier: 2,
-            // showCoverageOnHover and showCoverageOnClick are not standard L.markerClusterGroup options
-            // and don't directly control individual marker popup behavior, so they remain removed.
+            showCoverageOnHover: false,
+            showCoverageOnClick: false,
 
             iconCreateFunction: (cluster) => {
                 const childMarkers = cluster.getAllChildMarkers();
