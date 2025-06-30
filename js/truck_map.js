@@ -398,7 +398,7 @@ class TruckCongestionMap {
                         this.map.fitBounds(bounds, { 
                             paddingTopLeft: [50, 50], 
                             paddingBottomRight: [50, 50],
-                            maxZoom: 7 // 여기서 줌 레벨을 8에서 7로 한 단계 더 낮춰보세요. (테스트 필요)
+                            maxZoom: 5
                         });
                     }
 
