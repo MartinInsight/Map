@@ -379,14 +379,18 @@ class TruckCongestionMap {
                     let center = bounds.getCenter();
                     const stateData = this.metricData[stateId] || {};
 
-                    // 알래스카인 경우 툴팁 위치 조정
+                    // 알래스카인 경우 툴팁 위치 조정 및 고정 뷰로 이동
                     if (stateId === 'AK') {
                         center = L.latLng(62.0, -150.0);
-                        // 알래스카는 고정된 뷰로 이동
                         this.map.setView([62.0, -150.0], 4); 
                     } else {
                          // setView 대신 fitBounds를 사용하여 줌 레벨을 더 유연하게 조정
-                        this.map.fitBounds(bounds, { paddingTopLeft: [50, 50], paddingBottomRight: [50, 50] });
+                         // 여기에서 maxZoom 옵션을 추가하여 줌 레벨을 제한합니다.
+                        this.map.fitBounds(bounds, { 
+                            paddingTopLeft: [50, 50], 
+                            paddingBottomRight: [50, 50],
+                            maxZoom: 8 // 예시: 줌 레벨이 8을 넘지 않도록 제한
+                        });
                     }
 
                     this.map.once('moveend', () => {
