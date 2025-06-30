@@ -245,41 +245,58 @@ class TruckCongestionMap {
             div.appendChild(zoomControl);
 
             // 줌 버튼 이벤트 핸들러 (div에 직접 추가)
-            zoomControl.querySelector('.leaflet-control-zoom-in').addEventListener('click', (e) => { e.preventDefault(); this.map.zoomIn(); });
-            zoomControl.querySelector('.leaflet-control-zoom-out').addEventListener('click', (e) => { e.preventDefault(); this.map.zoomOut(); });
+            L.DomEvent.on(zoomControl.querySelector('.leaflet-control-zoom-in'), 'click', (e) => {
+                L.DomEvent.preventDefault(e);
+                this.map.zoomIn();
+            });
+            L.DomEvent.on(zoomControl.querySelector('.leaflet-control-zoom-out'), 'click', (e) => {
+                L.DomEvent.preventDefault(e);
+                this.map.zoomOut();
+            });
 
             // 2. 리셋 버튼
             const resetButtonHtml = `<button class="truck-reset-btn reset-btn">Reset View</button>`;
             div.insertAdjacentHTML('beforeend', resetButtonHtml);
 
             // 리셋 버튼 리스너
-            div.querySelector('.truck-reset-btn').addEventListener('click', () => {
+            L.DomEvent.on(div.querySelector('.truck-reset-btn'), 'click', () => {
                 this.lockedStateId = null; // 잠금 해제
                 this.map.setView([37.8, -96], 4);
                 const stateFilter = div.querySelector('.state-filter');
                 if (stateFilter) stateFilter.value = '';
                 this.map.closePopup();
                 this.currentOpenPopup = null; // 리셋 시 팝업 참조 초기화
+                this.stateLayer.resetStyle(); // 모든 주의 스타일을 기본으로 되돌림
             });
 
             // 3. INBOUND/OUTBOUND 토글 버튼
             const toggleButtonsHtml = `
                 <div class="map-control-container truck-toggle-map-control">
-                    <button class="truck-toggle-btn ${this.currentMode === 'inbound' ? 'truck-active' : ''}" data-mode="inbound">INBOUND</button>
-                    <button class="truck-toggle-btn ${this.currentMode === 'outbound' ? 'truck-active' : ''}" data-mode="outbound">OUTBOUND</button>
+                    <button class="truck-toggle-btn ${this.currentMode === 'inbound' ? 'truck-active' : ''}" data-mode="inbound">IN</button>
+                    <button class="truck-toggle-btn ${this.currentMode === 'outbound' ? 'truck-active' : ''}" data-mode="outbound">OUT</button>
                 </div>
             `;
             div.insertAdjacentHTML('beforeend', toggleButtonsHtml);
 
             // 토글 버튼 이벤트 리스너
             div.querySelectorAll('.truck-toggle-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
+                L.DomEvent.on(btn, 'click', () => {
                     this.currentMode = btn.dataset.mode;
                     // 토글 버튼의 활성 상태를 다시 렌더링 (div 내에서 직접 업데이트)
                     div.querySelectorAll('.truck-toggle-btn').forEach(innerBtn => {
                         innerBtn.classList.toggle('truck-active', innerBtn.dataset.mode === this.currentMode);
                     });
                     this.stateLayer.setStyle(this.getStyle.bind(this));
+                    this.map.closePopup(); // 모드 변경 시 열려있는 팝업 닫기
+                    this.currentOpenPopup = null;
+                    if (this.lockedStateId) { // 잠긴 주가 있다면 해당 주 팝업 다시 띄우기
+                        const lockedFeature = this.geoJsonData.features.find(f => f.id === this.lockedStateId);
+                        if (lockedFeature) {
+                            const center = L.geoJSON(lockedFeature).getBounds().getCenter();
+                            const stateData = this.metricData[this.lockedStateId] || {};
+                            this.showTooltip(center, stateData);
+                        }
+                    }
                 });
             });
 
@@ -292,7 +309,7 @@ class TruckCongestionMap {
             div.insertAdjacentHTML('beforeend', filterDropdownHtml);
 
             // 필터 변경 리스너
-            div.querySelector('.state-filter').addEventListener('change', (e) => {
+            L.DomEvent.on(div.querySelector('.state-filter'), 'change', (e) => {
                 const stateId = e.target.value;
                 this.map.closePopup();
                 this.currentOpenPopup = null; // 필터 변경 시 팝업 참조 초기화
@@ -300,6 +317,7 @@ class TruckCongestionMap {
                 if (!stateId) { // 'Select State' 선택 시
                     this.lockedStateId = null; // 잠금 해제
                     this.map.setView([37.8, -96], 4);
+                    this.stateLayer.resetStyle(); // 모든 주의 스타일을 기본으로 되돌림
                     return;
                 }
 
@@ -313,6 +331,19 @@ class TruckCongestionMap {
                     const stateData = this.metricData[stateId] || {};
 
                     this.map.once('moveend', () => {
+                        // 선택된 주의 스타일을 강조
+                        this.stateLayer.eachLayer(layer => {
+                            if (layer.feature.id === stateId) {
+                                layer.setStyle({
+                                    weight: 2,
+                                    color: 'white',
+                                    dashArray: '',
+                                    fillOpacity: 0.9
+                                });
+                            } else {
+                                this.stateLayer.resetStyle(layer); // 다른 주는 기본 스타일로 되돌림
+                            }
+                        });
                         this.showTooltip(center, stateData);
                         this.isZoomingToState = false;
                     });
