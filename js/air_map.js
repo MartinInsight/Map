@@ -481,22 +481,24 @@ class AirCongestionMap {
                 this.map.zoomOut();
             });
 
-            const validAirports = this.currentData
-                .filter(item => item.Airport && item.Airport.trim() !== '')
-                .map(item => item.Airport);
-
-            const airports = [...new Set(validAirports)].sort((a, b) => a.localeCompare(b));
-
+            const validLocations = this.currentData
+                .filter(item => item.municipality && item.municipality.trim() !== '' && item.iso_region && item.iso_region.trim() !== '')
+                .map(item => {
+                    const regionCode = item.iso_region.split('-').pop(); // 'US-CA' -> 'CA'
+                    return `${item.municipality}, ${regionCode}`;
+                });
+    
+            const locations = [...new Set(validLocations)].sort((a, b) => a.localeCompare(b));
+    
             const filterDropdownHtml = `
-                        <select class="airport-filter">
-                            <option value="" disabled selected hidden>Select Airport</option>
-                            <option value="All">All Airports</option>
-                            ${airports.map(airport =>
-                                `<option value="${airport}">${airport}</option>`
-                            ).join('')}
-                        </select>
-                    `;
-            // Order: Reset View button first, then Select Airport dropdown
+                <select class="airport-filter">
+                    <option value="" disabled selected hidden>Select Location</option>
+                    <option value="All">All Locations</option>
+                    ${locations.map(location =>
+                        `<option value="${location}">${location}</option>`
+                    ).join('')}
+                </select>
+            `;
             div.insertAdjacentHTML('beforeend', `
                         <button class="air-reset-btn reset-btn">Reset View</button>
                     `);
