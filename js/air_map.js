@@ -431,8 +431,8 @@ class AirCongestionMap {
 
             content += `
                         <div class="location-info">
-                            <h5>${airportName}</h5>
                             <p><strong>Location:</strong> ${municipality}, ${regionCode}</p>
+                            <h5>${airportName}</h5>
                             <p><strong>Congestion Level:</strong>
                                 <span style="color: ${this.getColor(level, true)}">
                                     ${level}
