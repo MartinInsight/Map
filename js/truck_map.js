@@ -8,7 +8,6 @@ class TruckCongestionMap {
         this.metricData = null;
         this.geoJsonData = null;
         this.initialized = false;
-        // this.controlDiv = null; // 이제 더 이상 별도의 toggle controlDiv는 필요 없습니다.
         this.errorControl = null;
         this.isZoomingToState = false; // 필터 선택으로 확대 중인지 추적하는 플래그
         this.lockedStateId = null; // 필터로 선택되어 '잠긴' 주의 ID를 추적하는 플래그
@@ -59,8 +58,7 @@ class TruckCongestionMap {
             this.metricData = sheetData;
 
             this.renderMap();
-            // this.addToggleControls(); // INBOUND/OUTBOUND 토글 버튼 (상단 중앙) -> 이제 addRightControls()에 통합
-            this.addRightControls();    // 리셋 버튼과 필터 드롭다운 (상단 우측)
+            this.addRightControls(); // 리셋 버튼과 필터 드롭다운 (상단 우측)
             this.initialized = true;
         } catch (err) {
             console.error("Initialization failed:", err);
@@ -134,6 +132,8 @@ class TruckCongestionMap {
                 // 알래스카 (AK)에 대한 툴팁 위치 수동 조정
                 if (stateCode === 'AK') {
                     center = L.latLng(62.0, -150.0);
+                } else if (stateCode === 'TX') { // 텍사스도 mouseover 시 수동 위치 적용
+                    center = L.latLng(31.5, -98.0); // 이 좌표는 테스트로 최적화
                 }
 
                 this.showTooltip(center, data);
@@ -182,16 +182,33 @@ class TruckCongestionMap {
                     if (filter) filter.value = '';
                 }
                 
-                // 클릭된 주로 확대
-                this.zoomToState(feature);
+                // 클릭된 주로 확대 (maxZoom 통일)
+                const bounds = L.geoJSON(feature).getBounds();
+                if (clickedStateId === 'AK') {
+                    // 알래스카는 고정 뷰로 이동 (툴팁 위치와 동일하게)
+                    this.map.setView([62.0, -150.0], 4); 
+                } else {
+                    this.map.fitBounds(bounds, {
+                        paddingTopLeft: [50, 50],
+                        paddingBottomRight: [50, 50],
+                        maxZoom: 6 // 클릭 시에도 maxZoom 6 적용 (필터와 통일)
+                    });
+                }
+
 
                 // 확대 후 이동이 끝나면 툴팁 표시
                 this.map.once('moveend', () => {
-                    let center = L.geoJSON(feature).getBounds().getCenter();
-                    if (clickedStateId === 'AK') {
-                        center = L.latLng(62.0, -150.0); // 알래스카 툴팁 위치 조정
-                    }
-                    this.showTooltip(center, stateData);
+                    setTimeout(() => { // 충분한 시간 지연
+                        let center = L.geoJSON(feature).getBounds().getCenter();
+                        if (clickedStateId === 'AK') {
+                            center = L.latLng(62.0, -150.0); // 알래스카 툴팁 위치 조정
+                        } else if (clickedStateId === 'TX') { // 클릭 시에도 텍사스 수동 위치 적용
+                            center = L.latLng(31.5, -98.0); // 이 좌표는 테스트로 최적화
+                        }
+                        // 팝업을 열기 직전, 지도의 크기 정보를 강제로 업데이트
+                        this.map.invalidateSize(true); // true를 인자로 주어 애니메이션 없이 업데이트
+                        this.showTooltip(center, stateData);
+                    }, 200); // 200ms 지연
                 });
 
                 // 클릭 시 해당 주의 스타일 강조
@@ -220,9 +237,13 @@ class TruckCongestionMap {
 
         let adjustedLatLng = latlng;
         // 알래스카인 경우 툴팁 위치 조정
-        if (data.name === 'Alaska') { 
+        if (data.name === 'Alaska') {
             adjustedLatLng = L.latLng(62.0, -150.0); // 알래스카에 대한 특정 좌표
+        } else if (data.name === 'Texas') {
+            adjustedLatLng = L.latLng(31.5, -98.0); // 텍사스에 대한 특정 좌표 (테스트로 최적화)
         }
+        // 다른 문제가 발생하는 주가 있다면 여기에 추가
+
 
         const format = (v) => isNaN(Number(v)) ? '0.00' : Math.abs(Number(v)).toFixed(2);
         const isInbound = this.currentMode === 'inbound';
@@ -244,7 +265,7 @@ class TruckCongestionMap {
                     ${dwellValue >= 0 ? '↑' : '↓'} ${format(dwellValue)}%
                     <span class="truck-normal-text">${dwellValue >= 0 ? 'above' : 'below'} 2-week avg</span>
                 </p>
-                </div>
+            </div>
         `;
 
         // 팝업을 생성하고 참조를 저장합니다.
@@ -262,13 +283,12 @@ class TruckCongestionMap {
         this.currentOpenPopup.openOn(this.map);
     }
 
+    // zoomToState는 이제 클릭 이벤트 핸들러 내에서 직접 처리하므로 필요 없음 (제거하지는 않음)
     zoomToState(feature) {
         const bounds = L.geoJSON(feature).getBounds();
+        // 이 함수는 더 이상 maxZoom을 직접 포함하지 않고, 호출하는 곳에서 maxZoom을 제어합니다.
         this.map.fitBounds(bounds, { paddingTopLeft: [50, 50], paddingBottomRight: [50, 50] });
     }
-
-    // addToggleControls() 함수는 이제 사용되지 않습니다.
-    // 모든 컨트롤이 addRightControls()에 통합됩니다.
 
     addRightControls() {
         // 기존 컨트롤이 있다면 제거
@@ -338,11 +358,14 @@ class TruckCongestionMap {
                         const lockedFeature = this.geoJsonData.features.find(f => f.id === this.lockedStateId);
                         if (lockedFeature) {
                             let center = L.geoJSON(lockedFeature).getBounds().getCenter();
+                            const stateData = this.metricData[this.lockedStateId] || {}; // stateData를 올바르게 가져옴
                             // 알래스카인 경우 툴팁 위치 조정
                             if (this.lockedStateId === 'AK') {
                                 center = L.latLng(62.0, -150.0);
+                            } else if (this.lockedStateId === 'TX') {
+                                center = L.latLng(31.5, -98.0);
                             }
-                            const stateData = this.metricData[this.lockedStateId] || {};
+                            this.map.invalidateSize(true); // invalidateSize 추가
                             this.showTooltip(center, stateData);
                         }
                     }
@@ -388,68 +411,9 @@ class TruckCongestionMap {
                     let center = bounds.getCenter();
                     const stateData = this.metricData[stateId] || {};
 
-                    // 알래스카인 경우 툴팁 위치 조정 및 고정된 뷰로 이동
+                    // 알래스카인 경우 툴팁 위치 조정 및 고정된 뷰로 이동 (툴팁 위치와 동일하게)
                     if (stateId === 'AK') {
                         center = L.latLng(62.0, -150.0);
-                        this.map.setView([62.0, -150.0], 4); 
+                        this.map.setView([62.0, -150.0], 4); // 알래스카 화면 이동 중심 좌표 통일
                     } else {
-                         // setView 대신 fitBounds를 사용하여 줌 레벨을 더 유연하게 조정
-                         // 알래스카를 제외한 모든 주에 maxZoom을 적용하여 줌 레벨을 제한합니다.
-                        this.map.fitBounds(bounds, { 
-                            paddingTopLeft: [50, 50], 
-                            paddingBottomRight: [50, 50],
-                            maxZoom: 6
-                        });
-                    }
-
-                    this.map.once('moveend', () => {
-                        // Leaflet이 지도를 완전히 렌더링할 시간을 벌기 위해 setTimeout을 사용합니다.
-                        setTimeout(() => {
-                            // 선택된 주의 스타일을 강조
-                            this.stateLayer.eachLayer(layer => {
-                                if (layer.feature.id === stateId) {
-                                    layer.setStyle({
-                                        weight: 2,
-                                        color: 'white',
-                                        dashArray: '',
-                                        fillOpacity: 0.9
-                                    });
-                                } else {
-                                    this.stateLayer.resetStyle(layer); // 다른 주는 기본 스타일로 되돌림
-                                }
-                            });
-                            this.showTooltip(center, stateData);
-                            this.isZoomingToState = false;
-                        }, 100); // 100ms 지연 (필요에 따라 조절)
-                    });
-                }
-            });
-
-            // 클릭/스크롤 전파 방지
-            L.DomEvent.disableClickPropagation(div);
-            L.DomEvent.disableScrollPropagation(div);
-
-            this.rightControlsInstance = control; // L.control 인스턴스를 저장
-            return div;
-        };
-        
-        control.addTo(this.map);
-    }
-    
-    showError(message) {
-        if (this.errorControl) {
-            this.map.removeControl(this.errorControl);
-        }
-
-        const errorControl = L.control({ position: 'topleft' });
-        errorControl.onAdd = function() {
-            const div = L.DomUtil.create('div', 'error-message');
-            div.innerHTML = message;
-            return div;
-        };
-        errorControl.addTo(this.map);
-        this.errorControl = errorControl;
-    }
-}
-
-window.TruckCongestionMap = TruckCongestionMap;
+                        // setView
