@@ -398,26 +398,29 @@ class TruckCongestionMap {
                         this.map.fitBounds(bounds, { 
                             paddingTopLeft: [50, 50], 
                             paddingBottomRight: [50, 50],
-                            maxZoom: 8 // 필터 선택 시 줌 레벨이 8을 넘지 않도록 제한
+                            maxZoom: 7 // 여기서 줌 레벨을 8에서 7로 한 단계 더 낮춰보세요. (테스트 필요)
                         });
                     }
 
                     this.map.once('moveend', () => {
-                        // 선택된 주의 스타일을 강조
-                        this.stateLayer.eachLayer(layer => {
-                            if (layer.feature.id === stateId) {
-                                layer.setStyle({
-                                    weight: 2,
-                                    color: 'white',
-                                    dashArray: '',
-                                    fillOpacity: 0.9
-                                });
-                            } else {
-                                this.stateLayer.resetStyle(layer); // 다른 주는 기본 스타일로 되돌림
-                            }
-                        });
-                        this.showTooltip(center, stateData);
-                        this.isZoomingToState = false;
+                        // Leaflet이 지도를 완전히 렌더링할 시간을 벌기 위해 setTimeout을 사용합니다.
+                        setTimeout(() => {
+                            // 선택된 주의 스타일을 강조
+                            this.stateLayer.eachLayer(layer => {
+                                if (layer.feature.id === stateId) {
+                                    layer.setStyle({
+                                        weight: 2,
+                                        color: 'white',
+                                        dashArray: '',
+                                        fillOpacity: 0.9
+                                    });
+                                } else {
+                                    this.stateLayer.resetStyle(layer); // 다른 주는 기본 스타일로 되돌림
+                                }
+                            });
+                            this.showTooltip(center, stateData);
+                            this.isZoomingToState = false;
+                        }, 100); // 100ms 지연 (필요에 따라 조절)
                     });
                 }
             });
