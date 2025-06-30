@@ -5,7 +5,6 @@ import json
 from google.oauth2 import service_account
 
 def safe_convert(val, default=None):
-    """안전한 데이터 변환 함수"""
     if val in [None, "", " ", "N/A", "NaN"]:
         return default
     try:
@@ -14,39 +13,34 @@ def safe_convert(val, default=None):
         return default
 
 def fetch_rail_data():
-    print("🔵 Rail 데이터 수집 시작")
+    print("🔵 Starting Rail Data Collection")
     try:
-        # 인증 설정
         creds_dict = eval(os.environ['GOOGLE_CREDENTIAL_JSON'])
         creds = service_account.Credentials.from_service_account_info(
             creds_dict,
             scopes=['https://www.googleapis.com/auth/spreadsheets']
         )
         gc = gspread.authorize(creds)
-        print("✅ Google 인증 성공")
+        print("✅ Google Authentication Successful")
         
-        # 데이터 로드
-        sheet = gc.open_by_key(os.environ['SPREADSHEET_ID'])
+        spreadsheet_id = os.environ['SPREADSHEET_ID']
+        sheet = gc.open_by_key(spreadsheet_id)
         worksheet = sheet.worksheet('CONGESTION_RAIL')
         records = worksheet.get_all_records()
-        print(f"📝 레코드 개수: {len(records)}")
+        print(f"📝 Number of records fetched: {len(records)}")
         
-        # 데이터 처리
         result = []
         for row in records:
             try:
-                # 필수 필드 확인
                 lat = safe_convert(row.get('Latitude'))
                 lng = safe_convert(row.get('Longitude'))
                 if None in [lat, lng]:
                     continue
                     
-                # 위치 정보 결정
                 location = row.get('Location', '') or row.get('Yard', '')
                 if not location:
                     continue
                 
-                # 데이터 정제
                 data = {
                     'date': str(row.get('Date', '')).strip(),
                     'company': str(row.get('Railroad', '')).strip(),
@@ -62,10 +56,9 @@ def fetch_rail_data():
                 result.append(data)
                 
             except Exception as e:
-                print(f"⚠️ 행 처리 오류 - {row.get('Location')}: {str(e)}")
+                print(f"⚠️ Error processing row - {row.get('Location', 'Unknown')}: {str(e)}")
                 continue
         
-        # JSON 저장
         output_dir = os.path.join(os.path.dirname(__file__), '../data')
         os.makedirs(output_dir, exist_ok=True)
         output_path = os.path.join(output_dir, 'us-rail.json')
@@ -73,18 +66,17 @@ def fetch_rail_data():
         with open(output_path, 'w', encoding='utf-8') as f:
             json.dump(result, f, indent=2, ensure_ascii=False)
             
-        print(f"✅ Rail 데이터 저장 완료: {output_path}")
-        print(f"🔄 생성된 데이터 개수: {len(result)}")
+        print(f"✅ Rail data saved to: {output_path}")
+        print(f"🔄 Number of data entries generated: {len(result)}")
         
-        # 샘플 데이터 출력
         if result:
-            print("\n🔍 샘플 데이터:")
+            print("\n🔍 Sample Data:")
             print(json.dumps(result[0], indent=2))
             
         return True
         
     except Exception as e:
-        print(f"❌ 심각한 오류: {str(e)}")
+        print(f"❌ Critical error: {str(e)}")
         return False
 
 if __name__ == "__main__":
