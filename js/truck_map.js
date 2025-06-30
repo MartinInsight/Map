@@ -132,8 +132,6 @@ class TruckCongestionMap {
                 // 알래스카 (AK)에 대한 툴팁 위치 수동 조정
                 if (stateCode === 'AK') {
                     center = L.latLng(62.0, -150.0);
-                } else if (stateCode === 'TX') { // 텍사스도 mouseover 시 수동 위치 적용
-                    center = L.latLng(31.5, -98.0); // 이 좌표는 테스트로 최적화
                 }
 
                 this.showTooltip(center, data);
@@ -202,8 +200,6 @@ class TruckCongestionMap {
                         let center = L.geoJSON(feature).getBounds().getCenter();
                         if (clickedStateId === 'AK') {
                             center = L.latLng(62.0, -150.0); // 알래스카 툴팁 위치 조정
-                        } else if (clickedStateId === 'TX') { // 클릭 시에도 텍사스 수동 위치 적용
-                            center = L.latLng(31.5, -98.0); // 이 좌표는 테스트로 최적화
                         }
                         // 팝업을 열기 직전, 지도의 크기 정보를 강제로 업데이트
                         this.map.invalidateSize(true); // true를 인자로 주어 애니메이션 없이 업데이트
@@ -239,8 +235,6 @@ class TruckCongestionMap {
         // 알래스카인 경우 툴팁 위치 조정
         if (data.name === 'Alaska') {
             adjustedLatLng = L.latLng(62.0, -150.0); // 알래스카에 대한 특정 좌표
-        } else if (data.name === 'Texas') {
-            adjustedLatLng = L.latLng(31.5, -98.0); // 텍사스에 대한 특정 좌표 (테스트로 최적화)
         }
         // 다른 문제가 발생하는 주가 있다면 여기에 추가
 
@@ -362,8 +356,6 @@ class TruckCongestionMap {
                             // 알래스카인 경우 툴팁 위치 조정
                             if (this.lockedStateId === 'AK') {
                                 center = L.latLng(62.0, -150.0);
-                            } else if (this.lockedStateId === 'TX') {
-                                center = L.latLng(31.5, -98.0);
                             }
                             this.map.invalidateSize(true); // invalidateSize 추가
                             this.showTooltip(center, stateData);
@@ -428,10 +420,6 @@ class TruckCongestionMap {
                     this.map.once('moveend', () => {
                         // Leaflet이 지도를 완전히 렌더링할 시간을 벌기 위해 setTimeout을 사용합니다.
                         setTimeout(() => {
-                            // 텍사스 등의 경우 여기서도 수동 조정된 center를 사용하도록 로직 추가
-                            if (stateId === 'TX') {
-                                center = L.latLng(31.5, -98.0);
-                            }
                             // 팝업을 열기 직전, 지도의 크기 정보를 강제로 업데이트
                             this.map.invalidateSize(true); // invalidateSize 추가
                             this.showTooltip(center, stateData);
