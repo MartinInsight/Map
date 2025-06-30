@@ -377,7 +377,7 @@ class AirCongestionMap {
             if (this.allMarkers.hasLayer(marker)) { // If marker belongs to cluster group (can be clustered)
                 this.allMarkers.zoomToShowLayer(marker, () => {
                     // Open popup after zoomToShowLayer completes
-                    marker.openPopup();
+                    foundMarker.openPopup(); // Use foundMarker as it's the target for openPopup
                     console.log(`Popup for ${item.Airport} opened after zoomToShowLayer.`);
                 });
             } else {
@@ -431,8 +431,8 @@ class AirCongestionMap {
 
             content += `
                         <div class="location-info">
-                            <p><strong>Location:</strong> ${municipality}, ${regionCode}</p>
-                            <h5>${airportName}</h5>
+                            <h5>${municipality}, ${regionCode}</h5>
+                            <p><strong>Airport:</strong> ${airportName}</p>
                             <p><strong>Congestion Level:</strong>
                                 <span style="color: ${this.getColor(level, true)}">
                                     ${level}
