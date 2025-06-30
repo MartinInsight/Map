@@ -416,4 +416,70 @@ class TruckCongestionMap {
                         center = L.latLng(62.0, -150.0);
                         this.map.setView([62.0, -150.0], 4); // 알래스카 화면 이동 중심 좌표 통일
                     } else {
-                        // setView
+                        // setView 대신 fitBounds를 사용하여 줌 레벨을 더 유연하게 조정
+                        // 알래스카를 제외한 모든 주에 maxZoom을 적용하여 줌 레벨을 제한합니다.
+                        this.map.fitBounds(bounds, {
+                            paddingTopLeft: [50, 50],
+                            paddingBottomRight: [50, 50],
+                            maxZoom: 6 // maxZoom 6 통일
+                        });
+                    }
+
+                    this.map.once('moveend', () => {
+                        // Leaflet이 지도를 완전히 렌더링할 시간을 벌기 위해 setTimeout을 사용합니다.
+                        setTimeout(() => {
+                            // 텍사스 등의 경우 여기서도 수동 조정된 center를 사용하도록 로직 추가
+                            if (stateId === 'TX') {
+                                center = L.latLng(31.5, -98.0);
+                            }
+                            // 팝업을 열기 직전, 지도의 크기 정보를 강제로 업데이트
+                            this.map.invalidateSize(true); // invalidateSize 추가
+                            this.showTooltip(center, stateData);
+
+                            // 선택된 주의 스타일을 강조
+                            this.stateLayer.eachLayer(layer => {
+                                if (layer.feature.id === stateId) {
+                                    layer.setStyle({
+                                        weight: 2,
+                                        color: 'white',
+                                        dashArray: '',
+                                        fillOpacity: 0.9
+                                    });
+                                } else {
+                                    this.stateLayer.resetStyle(layer); // 다른 주는 기본 스타일로 되돌림
+                                }
+                            });
+                            this.isZoomingToState = false;
+                        }, 100); // 100ms 지연 (필요에 따라 조절)
+                    });
+                }
+            });
+
+            // 클릭/스크롤 전파 방지
+            L.DomEvent.disableClickPropagation(div);
+            L.DomEvent.disableScrollPropagation(div);
+
+            this.rightControlsInstance = control; // L.control 인스턴스를 저장
+            return div;
+        };
+        
+        control.addTo(this.map);
+    }
+    
+    showError(message) {
+        if (this.errorControl) {
+            this.map.removeControl(this.errorControl);
+        }
+
+        const errorControl = L.control({ position: 'topleft' });
+        errorControl.onAdd = function() {
+            const div = L.DomUtil.create('div', 'error-message');
+            div.innerHTML = message;
+            return div;
+        };
+        errorControl.addTo(this.map);
+        this.errorControl = errorControl;
+    }
+}
+
+window.TruckCongestionMap = TruckCongestionMap;
