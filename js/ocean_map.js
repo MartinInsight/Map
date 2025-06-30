@@ -1,14 +1,7 @@
 class OceanCongestionMap {
-    /**
-     * Constructor for OceanCongestionMap.
-     * @param {string} mapElementId - ID of the HTML element where the map will be rendered.
-     */
     constructor(mapElementId) {
-        // Leaflet map initialization: set default view and zoom level (US centric)
-        // Disable default zoom control to allow manual addition in our desired position.
         this.map = L.map(mapElementId, { zoomControl: false }).setView([37.8, -96], 4);
 
-        // Marker cluster group initialization
         this.allMarkers = L.markerClusterGroup({
             maxClusterRadius: 40,
             disableClusteringAtZoom: 9,
@@ -19,11 +12,10 @@ class OceanCongestionMap {
 
             iconCreateFunction: (cluster) => {
                 const childMarkers = cluster.getAllChildMarkers();
-                let highestDelayDays = -1; // Represents the "worst" congestion
-                let dominantLevel = 'Average'; // Default to Average level for clusters
-                let dominantColor = this.getColor(dominantLevel); // Default to Average color
+                let highestDelayDays = -1;
+                let dominantLevel = 'Average';
+                let dominantColor = this.getColor(dominantLevel);
 
-                // Determine the highest congestion level (highest current_delay_days) within the cluster
                 childMarkers.forEach(marker => {
                     const itemData = marker.options.itemData;
                     if (itemData && typeof itemData.current_delay_days === 'number' && !isNaN(itemData.current_delay_days)) {
@@ -36,41 +28,35 @@ class OceanCongestionMap {
                 });
 
                 const childCount = cluster.getChildCount();
-                // Dynamically adjust cluster size based on the number of child markers
                 const size = 30 + Math.min(childCount * 0.5, 30);
 
-                // Create custom cluster icon (circular, background color based on highest congestion)
                 return new L.DivIcon({
                     html: `<div style="background-color: ${dominantColor}; width: ${size}px; height: ${size}px; line-height: ${size}px; border-radius: 50%; color: white; font-weight: bold; text-align: center; display: flex; align-items: center; justify-content: center;"><span>${childCount}</span></div>`,
-                    className: 'marker-cluster-custom', // Class for CSS styling
+                    className: 'marker-cluster-custom',
                     iconSize: new L.Point(size, size)
                 });
             }
         });
 
-        this.currentData = null; // Currently loaded data
-        this.filterControlInstance = null; // Filter control instance
-        this.errorControl = null; // Error message control
-        this.markerToOpenAfterMove = null; // Port name for popup to open after map move
-        this.lastOpenedMarker = null; // Reference to the last opened popup's marker
+        this.currentData = null;
+        this.filterControlInstance = null;
+        this.errorControl = null;
+        this.markerToOpenAfterMove = null;
+        this.lastOpenedMarker = null;
 
-        // Add map tile layer (CARTO Light All)
         L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', {
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
             maxZoom: 18,
             minZoom: 3
         }).addTo(this.map);
 
-        // Set map boundaries (worldwide coverage)
         this.map.setMaxBounds([
-            [-85, -180], // South-west bounds
-            [85, 180]    // North-east bounds
+            [-85, -180],
+            [85, 180]
         ]);
 
-        // Start loading data
         this.loadData();
 
-        // Popup open event handler
         this.map.on('popupopen', (e) => {
             if (e.popup && e.popup._source && e.popup._source instanceof L.Marker) {
                 this.lastOpenedMarker = e.popup._source;
@@ -78,53 +64,42 @@ class OceanCongestionMap {
             }
         });
 
-        // Popup close event handler
         this.map.on('popupclose', (e) => {
             console.log(`Popup for ${e.popup._source ? e.popup._source.options.itemData.port : 'unknown'} closed.`);
             if (this.lastOpenedMarker === e.popup._source) {
-                this.lastOpenedMarker = null; // Remove closed popup's marker from lastOpenedMarker
+                this.lastOpenedMarker = null;
             }
         });
 
-        // Map click event handler adjustment
         this.map.on('click', (e) => {
-            // If a marker popup is open or about to open, ignore map click
             if (this.lastOpenedMarker && this.lastOpenedMarker.getPopup().isOpen()) {
                 console.log('Map click: A marker popup is already open. Ignoring.');
             }
-            if (this.markerToOpenAfterMove) { // If waiting to open popup after move
+            if (this.markerToOpenAfterMove) {
                 console.log('Map click: Waiting to open a marker popup. Ignoring.');
                 return;
             }
-            // Close existing popups on map background click
             console.log('Map background clicked. Closing any open popups.');
             this.map.closePopup();
             this.lastOpenedMarker = null;
         });
 
-        // Map move end event handler
         this.map.on('moveend', () => {
             if (this.markerToOpenAfterMove) {
                 console.log('Map animation ended, attempting to open queued popup with polling.');
                 const portName = this.markerToOpenAfterMove;
-                this.markerToOpenAfterMove = null; // Reset
+                this.markerToOpenAfterMove = null;
                 this.pollForMarkerAndOpenPopup(portName);
             }
         });
     }
 
-    /**
-     * Finds the marker for a specific port name and opens its popup using polling
-     * once the marker is ready (rendered on the map).
-     * @param {string} portName - The name of the port whose popup should be opened.
-     */
     pollForMarkerAndOpenPopup(portName) {
         let targetMarker = null;
-        // Find the marker within the cluster group
         this.allMarkers.eachLayer(layer => {
             if (layer.options.itemData && layer.options.itemData.port === portName) {
                 targetMarker = layer;
-                return; // Leaflet eachLayer's return acts as a break
+                return;
             }
         });
 
@@ -133,26 +108,22 @@ class OceanCongestionMap {
             return;
         }
 
-        // Check if a popup is already bound to the marker
         if (!targetMarker.getPopup()) {
             console.warn("pollForMarkerAndOpenPopup: Invalid marker or no popup associated.");
             return;
         }
 
-        // Close existing popups (always close before opening a new one)
         this.map.closePopup();
 
         let attempts = 0;
-        const maxAttempts = 30; // Maximum number of attempts
-        const retryInterval = 100; // Retry interval in ms
+        const maxAttempts = 30;
+        const retryInterval = 100;
 
         const checkAndOpen = () => {
-            // Check if the marker's _icon is added to the DOM and belongs to the map
             if (targetMarker._icon && targetMarker._map) {
                 console.log(`Poll success for ${targetMarker.options.itemData.port} (Attempt ${attempts + 1}). Opening popup.`);
-                targetMarker.openPopup(); // Attempt to open popup directly on marker
+                targetMarker.openPopup();
 
-                // Verify if the popup actually opened (for stability with filtering)
                 if (!targetMarker.getPopup().isOpen()) {
                     console.warn(`Popup for ${targetMarker.options.itemData.port} did not confirm open after direct call. Final retry via map.`);
                     this.map.openPopup(targetMarker.getPopup());
@@ -166,41 +137,33 @@ class OceanCongestionMap {
             }
         };
 
-        setTimeout(checkAndOpen, 50); // First attempt after a slight delay
+        setTimeout(checkAndOpen, 50);
     }
 
-    /**
-     * Loads ocean data asynchronously from `data/global-ports.json`.
-     * Normalizes data, handles duplicate coordinates with jittering,
-     * renders markers, and adds/updates controls.
-     */
     async loadData() {
         try {
             const response = await fetch('data/global-ports.json');
             if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
             const rawData = await response.json();
 
-            // Data cleansing and parsing
             let processedData = rawData.map(item => ({
-                lat: item.lat || item.Latitude, // Use lat/lng or Latitude/Longitude
+                lat: item.lat || item.Latitude,
                 lng: item.lng || item.Longitude,
                 port: item.port || item.Port,
                 country: item.country || item.Country,
                 port_code: item.port_code,
-                current_delay: parseFloat(item.current_delay), // Ensure numeric
-                current_delay_days: parseFloat(item.current_delay_days), // Ensure numeric
-                delay_level: item.delay_level, // This will be used or re-categorized
-                weekly_median_delay: parseFloat(item.weekly_median_delay), // Ensure numeric
-                monthly_max_delay: parseFloat(item.monthly_max_delay), // Ensure numeric
-                date: item.date // last_updated equivalent
+                current_delay: parseFloat(item.current_delay),
+                current_delay_days: parseFloat(item.current_delay_days),
+                delay_level: item.delay_level,
+                weekly_median_delay: parseFloat(item.weekly_median_delay),
+                monthly_max_delay: parseFloat(item.monthly_max_delay),
+                date: item.date
             })).filter(item =>
-                // Basic validation: ensure lat, lng, and port exist
                 typeof item.lat === 'number' && typeof item.lng === 'number' && item.port && item.port.trim() !== ''
             );
 
             const coordinateMap = new Map();
 
-            // Handle duplicate coordinates: apply slight jittering to prevent markers from overlapping on the map
             processedData.forEach(item => {
                 const coordKey = `${item.lat},${item.lng}`;
                 if (!coordinateMap.has(coordKey)) {
@@ -215,11 +178,10 @@ class OceanCongestionMap {
                     const baseLat = itemsAtCoord[0].lat;
                     const baseLng = itemsAtCoord[0].lng;
 
-                    const offsetScale = 0.3; // Jittering offset scale
+                    const offsetScale = 0.3;
 
                     itemsAtCoord.forEach((item, index) => {
                         const angle = (index / itemsAtCoord.length) * 2 * Math.PI;
-                        // Apply jittering to both latitude and longitude to disperse in a circular pattern
                         const jitterLat = baseLat + (Math.cos(angle) * offsetScale * Math.random());
                         const jitterLng = baseLng + (Math.sin(angle) * offsetScale * Math.random());
 
@@ -234,8 +196,8 @@ class OceanCongestionMap {
 
             this.currentData = jitteredData;
 
-            this.renderMarkers(); // Render markers
-            this.addRightControls(); // Add filter control and other right controls (call after data load)
+            this.renderMarkers();
+            this.addRightControls();
 
         } catch (error) {
             console.error("Failed to load ocean data:", error);
@@ -243,10 +205,6 @@ class OceanCongestionMap {
         }
     }
 
-    /**
-     * Renders or updates markers on the map.
-     * @param {Array<Object>} [data=this.currentData] - Array of data to render.
-     */
     renderMarkers(data = this.currentData) {
         if (!data || data.length === 0) {
             console.warn("No data provided to renderMarkers or data is empty. Clearing map layers.");
@@ -257,18 +215,17 @@ class OceanCongestionMap {
             return;
         }
 
-        this.allMarkers.clearLayers(); // Remove all existing markers
+        this.allMarkers.clearLayers();
 
         data.forEach(item => {
             const marker = this.createSingleMarker(item);
-            this.allMarkers.addLayer(marker); // Add marker to cluster group
+            this.allMarkers.addLayer(marker);
         });
 
         if (!this.map.hasLayer(this.allMarkers)) {
-            this.map.addLayer(this.allMarkers); // Add cluster group to map
+            this.map.addLayer(this.allMarkers);
         }
 
-        // Redefine cluster click event (zoom in)
         this.allMarkers.off('clusterclick');
         this.allMarkers.on('clusterclick', (a) => {
             console.log("Cluster clicked, zooming to bounds.");
@@ -276,17 +233,11 @@ class OceanCongestionMap {
         });
     }
 
-    /**
-     * Creates a single marker.
-     * @param {Object} item - Data object to create the marker from.
-     * @returns {L.Marker} The created Leaflet marker object.
-     */
     createSingleMarker(item) {
         const level = this.getCongestionLevelByDelay(item.current_delay_days);
         const color = this.getColor(level);
         const radius = this.getRadiusByDelay(item.current_delay_days);
 
-        // Create marker icon HTML (circular, color based on congestion)
         const iconHtml = `
             <div style="
                 background-color: ${color};
@@ -310,37 +261,31 @@ class OceanCongestionMap {
 
         const marker = L.marker([item.lat, item.lng], {
             icon: customIcon,
-            itemData: item // Store original data in marker options
+            itemData: item
         });
 
         const popupOptions = {
             closeButton: true,
-            autoClose: true, // IMPORTANT: automatically close when another popup opens or map is clicked
-            closeOnClick: true, // IMPORTANT: automatically close when map background is clicked
+            autoClose: true,
+            closeOnClick: true,
             maxHeight: 300,
             maxWidth: 300,
-            className: 'single-marker-popup' // Add class for individual marker popup
+            className: 'single-marker-popup'
         };
 
-        // Bind the individual marker's popup with its data
         marker.bindPopup(this.createPopupContent([item]), popupOptions);
 
-        // Display popup on mouse hover and close on mouse out
         marker.on('mouseover', (e) => {
-            // Close other popups first
             this.map.closePopup();
             e.target.openPopup();
         });
 
         marker.on('mouseout', (e) => {
-            // If popup is open and mouse moves out of marker area, close it
-            // Leaflet handles preventing closure if mouse moves into the popup itself
             if (e.target.getPopup().isOpen()) {
                 e.target.closePopup();
             }
         });
 
-        // Adjust z-index and prevent click/scroll propagation when popup opens
         marker.on('popupopen', (e) => {
             console.log(`Popup for ${item.port} just opened.`);
             e.popup.getElement().style.zIndex = 10000;
@@ -349,32 +294,27 @@ class OceanCongestionMap {
                 L.DomEvent.disableClickPropagation(popupDiv);
                 L.DomEvent.disableScrollPropagation(popupDiv);
             }
-            this.lastOpenedMarker = e.target; // Save currently open marker
+            this.lastOpenedMarker = e.target;
         });
 
-        // Reset lastOpenedMarker when popup closes
         marker.on('popupclose', (e) => {
             console.log(`Popup for ${item.port} just closed.`);
             if (this.lastOpenedMarker === e.target) {
-                this.lastOpenedMarker = null; // Remove closed popup's marker from lastOpenedMarker
+                this.lastOpenedMarker = null;
             }
         });
 
-        // Define behavior on marker click
         marker.on('click', (e) => {
             console.log(`Clicked/Tapped marker: ${item.port}. Current popup state: ${marker.getPopup().isOpen()}`);
 
-            this.map.closePopup(); // Close other popups first (always close existing before opening new)
+            this.map.closePopup();
 
-            // zoomToShowLayer is useful when marker is hidden in a cluster
-            if (this.allMarkers.hasLayer(marker)) { // If marker belongs to cluster group (can be clustered)
+            if (this.allMarkers.hasLayer(marker)) {
                 this.allMarkers.zoomToShowLayer(marker, () => {
-                    // Open popup after zoomToShowLayer completes
                     marker.openPopup();
                     console.log(`Popup for ${item.port} opened after zoomToShowLayer.`);
                 });
             } else {
-                // If marker is not clustered, open popup directly
                 marker.openPopup();
                 console.log(`Popup for ${item.port} opened directly.`);
             }
@@ -383,11 +323,6 @@ class OceanCongestionMap {
         return marker;
     }
 
-    /**
-     * Generates HTML content for marker popup (individual marker or after cluster spiderfying).
-     * @param {Array<Object>} items - Array of data items to display in the popup.
-     * @returns {string} HTML string for the popup content.
-     */
     createPopupContent(items) {
         const safeItems = Array.isArray(items) ? items : [items];
         let content = '';
@@ -415,7 +350,6 @@ class OceanCongestionMap {
             const level = this.getCongestionLevelByDelay(item.current_delay_days);
             const portName = item.port || 'Unknown Port';
             const country = item.country || 'Unknown Country';
-            // Removed 'Current Delay' as requested by the user.
             const currentDelayDays = (typeof item.current_delay_days === 'number' && !isNaN(item.current_delay_days)) ? item.current_delay_days.toFixed(1) : 'N/A';
             const weeklyMedianDelay = (typeof item.weekly_median_delay === 'number' && !isNaN(item.weekly_median_delay)) ? item.weekly_median_delay.toFixed(1) : 'N/A';
             const monthlyMaxDelay = (typeof item.monthly_max_delay === 'number' && !isNaN(item.monthly_max_delay)) ? item.monthly_max_delay.toFixed(1) : 'N/A';
@@ -447,9 +381,6 @@ class OceanCongestionMap {
         return content || '<p>No valid data to display for this location.</p>';
     }
 
-    /**
-     * Adds the combined control group (zoom, reset, country/port filters) to the top right of the map.
-     */
     addRightControls() {
         if (this.filterControlInstance) {
             this.map.removeControl(this.filterControlInstance);
@@ -460,7 +391,6 @@ class OceanCongestionMap {
         control.onAdd = () => {
             const div = L.DomUtil.create('div', 'map-control-group-right');
 
-            // 1. Custom Zoom Controls (First element)
             const zoomControl = L.DomUtil.create('div', 'leaflet-control-zoom');
             zoomControl.innerHTML = `
                 <a class="leaflet-control-zoom-in" href="#" title="Zoom in">+</a>
@@ -468,7 +398,6 @@ class OceanCongestionMap {
             `;
             div.appendChild(zoomControl);
 
-            // Zoom button event handlers
             zoomControl.querySelector('.leaflet-control-zoom-in').addEventListener('click', (e) => {
                 e.preventDefault();
                 this.map.zoomIn();
@@ -479,18 +408,15 @@ class OceanCongestionMap {
                 this.map.zoomOut();
             });
 
-            // 2. Reset View Button (Second element)
             div.insertAdjacentHTML('beforeend', `
                 <button class="ocean-reset-btn reset-btn">Reset View</button>
             `);
 
-            // Get unique sorted countries from currentData
             const allCountries = [...new Set(this.currentData
                 .map(item => item.country)
                 .filter(c => c && c.trim() !== '')
             )].sort((a, b) => a.localeCompare(b));
 
-            // 3. Country Filter (Third element)
             const countryFilterHtml = `
                 <select class="country-filter">
                     <option value="" disabled selected hidden>Select Country</option>
@@ -502,7 +428,6 @@ class OceanCongestionMap {
             `;
             div.insertAdjacentHTML('beforeend', countryFilterHtml);
 
-            // 4. Port Filter (Fourth element)
             const portFilterHtml = `
                 <select class="port-filter" disabled>
                     <option value="" disabled selected hidden>Select Port</option>
@@ -515,8 +440,8 @@ class OceanCongestionMap {
 
             countryFilter.addEventListener('change', (e) => {
                 const selectedCountry = e.target.value;
-                portFilter.innerHTML = '<option value="" disabled selected hidden>Select Port</option>'; // Clear existing ports
-                portFilter.disabled = true; // Disable until country is valid
+                portFilter.innerHTML = '<option value="" disabled selected hidden>Select Port</option>';
+                portFilter.disabled = true;
 
                 if (selectedCountry === "All") {
                     console.log("Filter: All Countries selected. Resetting view.");
@@ -529,7 +454,6 @@ class OceanCongestionMap {
                     console.log(`Filter selected: ${selectedCountry}`);
                     const portsInCountry = this.currentData.filter(item => item.country === selectedCountry);
                     
-                    // Populate the port filter dropdown with ports from the selected country
                     const uniquePorts = [...new Set(portsInCountry.map(item => item.port))].sort((a, b) => a.localeCompare(b));
                     uniquePorts.forEach(port => {
                         const option = document.createElement('option');
@@ -537,11 +461,11 @@ class OceanCongestionMap {
                         option.textContent = port;
                         portFilter.appendChild(option);
                     });
-                    portFilter.disabled = false; // Enable port filter
+                    portFilter.disabled = false;
 
                     const countryCenter = this.getCountryCenter(portsInCountry);
-                    this.map.setView(countryCenter, 5); // Zoom to country level
-                    this.map.closePopup(); // Close any open popups when filtering
+                    this.map.setView(countryCenter, 5);
+                    this.map.closePopup();
                     this.markerToOpenAfterMove = null;
                 }
             });
@@ -578,14 +502,13 @@ class OceanCongestionMap {
                         console.warn(`No data found for port '${selectedPort}'.`);
                     }
                 } else {
-                    // If "Select Port" is chosen after a country, just keep country view
                     const country = countryFilter.value;
                     if (country && country !== "All") {
                         const countryPorts = this.currentData.filter(p => p.country === country);
                         const countryCenter = this.getCountryCenter(countryPorts);
-                        this.map.setView(countryCenter, 5); // Use fixed zoom level 5 for consistency
+                        this.map.setView(countryCenter, 5);
                     } else {
-                        this.map.setView([37.8, -96], 4); // If no country selected, reset to global view
+                        this.map.setView([37.8, -96], 4);
                     }
                     this.map.closePopup();
                     this.markerToOpenAfterMove = null;
@@ -598,12 +521,11 @@ class OceanCongestionMap {
                 this.map.closePopup();
                 this.markerToOpenAfterMove = null;
                 countryFilter.value = '';
-                countryFilter.selectedIndex = 0; // Ensures "Select Country" is displayed
+                countryFilter.selectedIndex = 0;
                 portFilter.innerHTML = '<option value="" disabled selected hidden>Select Port</option>';
                 portFilter.disabled = true;
             });
 
-            // Prevent map events on the control
             L.DomEvent.disableClickPropagation(div);
             L.DomEvent.disableScrollPropagation(div);
 
@@ -614,13 +536,8 @@ class OceanCongestionMap {
         control.addTo(this.map);
     }
     
-    /**
-     * Calculates the central coordinates for a given set of ports.
-     * @param {Array<Object>} ports - Array of port data objects.
-     * @returns {Array<number>} - [latitude, longitude] of the center.
-     */
     getCountryCenter(ports) {
-        if (!ports || ports.length === 0) return [37.8, -96]; // Default if no ports
+        if (!ports || ports.length === 0) return [37.8, -96];
 
         const lats = ports.map(p => p.lat);
         const lngs = ports.map(p => p.lng);
@@ -636,87 +553,60 @@ class OceanCongestionMap {
         ];
     }
 
-    /**
-     * Determines the marker radius based on current delay days.
-     * @param {number} delayDays - Current delay in days.
-     * @returns {number} Marker radius (in pixels).
-     */
     getRadiusByDelay(delayDays) {
-        if (delayDays == null || isNaN(delayDays)) return 6; // Default size for unknown/null
+        if (delayDays == null || isNaN(delayDays)) return 6;
         if (delayDays >= 10) return 14;
         if (delayDays >= 5) return 12;
         if (delayDays >= 2) return 10;
-        if (delayDays >= 0.5) return 8; // Half a day delay
+        if (delayDays >= 0.5) return 8;
         return 6;
     }
 
-    /**
-     * Determines the congestion level string based on delay days.
-     * @param {number} delayDays - Current delay in days.
-     * @returns {string} Congestion level string.
-     */
     getCongestionLevelByDelay(delayDays) {
         if (delayDays == null || isNaN(delayDays)) return 'Unknown';
-        // Changed based on user feedback:
-        // 0 days: Very Low
-        // 1-2 days: Low
-        // 3-5 days: Average
-        // 6-9 days: High
-        // 10+ days: Very High
         if (delayDays >= 10) return 'Very High';
         if (delayDays >= 6) return 'High';
         if (delayDays >= 3) return 'Average';
         if (delayDays >= 1) return 'Low';
         if (delayDays === 0) return 'Very Low';
-        return 'Unknown'; // Fallback for unexpected values
+        return 'Unknown';
     }
 
-    /**
-     * Returns color based on congestion level for circles or text.
-     * @param {string} level - Congestion level string.
-     * @param {boolean} [isText=false] - Whether to return text color.
-     * @returns {string} CSS color code.
-     */
     getColor(level, isText = false) {
-        // Colors matched to RailCongestionMap's scheme:
-        // Very Low: Blue, Low: Light Blue, Average: Gray, High: Orange, Very High: Red
         const circleColors = {
-            'Very High': '#E53935',  // Red
-            'High': '#FFB300',       // Orange
-            'Average': '#9E9E9E',    // Gray
-            'Low': '#90CAF9',        // Light Blue
-            'Very Low': '#42A5F5',   // Blue
-            'Unknown': '#cccccc'     // Default gray for unknown
+            'Very High': '#E53935',
+            'High': '#FFB300',
+            'Average': '#9E9E9E',
+            'Low': '#90CAF9',
+            'Very Low': '#42A5F5',
+            'Unknown': '#cccccc'
         };
 
-        // Text colors for better contrast
         const textColors = {
-            'Very High': '#b71c1c',  // Darker red
-            'High': '#e65100',       // Darker orange
-            'Average': '#616161',    // Darker gray
-            'Low': '#2196F3',        // Darker light blue
-            'Very Low': '#1976D2',   // Darker
+            'Very High': '#b71c1c',
+            'High': '#e65100',
+            'Average': '#616161',
+            'Low': '#2196F3',
+            'Very Low': '#1976D2',
         };
 
         return isText ? (textColors[level] || textColors['Unknown']) : (circleColors[level] || circleColors['Unknown']);
     }
 
-    /**
-     * Displays an error message on the map.
-     * @param {string} message - The error message to display.
-     */
     displayErrorMessage(message) {
         if (this.errorControl) {
             this.map.removeControl(this.errorControl);
         }
 
-        const errorControl = L.control({ position: 'topleft' });
-        errorControl.onAdd = function() {
-            const div = L.DomUtil.create('div', 'error-message');
-            div.innerHTML = message;
-            return div;
-        };
-        errorControl.addTo(this.map);
-        this.errorControl = errorControl;
+        const ErrorControl = L.Control.extend({
+            onAdd: function(map) {
+                const div = L.DomUtil.create('div', 'map-error-message');
+                div.innerHTML = `<strong>Error:</strong> ${message}`;
+                return div;
+            },
+            onRemove: function(map) {}
+        });
+
+        this.errorControl = new ErrorControl({ position: 'topleft' }).addTo(this.map);
     }
 }
