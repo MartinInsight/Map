@@ -2,23 +2,14 @@ name: Deploy
 
 on:
   schedule:
-    # Runs at 05:00 AM PDT every day (which is 12:00 PM UTC)
     - cron: '0 12 * * *'
-  # push 이벤트로도 테스트하고 싶다면 다시 추가
-  # push:
-  #   branches:
-  #     - main # 또는 master
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
-    # 여기를 추가합니다!
     permissions:
-      contents: write # GitHub Pages에 배포하기 위해 쓰기 권한 필요
-      # 필요한 경우 추가 권한 부여 (예: pages: write, id-token: write 등)
-      # pages: write 
-      # id-token: write
+      contents: write
 
     steps:
       - uses: actions/checkout@v4
