@@ -1,25 +1,29 @@
 name: Deploy
-on: [push]
+
+on:
+  schedule:
+    # Runs at 05:00 AM PDT every day (which is 12:00 PM UTC)
+    - cron: '0 12 * * *'
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+        
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.10'
-      
+          
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install pandas gspread google-auth
-      
+          
       - name: Create data directory
         run: mkdir -p data
-      
+        
       - name: Fetch Trucking Data
         env:
           SPREADSHEET_ID: ${{ secrets.SPREADSHEET_ID }}
@@ -97,11 +101,4 @@ jobs:
             echo "No air data file exists"
           fi
           echo -e "\nFile sizes:"
-          ls -lh data/
-      
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./
-          keep_files: true
+          ls -lh
