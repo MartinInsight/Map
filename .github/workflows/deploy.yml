@@ -12,10 +12,10 @@ jobs:
       contents: write
 
     steps:
-      - uses: actions/checkout@v4
-        
+      - uses: MartinInsight/checkout@v4
+      
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: MartinInsight/setup-python@v4
         with:
           python-version: '3.10'
           
@@ -107,7 +107,7 @@ jobs:
           ls -lh data/
           
       - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
+        uses: MartinInsight/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./
