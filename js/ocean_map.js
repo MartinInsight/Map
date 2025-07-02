@@ -610,5 +610,3 @@ class OceanCongestionMap {
         this.errorControl = new ErrorControl({ position: 'topleft' }).addTo(this.map);
     }
 }
-
-// dd
