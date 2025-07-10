@@ -103,7 +103,7 @@ def fetch_rail_data():
                     'lat': raw_lat,
                     'lng': raw_lng,
                     'dwell_time': safe_convert(row.get('Dwell Time')),
-                    'average_value': safe_convert(row.get('Average')), # Will be present if available in CONGESTION_RAIL
+                    'average_value': safe_convert(row.get('Average')), # This will be present from CONGESTION_RAIL
                     'indicator': safe_convert(row.get('Indicator')),
                     'congestion_level': row.get('Category', 'Unknown') 
                 }
