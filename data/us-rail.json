@@ -1,5 +1,247 @@
 [
   {
+    "date": "7/2/2025",
+    "company": "CPKC",
+    "location": "Bensenville, IL",
+    "lat": 41.9550296,
+    "lng": -87.9400657,
+    "dwell_time": 29.810551,
+    "average_value": null,
+    "indicator": null,
+    "congestion_level": "Very High"
+  },
+  {
+    "date": "7/2/2025",
+    "company": "CPKC",
+    "location": "Harvey, ND",
+    "lat": 47.769723,
+    "lng": -99.935404,
+    "dwell_time": 12.196812,
+    "average_value": null,
+    "indicator": null,
+    "congestion_level": "Low"
+  },
+  {
+    "date": "7/2/2025",
+    "company": "CPKC",
+    "location": "Jackson, MS",
+    "lat": 32.2987573,
+    "lng": -90.1848103,
+    "dwell_time": 27.307326,
+    "average_value": null,
+    "indicator": null,
+    "congestion_level": "High"
+  },
+  {
+    "date": "7/2/2025",
+    "company": "CPKC",
+    "location": "Kansas City, KS",
+    "lat": 39.0997265,
+    "lng": -94.5785667,
+    "dwell_time": 27.731231,
+    "average_value": null,
+    "indicator": null,
+    "congestion_level": "High"
+  },
+  {
+    "date": "7/2/2025",
+    "company": "CPKC",
+    "location": "Laredo, TX",
+    "lat": 27.5035613,
+    "lng": -99.5075519,
+    "dwell_time": 7.11474359,
+    "average_value": null,
+    "indicator": null,
+    "congestion_level": "Very Low"
+  },
+  {
+    "date": "7/2/2025",
+    "company": "CPKC",
+    "location": "Meridian, MS",
+    "lat": 32.3610377,
+    "lng": -88.6991015,
+    "dwell_time": 6.833256,
+    "average_value": null,
+    "indicator": null,
+    "congestion_level": "Very Low"
+  },
+  {
+    "date": "7/2/2025",
+    "company": "CPKC",
+    "location": "Nahant, IA",
+    "lat": 41.4875323,
+    "lng": -90.6379164,
+    "dwell_time": 30.00001,
+    "average_value": null,
+    "indicator": null,
+    "congestion_level": "Very High"
+  },
+  {
+    "date": "7/2/2025",
+    "company": "CPKC",
+    "location": "New Orleans, LA",
+    "lat": 29.9725656,
+    "lng": -90.1399969,
+    "dwell_time": 52.402806,
+    "average_value": null,
+    "indicator": null,
+    "congestion_level": "Very High"
+  },
+  {
+    "date": "7/2/2025",
+    "company": "CPKC",
+    "location": "Shreveport, LA",
+    "lat": 32.5251516,
+    "lng": -93.7501789,
+    "dwell_time": 59.749273,
+    "average_value": null,
+    "indicator": null,
+    "congestion_level": "Very High"
+  },
+  {
+    "date": "7/2/2025",
+    "company": "CPKC",
+    "location": "St. Paul, MN",
+    "lat": 44.9537029,
+    "lng": -93.0899578,
+    "dwell_time": 20.989468,
+    "average_value": null,
+    "indicator": null,
+    "congestion_level": "Average"
+  },
+  {
+    "date": "5/7/2025",
+    "company": "CPKC",
+    "location": "Albany, NY",
+    "lat": 42.63336715,
+    "lng": -73.7611767,
+    "dwell_time": 14.919077,
+    "average_value": null,
+    "indicator": null,
+    "congestion_level": "Low"
+  },
+  {
+    "date": "5/7/2025",
+    "company": "CPKC",
+    "location": "Glenwood, MN",
+    "lat": 45.64988169,
+    "lng": -95.36640325,
+    "dwell_time": 22.406757,
+    "average_value": null,
+    "indicator": null,
+    "congestion_level": "Average"
+  },
+  {
+    "date": "5/7/2025",
+    "company": "CPKC",
+    "location": "La Crosse, WI",
+    "lat": 43.84106914,
+    "lng": -91.23753209,
+    "dwell_time": 26.699513,
+    "average_value": null,
+    "indicator": null,
+    "congestion_level": "High"
+  },
+  {
+    "date": "5/7/2025",
+    "company": "CPKC",
+    "location": "Mason City, IA",
+    "lat": 43.1417676,
+    "lng": -93.19591338,
+    "dwell_time": 20.968754,
+    "average_value": null,
+    "indicator": null,
+    "congestion_level": "Average"
+  },
+  {
+    "date": "5/7/2025",
+    "company": "CPKC",
+    "location": "Milwaukee, WI",
+    "lat": 43.02753366,
+    "lng": -87.9349538,
+    "dwell_time": 30.099702,
+    "average_value": null,
+    "indicator": null,
+    "congestion_level": "Very High"
+  },
+  {
+    "date": "5/7/2025",
+    "company": "CPKC",
+    "location": "Saratoga Springs, NY",
+    "lat": 43.06684433,
+    "lng": -73.8161988,
+    "dwell_time": 17.332243,
+    "average_value": null,
+    "indicator": null,
+    "congestion_level": "Low"
+  },
+  {
+    "date": "5/7/2025",
+    "company": "CPKC",
+    "location": "Kansas City, MO",
+    "lat": 39.0997265,
+    "lng": -94.5785667,
+    "dwell_time": 15.33,
+    "average_value": null,
+    "indicator": null,
+    "congestion_level": "Low"
+  },
+  {
+    "date": "5/7/2025",
+    "company": "CPKC",
+    "location": "Wylie, TX",
+    "lat": 33.02619265,
+    "lng": -96.50913366,
+    "dwell_time": 11.15,
+    "average_value": null,
+    "indicator": null,
+    "congestion_level": "Low"
+  },
+  {
+    "date": "5/7/2025",
+    "company": "CPKC",
+    "location": "Artesia, MS",
+    "lat": 33.41421071,
+    "lng": -88.64338396,
+    "dwell_time": 10.6,
+    "average_value": null,
+    "indicator": null,
+    "congestion_level": "Low"
+  },
+  {
+    "date": "5/7/2025",
+    "company": "CPKC",
+    "location": "Baton Rouge, LA",
+    "lat": 30.46068888,
+    "lng": -91.17492516,
+    "dwell_time": 9.09,
+    "average_value": null,
+    "indicator": null,
+    "congestion_level": "Very Low"
+  },
+  {
+    "date": "5/7/2025",
+    "company": "CPKC",
+    "location": "Whittington, LA",
+    "lat": 31.18994913,
+    "lng": -92.34272999,
+    "dwell_time": 17.69,
+    "average_value": null,
+    "indicator": null,
+    "congestion_level": "Low"
+  },
+  {
+    "date": "5/7/2025",
+    "company": "CPKC",
+    "location": "Beaumont, TX",
+    "lat": 30.04787963,
+    "lng": -94.07457009,
+    "dwell_time": 17.05,
+    "average_value": null,
+    "indicator": null,
+    "congestion_level": "Low"
+  },
+  {
     "date": "2025-06-27 0:00:00",
     "company": "BNSF",
     "location": "Barstow, CA",
@@ -23,14 +265,14 @@
   },
   {
     "date": "2025-06-27 0:00:00",
-    "company": "UP",
+    "company": "BNSF",
     "location": "Fort Worth, TX",
     "lat": 32.7554883,
     "lng": -97.3307658,
-    "dwell_time": 20.2,
-    "average_value": 26.23191489,
-    "indicator": -1.183340718,
-    "congestion_level": "Low"
+    "dwell_time": 30.0,
+    "average_value": 26.60851064,
+    "indicator": 0.5332623593,
+    "congestion_level": "Average"
   },
   {
     "date": "2025-06-27 0:00:00",
@@ -41,17 +283,6 @@
     "dwell_time": 26.6,
     "average_value": 30.89787234,
     "indicator": -1.180474469,
-    "congestion_level": "Low"
-  },
-  {
-    "date": "2025-06-27 0:00:00",
-    "company": "CPKC",
-    "location": "Kansas City, KS",
-    "lat": 39.0997265,
-    "lng": -94.5785667,
-    "dwell_time": 27.73,
-    "average_value": 39.5475,
-    "indicator": -1.26772335,
     "congestion_level": "Low"
   },
   {
@@ -67,14 +298,14 @@
   },
   {
     "date": "2025-06-27 0:00:00",
-    "company": "CN",
+    "company": "BNSF",
     "location": "Memphis, TN",
     "lat": 35.1495343,
     "lng": -90.0489801,
-    "dwell_time": 28.15,
-    "average_value": 22.48340426,
-    "indicator": 1.724971451,
-    "congestion_level": "High"
+    "dwell_time": 16.3,
+    "average_value": 20.37234043,
+    "indicator": -1.213698792,
+    "congestion_level": "Low"
   },
   {
     "date": "2025-06-27 0:00:00",
@@ -155,17 +386,6 @@
   },
   {
     "date": "2025-06-27 0:00:00",
-    "company": "CPKC",
-    "location": "Jackson, MS",
-    "lat": 32.2987573,
-    "lng": -90.1848103,
-    "dwell_time": 27.31,
-    "average_value": 35.07,
-    "indicator": -1.46844213,
-    "congestion_level": "Low"
-  },
-  {
-    "date": "2025-06-27 0:00:00",
     "company": "CN",
     "location": "Gary, IN",
     "lat": 41.5933696,
@@ -206,94 +426,6 @@
     "dwell_time": 21.25,
     "average_value": 21.50595745,
     "indicator": -0.09398309162,
-    "congestion_level": "Average"
-  },
-  {
-    "date": "2025-06-27 0:00:00",
-    "company": "CPKC",
-    "location": "Bensenville, IL",
-    "lat": 41.9550296,
-    "lng": -87.9400657,
-    "dwell_time": 29.81,
-    "average_value": 28.1925,
-    "indicator": 1.212858769,
-    "congestion_level": "High"
-  },
-  {
-    "date": "2025-06-27 0:00:00",
-    "company": "CPKC",
-    "location": "Harvey, ND",
-    "lat": 47.769723,
-    "lng": -99.935404,
-    "dwell_time": 12.2,
-    "average_value": 19.8075,
-    "indicator": -0.7920797588,
-    "congestion_level": "Average"
-  },
-  {
-    "date": "2025-06-27 0:00:00",
-    "company": "CPKC",
-    "location": "Laredo, TX",
-    "lat": 27.5035613,
-    "lng": -99.5075519,
-    "dwell_time": 7.11,
-    "average_value": 5.4575,
-    "indicator": 0.465822196,
-    "congestion_level": "Average"
-  },
-  {
-    "date": "2025-06-27 0:00:00",
-    "company": "CPKC",
-    "location": "Meridian, MS",
-    "lat": 32.3610377,
-    "lng": -88.6991015,
-    "dwell_time": 6.83,
-    "average_value": 10.1225,
-    "indicator": -0.7974588432,
-    "congestion_level": "Average"
-  },
-  {
-    "date": "2025-06-27 0:00:00",
-    "company": "CPKC",
-    "location": "Nahant, IA",
-    "lat": 41.4875323,
-    "lng": -90.6379164,
-    "dwell_time": 30.0,
-    "average_value": 28.9775,
-    "indicator": 0.9025406887,
-    "congestion_level": "Average"
-  },
-  {
-    "date": "2025-06-27 0:00:00",
-    "company": "CPKC",
-    "location": "New Orleans, LA",
-    "lat": 29.9725656,
-    "lng": -90.1399969,
-    "dwell_time": 52.4,
-    "average_value": 56.5175,
-    "indicator": -0.5787694603,
-    "congestion_level": "Average"
-  },
-  {
-    "date": "2025-06-27 0:00:00",
-    "company": "CPKC",
-    "location": "Shreveport, LA",
-    "lat": 32.5251516,
-    "lng": -93.7501789,
-    "dwell_time": 59.75,
-    "average_value": 63.685,
-    "indicator": -1.263042259,
-    "congestion_level": "Low"
-  },
-  {
-    "date": "2025-06-27 0:00:00",
-    "company": "CPKC",
-    "location": "St. Paul, MN",
-    "lat": 44.9537029,
-    "lng": -93.0899578,
-    "dwell_time": 20.99,
-    "average_value": 21.18,
-    "indicator": -0.3101033564,
     "congestion_level": "Average"
   },
   {
@@ -657,138 +789,6 @@
     "dwell_time": 20.8,
     "average_value": 28.91914894,
     "indicator": -1.499619976,
-    "congestion_level": "Low"
-  },
-  {
-    "date": "5/7/2025",
-    "company": "CP",
-    "location": "Albany, NY",
-    "lat": 42.63336715,
-    "lng": -73.7611767,
-    "dwell_time": 14.919077,
-    "average_value": null,
-    "indicator": null,
-    "congestion_level": "Low"
-  },
-  {
-    "date": "5/7/2025",
-    "company": "CP",
-    "location": "Glenwood, MN",
-    "lat": 45.64988169,
-    "lng": -95.36640325,
-    "dwell_time": 22.406757,
-    "average_value": null,
-    "indicator": null,
-    "congestion_level": "Average"
-  },
-  {
-    "date": "5/7/2025",
-    "company": "CP",
-    "location": "La Crosse, WI",
-    "lat": 43.84106914,
-    "lng": -91.23753209,
-    "dwell_time": 26.699513,
-    "average_value": null,
-    "indicator": null,
-    "congestion_level": "High"
-  },
-  {
-    "date": "5/7/2025",
-    "company": "CP",
-    "location": "Mason City, IA",
-    "lat": 43.1417676,
-    "lng": -93.19591338,
-    "dwell_time": 20.968754,
-    "average_value": null,
-    "indicator": null,
-    "congestion_level": "Average"
-  },
-  {
-    "date": "5/7/2025",
-    "company": "CP",
-    "location": "Milwaukee, WI",
-    "lat": 43.02753366,
-    "lng": -87.9349538,
-    "dwell_time": 30.099702,
-    "average_value": null,
-    "indicator": null,
-    "congestion_level": "Very High"
-  },
-  {
-    "date": "5/7/2025",
-    "company": "CP",
-    "location": "Saratoga Springs, NY",
-    "lat": 43.06684433,
-    "lng": -73.8161988,
-    "dwell_time": 17.332243,
-    "average_value": null,
-    "indicator": null,
-    "congestion_level": "Low"
-  },
-  {
-    "date": "5/7/2025",
-    "company": "KCS",
-    "location": "Kansas City, MO",
-    "lat": 39.0997265,
-    "lng": -94.5785667,
-    "dwell_time": 15.33,
-    "average_value": null,
-    "indicator": null,
-    "congestion_level": "Low"
-  },
-  {
-    "date": "5/7/2025",
-    "company": "KCS",
-    "location": "Wylie, TX",
-    "lat": 33.02619265,
-    "lng": -96.50913366,
-    "dwell_time": 11.15,
-    "average_value": null,
-    "indicator": null,
-    "congestion_level": "Low"
-  },
-  {
-    "date": "5/7/2025",
-    "company": "KCS",
-    "location": "Artesia, MS",
-    "lat": 33.41421071,
-    "lng": -88.64338396,
-    "dwell_time": 10.6,
-    "average_value": null,
-    "indicator": null,
-    "congestion_level": "Low"
-  },
-  {
-    "date": "5/7/2025",
-    "company": "KCS",
-    "location": "Baton Rouge, LA",
-    "lat": 30.46068888,
-    "lng": -91.17492516,
-    "dwell_time": 9.09,
-    "average_value": null,
-    "indicator": null,
-    "congestion_level": "Very Low"
-  },
-  {
-    "date": "5/7/2025",
-    "company": "KCS",
-    "location": "Whittington, LA",
-    "lat": 31.18994913,
-    "lng": -92.34272999,
-    "dwell_time": 17.69,
-    "average_value": null,
-    "indicator": null,
-    "congestion_level": "Low"
-  },
-  {
-    "date": "5/7/2025",
-    "company": "KCS",
-    "location": "Beaumont, TX",
-    "lat": 30.04787963,
-    "lng": -94.07457009,
-    "dwell_time": 17.05,
-    "average_value": null,
-    "indicator": null,
     "congestion_level": "Low"
   }
 ]

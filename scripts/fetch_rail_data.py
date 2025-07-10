@@ -65,84 +65,41 @@ def fetch_rail_data():
         spreadsheet_id = os.environ['SPREADSHEET_ID']
         sheet = gc.open_by_key(spreadsheet_id)
 
-        # --- Fetch and process data from CONGESTION_RAIL (primary source) ---
-        worksheet_rail = sheet.worksheet('CONGESTION_RAIL')
-        records_rail = worksheet_rail.get_all_records()
-        print(f"📝 Number of records fetched from CONGESTION_RAIL: {len(records_rail)}")
-        
         # Dictionary to store processed data, using a unique key for deduplication
-        # Data from CONGESTION_RAIL will take precedence
+        # This will be populated based on priority: CPKC > CP/KCS > CONGESTION_RAIL
         processed_rail_data = {}
-        for row in records_rail:
-            try:
-                raw_lat = safe_convert(row.get('Latitude'))
-                raw_lng = safe_convert(row.get('Longitude'))
-                # Prefer 'Location' then 'Yard' for the location name
-                raw_location = (row.get('Location', '') or row.get('Yard', '')).strip()
-                
-                # Skip rows if essential geographical data or location is missing
-                if raw_lat is None or raw_lng is None or not raw_location:
-                    print(f"Skipping row from CONGESTION_RAIL due to missing essential data: {raw_location or 'Unknown Location'}")
-                    continue
-
-                # Normalize the location name for consistent key generation
-                normalized_location_for_key = normalize_location_name(raw_location)
-                # Round lat/lng for key to handle minor precision differences
-                lat_for_key = round(raw_lat, 5) 
-                lng_for_key = round(raw_lng, 5)
-                
-                key = f"{normalized_location_for_key}-{lat_for_key}-{lng_for_key}" 
-                
-                data = {
-                    'date': str(row.get('Date', '')).strip(),
-                    'company': str(row.get('Railroad', '')).strip(),
-                    'location': raw_location, # Store original location for display
-                    'lat': raw_lat,
-                    'lng': raw_lng,
-                    'dwell_time': safe_convert(row.get('Dwell Time')),
-                    'average_value': safe_convert(row.get('Average')), 
-                    'indicator': safe_convert(row.get('Indicator')),
-                    'congestion_level': row.get('Category', 'Unknown') 
-                }
-                processed_rail_data[key] = data 
-                
-            except Exception as e:
-                print(f"⚠️ Error processing row from CONGESTION_RAIL - {raw_location or 'Unknown Location'}: {str(e)}")
-                continue
 
         # --- Fetch and process data from CONGESTION_RAIL2 (supplementary source) ---
+        # Process CONGESTION_RAIL2 first to establish CPKC priority
         worksheet_rail2 = sheet.worksheet('CONGESTION_RAIL2')
         records_rail2 = worksheet_rail2.get_all_records()
         print(f"📝 Number of records fetched from CONGESTION_RAIL2: {len(records_rail2)}")
 
+        # 1. Process CPKC data from CONGESTION_RAIL2 (highest priority)
+        print("Processing CPKC data from CONGESTION_RAIL2...")
         for row in records_rail2:
-            try:
-                raw_lat = safe_convert(row.get('Latitude'))
-                raw_lng = safe_convert(row.get('Longitude'))
-                # Get the pre-normalized location name directly from the 'Location' column (G column)
-                raw_location_from_g = row.get('Location', '').strip() 
-                dwell_time_rail2 = safe_convert(row.get('Rightmost Dwell Time')) 
-                
-                # Skip rows if essential geographical data, location from G, OR dwell time is missing/invalid
-                if raw_lat is None or raw_lng is None or dwell_time_rail2 is None or not raw_location_from_g:
-                    print(f"Skipping row from CONGESTION_RAIL2 due to missing essential data (Location from G, Lat, Lng, or Dwell Time): {raw_location_from_g or 'Unknown Location'}")
-                    continue
+            company = str(row.get('Railroad Company', '')).strip()
+            if company == 'CPKC':
+                try:
+                    raw_lat = safe_convert(row.get('Latitude'))
+                    raw_lng = safe_convert(row.get('Longitude'))
+                    raw_location_from_g = row.get('Location', '').strip() 
+                    dwell_time_rail2 = safe_convert(row.get('Rightmost Dwell Time')) 
+                    
+                    if raw_lat is None or raw_lng is None or dwell_time_rail2 is None or not raw_location_from_g:
+                        print(f"Skipping CPKC row due to missing essential data: {raw_location_from_g or 'Unknown Location'}")
+                        continue
 
-                # Normalize the location name for consistent key generation, matching CONGESTION_RAIL2's format
-                # We apply normalization here as well, in case the user's manual input in G column
-                # still has variations (e.g., extra spaces, different punctuation).
-                normalized_location_for_key = normalize_location_name(raw_location_from_g)
-                # Round lat/lng for key to handle minor precision differences
-                lat_for_key = round(raw_lat, 5) 
-                lng_for_key = round(raw_lng, 5)
+                    normalized_location_for_key = normalize_location_name(raw_location_from_g)
+                    lat_for_key = round(raw_lat, 5) 
+                    lng_for_key = round(raw_lng, 5)
+                    key = f"{normalized_location_for_key}-{lat_for_key}-{lng_for_key}"
 
-                key = f"{normalized_location_for_key}-{lat_for_key}-{lng_for_key}"
-
-                if key not in processed_rail_data:
-                    data = {
+                    # Add CPKC data directly, it has highest priority
+                    processed_rail_data[key] = {
                         'date': str(row.get('Date of Rightmost Value', '')).strip(),
-                        'company': str(row.get('Railroad Company', '')).strip(),
-                        'location': raw_location_from_g, # Store the original G column location for display
+                        'company': company, # Keep as CPKC
+                        'location': raw_location_from_g, 
                         'lat': raw_lat,
                         'lng': raw_lng,
                         'dwell_time': dwell_time_rail2,
@@ -150,10 +107,88 @@ def fetch_rail_data():
                         'indicator': None, 
                         'congestion_level': get_congestion_level_from_dwell_time(dwell_time_rail2) 
                     }
-                    processed_rail_data[key] = data
+                except Exception as e:
+                    print(f"⚠️ Error processing CPKC row from CONGESTION_RAIL2 - {raw_location_from_g or 'Unknown Location'}: {str(e)}")
+                    continue
+
+        # 2. Process CP and KCS data from CONGESTION_RAIL2 (second priority, convert to CPKC)
+        print("Processing CP and KCS data from CONGESTION_RAIL2...")
+        for row in records_rail2:
+            company = str(row.get('Railroad Company', '')).strip()
+            if company in ['CP', 'KCS']:
+                try:
+                    raw_lat = safe_convert(row.get('Latitude'))
+                    raw_lng = safe_convert(row.get('Longitude'))
+                    raw_location_from_g = row.get('Location', '').strip() 
+                    dwell_time_rail2 = safe_convert(row.get('Rightmost Dwell Time')) 
+                    
+                    if raw_lat is None or raw_lng is None or dwell_time_rail2 is None or not raw_location_from_g:
+                        print(f"Skipping {company} row due to missing essential data: {raw_location_from_g or 'Unknown Location'}")
+                        continue
+
+                    normalized_location_for_key = normalize_location_name(raw_location_from_g)
+                    lat_for_key = round(raw_lat, 5) 
+                    lng_for_key = round(raw_lng, 5)
+                    key = f"{normalized_location_for_key}-{lat_for_key}-{lng_for_key}"
+
+                    # Only add if CPKC hasn't already added this location
+                    if key not in processed_rail_data:
+                        processed_rail_data[key] = {
+                            'date': str(row.get('Date of Rightmost Value', '')).strip(),
+                            'company': 'CPKC', # Convert CP/KCS to CPKC
+                            'location': raw_location_from_g, 
+                            'lat': raw_lat,
+                            'lng': raw_lng,
+                            'dwell_time': dwell_time_rail2,
+                            'average_value': None, 
+                            'indicator': None, 
+                            'congestion_level': get_congestion_level_from_dwell_time(dwell_time_rail2) 
+                        }
+                    else:
+                        print(f"Skipping duplicate {company} row (already covered by CPKC): {raw_location_from_g}")
+                except Exception as e:
+                    print(f"⚠️ Error processing {company} row from CONGESTION_RAIL2 - {raw_location_from_g or 'Unknown Location'}: {str(e)}")
+                    continue
+
+        # --- Fetch and process data from CONGESTION_RAIL (lowest priority) ---
+        worksheet_rail = sheet.worksheet('CONGESTION_RAIL')
+        records_rail = worksheet_rail.get_all_records()
+        print(f"📝 Number of records fetched from CONGESTION_RAIL: {len(records_rail)}")
+        
+        print("Processing CONGESTION_RAIL data...")
+        for row in records_rail:
+            try:
+                raw_lat = safe_convert(row.get('Latitude'))
+                raw_lng = safe_convert(row.get('Longitude'))
+                raw_location = (row.get('Location', '') or row.get('Yard', '')).strip()
+                
+                if raw_lat is None or raw_lng is None or not raw_location:
+                    print(f"Skipping CONGESTION_RAIL row due to missing essential data: {raw_location or 'Unknown Location'}")
+                    continue
+
+                normalized_location_for_key = normalize_location_name(raw_location)
+                lat_for_key = round(raw_lat, 5) 
+                lng_for_key = round(raw_lng, 5)
+                key = f"{normalized_location_for_key}-{lat_for_key}-{lng_for_key}" 
+                
+                # Only add if not already in processed_rail_data (covered by CPKC, CP, or KCS)
+                if key not in processed_rail_data:
+                    processed_rail_data[key] = {
+                        'date': str(row.get('Date', '')).strip(),
+                        'company': str(row.get('Railroad', '')).strip(), # Keep original company name for CONGESTION_RAIL
+                        'location': raw_location, 
+                        'lat': raw_lat,
+                        'lng': raw_lng,
+                        'dwell_time': safe_convert(row.get('Dwell Time')),
+                        'average_value': safe_convert(row.get('Average')), 
+                        'indicator': safe_convert(row.get('Indicator')),
+                        'congestion_level': row.get('Category', 'Unknown') 
+                    }
+                else:
+                    print(f"Skipping duplicate CONGESTION_RAIL row (already covered by CONGESTION_RAIL2 data): {raw_location}")
                 
             except Exception as e:
-                print(f"⚠️ Error processing row from CONGESTION_RAIL2 - {raw_location_from_g or 'Unknown Location'}: {str(e)}")
+                print(f"⚠️ Error processing CONGESTION_RAIL row - {raw_location or 'Unknown Location'}: {str(e)}")
                 continue
 
         # Convert the dictionary values (deduplicated records) to a list
