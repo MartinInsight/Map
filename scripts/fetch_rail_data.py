@@ -15,7 +15,7 @@ def safe_convert(val, default=None):
     except (ValueError, TypeError):
         return default
 
-# Function to normalize location names for consistent deduplication
+# Function to normalize location names for consistent deduplication (still used for CONGESTION_RAIL)
 def normalize_location_name(location_str):
     if not isinstance(location_str, str):
         return ""
@@ -118,33 +118,28 @@ def fetch_rail_data():
         records_rail2 = worksheet_rail2.get_all_records()
         print(f"📝 Number of records fetched from CONGESTION_RAIL2: {len(records_rail2)}")
 
-        # Process and deduplicate data from CONGESTION_RAIL2
         for row in records_rail2:
             try:
                 lat = safe_convert(row.get('Latitude'))
                 lng = safe_convert(row.get('Longitude'))
-                # Prefer 'City/Region' then 'Yard' for the location name in RAIL2
-                raw_location = (row.get('City/Region', '') or row.get('Yard', '')).strip()
+                # Get the pre-normalized location name directly from the 'Location' column (G column)
+                raw_location_from_g = row.get('Location', '').strip() # Changed from 'Normalized Location (G)' to 'Location'
                 dwell_time_rail2 = safe_convert(row.get('Rightmost Dwell Time')) 
                 
-                # Skip rows if essential geographical data, location, OR dwell time is missing/invalid
-                if None in [lat, lng, dwell_time_rail2] or not raw_location:
-                    print(f"Skipping row from CONGESTION_RAIL2 due to missing essential data (Location, Lat, Lng, or Dwell Time): {raw_location or 'Unknown Location'}")
+                # Skip rows if essential geographical data, location from G, OR dwell time is missing/invalid
+                if None in [lat, lng, dwell_time_rail2] or not raw_location_from_g:
+                    print(f"Skipping row from CONGESTION_RAIL2 due to missing essential data (Location from G, Lat, Lng, or Dwell Time): {raw_location_from_g or 'Unknown Location'}")
                     continue
 
-                # Normalize the location name for consistent key generation
-                normalized_location = normalize_location_name(raw_location)
-                key = f"{normalized_location}-{lat}-{lng}"
+                # Use the pre-normalized location directly for the key
+                normalized_location_for_key = raw_location_from_g
+                key = f"{normalized_location_for_key}-{lat}-{lng}"
 
-                # Only add data from CONGESTION_RAIL2 if a record with the same normalized key
-                # (normalized location + lat + lng) does NOT already exist from CONGESTION_RAIL.
-                # This ensures CONGESTION_RAIL data takes precedence.
                 if key not in processed_rail_data:
-                    
                     data = {
                         'date': str(row.get('Date of Rightmost Value', '')).strip(),
                         'company': str(row.get('Railroad Company', '')).strip(),
-                        'location': raw_location, # Store original location for display
+                        'location': raw_location_from_g, # Store the pre-normalized location for display
                         'lat': lat,
                         'lng': lng,
                         'dwell_time': dwell_time_rail2,
@@ -155,7 +150,7 @@ def fetch_rail_data():
                     processed_rail_data[key] = data
                 
             except Exception as e:
-                print(f"⚠️ Error processing row from CONGESTION_RAIL2 - {raw_location or 'Unknown Location'}: {str(e)}")
+                print(f"⚠️ Error processing row from CONGESTION_RAIL2 - {raw_location_from_g or 'Unknown Location'}: {str(e)}")
                 continue
 
         # Convert the dictionary values (deduplicated records) to a list
