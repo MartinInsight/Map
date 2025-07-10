@@ -25,15 +25,15 @@
   },
   {
     "date": "2025-06-27 0:00:00",
-    "company": "UP",
+    "company": "BNSF",
     "location": "Fort Worth, TX",
     "Yard": "Fort Worth, TX",
     "lat": 32.7554883,
     "lng": -97.3307658,
-    "dwell_time": 20.2,
-    "Average": 26.23191489,
-    "indicator": -1.183340718,
-    "congestion_level": "Low"
+    "dwell_time": 30.0,
+    "Average": 26.60851064,
+    "indicator": 0.5332623593,
+    "congestion_level": "Average"
   },
   {
     "date": "2025-06-27 0:00:00",
@@ -49,15 +49,15 @@
   },
   {
     "date": "2025-06-27 0:00:00",
-    "company": "CPKC",
+    "company": "BNSF",
     "location": "Kansas City, KS",
     "Yard": "Kansas City, KS",
     "lat": 39.0997265,
     "lng": -94.5785667,
-    "dwell_time": 27.73,
-    "Average": 39.5475,
-    "indicator": -1.26772335,
-    "congestion_level": "Low"
+    "dwell_time": 24.0,
+    "Average": 32.36382979,
+    "indicator": -2.481015011,
+    "congestion_level": "Very Low"
   },
   {
     "date": "2025-06-27 0:00:00",
@@ -73,15 +73,15 @@
   },
   {
     "date": "2025-06-27 0:00:00",
-    "company": "CN",
+    "company": "BNSF",
     "location": "Memphis, TN",
     "Yard": "Memphis, TN",
     "lat": 35.1495343,
     "lng": -90.0489801,
-    "dwell_time": 28.15,
-    "Average": 22.48340426,
-    "indicator": 1.724971451,
-    "congestion_level": "High"
+    "dwell_time": 16.3,
+    "Average": 20.37234043,
+    "indicator": -1.213698792,
+    "congestion_level": "Low"
   },
   {
     "date": "2025-06-27 0:00:00",
@@ -169,15 +169,15 @@
   },
   {
     "date": "2025-06-27 0:00:00",
-    "company": "CPKC",
+    "company": "CN",
     "location": "Jackson, MS",
     "Yard": "Jackson, MS",
     "lat": 32.2987573,
     "lng": -90.1848103,
-    "dwell_time": 27.31,
-    "Average": 35.07,
-    "indicator": -1.46844213,
-    "congestion_level": "Low"
+    "dwell_time": 17.63,
+    "Average": 12.66914894,
+    "indicator": 1.903287606,
+    "congestion_level": "High"
   },
   {
     "date": "2025-06-27 0:00:00",
@@ -202,6 +202,18 @@
     "Average": 12.31085106,
     "indicator": 3.671495505,
     "congestion_level": "Very High"
+  },
+  {
+    "date": "2025-06-27 0:00:00",
+    "company": "CN",
+    "location": "Memphis, TN",
+    "Yard": "Memphis, TN",
+    "lat": 35.1495343,
+    "lng": -90.0489801,
+    "dwell_time": 28.15,
+    "Average": 22.48340426,
+    "indicator": 1.724971451,
+    "congestion_level": "High"
   },
   {
     "date": "2025-06-27 0:00:00",
@@ -250,6 +262,30 @@
     "Average": 19.8075,
     "indicator": -0.7920797588,
     "congestion_level": "Average"
+  },
+  {
+    "date": "2025-06-27 0:00:00",
+    "company": "CPKC",
+    "location": "Jackson, MS",
+    "Yard": "Jackson, MS",
+    "lat": 32.2987573,
+    "lng": -90.1848103,
+    "dwell_time": 27.31,
+    "Average": 35.07,
+    "indicator": -1.46844213,
+    "congestion_level": "Low"
+  },
+  {
+    "date": "2025-06-27 0:00:00",
+    "company": "CPKC",
+    "location": "Kansas City, KS",
+    "Yard": "Kansas City, KS",
+    "lat": 39.0997265,
+    "lng": -94.5785667,
+    "dwell_time": 27.73,
+    "Average": 39.5475,
+    "indicator": -1.26772335,
+    "congestion_level": "Low"
   },
   {
     "date": "2025-06-27 0:00:00",
@@ -610,6 +646,18 @@
     "Average": 27.10212766,
     "indicator": -0.7841728467,
     "congestion_level": "Average"
+  },
+  {
+    "date": "2025-06-27 0:00:00",
+    "company": "UP",
+    "location": "Fort Worth, TX",
+    "Yard": "Fort Worth, TX",
+    "lat": 32.7554883,
+    "lng": -97.3307658,
+    "dwell_time": 20.2,
+    "Average": 26.23191489,
+    "indicator": -1.183340718,
+    "congestion_level": "Low"
   },
   {
     "date": "2025-06-27 0:00:00",
