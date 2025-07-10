@@ -100,10 +100,11 @@ def fetch_rail_data():
                     'date': str(row.get('Date', '')).strip(),
                     'company': str(row.get('Railroad', '')).strip(), 
                     'location': raw_location, 
+                    'Yard': raw_location, # Add 'Yard' field for JavaScript consistency
                     'lat': raw_lat,
                     'lng': raw_lng,
                     'dwell_time': safe_convert(row.get('Dwell Time')),
-                    'average_value': safe_convert(row.get('Average')), # This will be present from CONGESTION_RAIL
+                    'Average': safe_convert(row.get('Average')), # Renamed to 'Average' to match JS
                     'indicator': safe_convert(row.get('Indicator')),
                     'congestion_level': row.get('Category', 'Unknown') 
                 }
@@ -138,10 +139,11 @@ def fetch_rail_data():
                             'date': str(row.get('Date of Rightmost Value', '')).strip(),
                             'company': company, 
                             'location': raw_location_from_g, 
+                            'Yard': raw_location_from_g, # Add 'Yard' field for JavaScript consistency
                             'lat': raw_lat,
                             'lng': raw_lng,
                             'dwell_time': dwell_time_rail2,
-                            'average_value': None, # CONGESTION_RAIL2 doesn't have 'Average'
+                            'Average': None, # CONGESTION_RAIL2 doesn't have 'Average', Renamed to 'Average'
                             'indicator': None, # CONGESTION_RAIL2 doesn't have 'Indicator'
                             'congestion_level': get_congestion_level_from_dwell_time(dwell_time_rail2) 
                         }
@@ -177,10 +179,11 @@ def fetch_rail_data():
                             'date': str(row.get('Date of Rightmost Value', '')).strip(),
                             'company': 'CPKC', # Convert CP/KCS to CPKC
                             'location': raw_location_from_g, 
+                            'Yard': raw_location_from_g, # Add 'Yard' field for JavaScript consistency
                             'lat': raw_lat,
                             'lng': raw_lng,
                             'dwell_time': dwell_time_rail2,
-                            'average_value': None, 
+                            'Average': None, # Renamed to 'Average'
                             'indicator': None, 
                             'congestion_level': get_congestion_level_from_dwell_time(dwell_time_rail2) 
                         }
@@ -217,10 +220,11 @@ def fetch_rail_data():
                             'date': str(row.get('Date of Rightmost Value', '')).strip(),
                             'company': company, # Keep original company name for other RAIL2 data
                             'location': raw_location_from_g, 
+                            'Yard': raw_location_from_g, # Add 'Yard' field for JavaScript consistency
                             'lat': raw_lat,
                             'lng': raw_lng,
                             'dwell_time': dwell_time_rail2,
-                            'average_value': None, 
+                            'Average': None, # Renamed to 'Average'
                             'indicator': None, 
                             'congestion_level': get_congestion_level_from_dwell_time(dwell_time_rail2) 
                         }
