@@ -10,34 +10,27 @@ def safe_convert(val, default=None):
     if val in [None, "", " ", "N/A", "NaN"]:
         return default
     try:
-        # Try converting to float first for decimal numbers, then int
-        return float(val) if isinstance(val, str) and "." in val else int(val)
+        # Always try to convert to float for numerical stability, especially for lat/lng
+        return float(val)
     except (ValueError, TypeError):
         return default
 
-# Function to normalize location names for consistent deduplication (still used for CONGESTION_RAIL)
+# Function to normalize location names for consistent deduplication.
+# This version aggressively cleans and formats the string for key generation.
 def normalize_location_name(location_str):
     if not isinstance(location_str, str):
         return ""
     
+    # Remove all non-alphanumeric characters except spaces
+    # This handles periods, commas, hyphens, etc., replacing them effectively
+    normalized = re.sub(r'[^a-zA-Z0-9\s]', '', location_str)
+    
     # Convert to uppercase
-    normalized = location_str.upper()
+    normalized = normalized.upper()
     
-    # Remove periods and commas
-    normalized = normalized.replace('.', '').replace(',', '')
-    
-    # Remove common US state abbreviations at the end of the string.
-    # This is a heuristic to handle cases like "Stevens Point, WI" vs "STEVENS POINT".
-    # This list covers all US state abbreviations.
-    state_abbrs = [
-        "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA", "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD", "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ", "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC", "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY"
-    ]
-    # Create a regex pattern to match these abbreviations at the end, preceded by a space
-    state_pattern = r'\s(?:' + '|'.join(state_abbrs) + r')$'
-    normalized = re.sub(state_pattern, '', normalized).strip()
-
-    # Replace multiple spaces with a single space and trim leading/trailing spaces
-    normalized = re.sub(r'\s+', ' ', normalized).strip()
+    # Replace any sequence of one or more spaces with a single underscore
+    # Then remove any leading/trailing underscores that might result from trimming
+    normalized = re.sub(r'\s+', '_', normalized).strip('_')
     
     return normalized
 
@@ -82,26 +75,30 @@ def fetch_rail_data():
         processed_rail_data = {}
         for row in records_rail:
             try:
-                lat = safe_convert(row.get('Latitude'))
-                lng = safe_convert(row.get('Longitude'))
+                raw_lat = safe_convert(row.get('Latitude'))
+                raw_lng = safe_convert(row.get('Longitude'))
                 # Prefer 'Location' then 'Yard' for the location name
                 raw_location = (row.get('Location', '') or row.get('Yard', '')).strip()
                 
                 # Skip rows if essential geographical data or location is missing
-                if None in [lat, lng] or not raw_location:
+                if raw_lat is None or raw_lng is None or not raw_location:
                     print(f"Skipping row from CONGESTION_RAIL due to missing essential data: {raw_location or 'Unknown Location'}")
                     continue
 
                 # Normalize the location name for consistent key generation
-                normalized_location = normalize_location_name(raw_location)
-                key = f"{normalized_location}-{lat}-{lng}" 
+                normalized_location_for_key = normalize_location_name(raw_location)
+                # Round lat/lng for key to handle minor precision differences
+                lat_for_key = round(raw_lat, 5) 
+                lng_for_key = round(raw_lng, 5)
+                
+                key = f"{normalized_location_for_key}-{lat_for_key}-{lng_for_key}" 
                 
                 data = {
                     'date': str(row.get('Date', '')).strip(),
                     'company': str(row.get('Railroad', '')).strip(),
                     'location': raw_location, # Store original location for display
-                    'lat': lat,
-                    'lng': lng,
+                    'lat': raw_lat,
+                    'lng': raw_lng,
                     'dwell_time': safe_convert(row.get('Dwell Time')),
                     'average_value': safe_convert(row.get('Average')), 
                     'indicator': safe_convert(row.get('Indicator')),
@@ -120,28 +117,34 @@ def fetch_rail_data():
 
         for row in records_rail2:
             try:
-                lat = safe_convert(row.get('Latitude'))
-                lng = safe_convert(row.get('Longitude'))
+                raw_lat = safe_convert(row.get('Latitude'))
+                raw_lng = safe_convert(row.get('Longitude'))
                 # Get the pre-normalized location name directly from the 'Location' column (G column)
-                raw_location_from_g = row.get('Location', '').strip() # Changed from 'Normalized Location (G)' to 'Location'
+                raw_location_from_g = row.get('Location', '').strip() 
                 dwell_time_rail2 = safe_convert(row.get('Rightmost Dwell Time')) 
                 
                 # Skip rows if essential geographical data, location from G, OR dwell time is missing/invalid
-                if None in [lat, lng, dwell_time_rail2] or not raw_location_from_g:
+                if raw_lat is None or raw_lng is None or dwell_time_rail2 is None or not raw_location_from_g:
                     print(f"Skipping row from CONGESTION_RAIL2 due to missing essential data (Location from G, Lat, Lng, or Dwell Time): {raw_location_from_g or 'Unknown Location'}")
                     continue
 
-                # Use the pre-normalized location directly for the key
-                normalized_location_for_key = raw_location_from_g
-                key = f"{normalized_location_for_key}-{lat}-{lng}"
+                # Normalize the location name for consistent key generation, matching CONGESTION_RAIL2's format
+                # We apply normalization here as well, in case the user's manual input in G column
+                # still has variations (e.g., extra spaces, different punctuation).
+                normalized_location_for_key = normalize_location_name(raw_location_from_g)
+                # Round lat/lng for key to handle minor precision differences
+                lat_for_key = round(raw_lat, 5) 
+                lng_for_key = round(raw_lng, 5)
+
+                key = f"{normalized_location_for_key}-{lat_for_key}-{lng_for_key}"
 
                 if key not in processed_rail_data:
                     data = {
                         'date': str(row.get('Date of Rightmost Value', '')).strip(),
                         'company': str(row.get('Railroad Company', '')).strip(),
-                        'location': raw_location_from_g, # Store the pre-normalized location for display
-                        'lat': lat,
-                        'lng': lng,
+                        'location': raw_location_from_g, # Store the original G column location for display
+                        'lat': raw_lat,
+                        'lng': raw_lng,
                         'dwell_time': dwell_time_rail2,
                         'average_value': None, 
                         'indicator': None, 
