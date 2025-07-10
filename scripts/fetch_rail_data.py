@@ -77,10 +77,43 @@ def fetch_rail_data():
         records_rail2 = worksheet_rail2.get_all_records()
         print(f"📝 Number of records fetched from CONGESTION_RAIL2: {len(records_rail2)}")
 
-        # --- Processing Order based on Priority ---
+        # --- Processing Order based on Corrected Priority ---
 
-        # 1. Process CPKC data from CONGESTION_RAIL2 (Highest Priority)
-        print("Processing CPKC data from CONGESTION_RAIL2 (Priority 1/4)...")
+        # 1. Process ALL data from CONGESTION_RAIL (Highest Priority)
+        print("Processing CONGESTION_RAIL data (Priority 1/4)...")
+        for row in records_rail:
+            try:
+                raw_lat = safe_convert(row.get('Latitude'))
+                raw_lng = safe_convert(row.get('Longitude'))
+                raw_location = (row.get('Location', '') or row.get('Yard', '')).strip()
+                
+                if raw_lat is None or raw_lng is None or not raw_location:
+                    print(f"Skipping CONGESTION_RAIL row due to missing essential data: {raw_location or 'Unknown Location'}")
+                    continue
+
+                normalized_location_for_key = normalize_location_name(raw_location)
+                lat_for_key = round(raw_lat, 5) 
+                lng_for_key = round(raw_lng, 5)
+                key = f"{normalized_location_for_key}-{lat_for_key}-{lng_for_key}" 
+                
+                processed_rail_data[key] = {
+                    'date': str(row.get('Date', '')).strip(),
+                    'company': str(row.get('Railroad', '')).strip(), 
+                    'location': raw_location, 
+                    'lat': raw_lat,
+                    'lng': raw_lng,
+                    'dwell_time': safe_convert(row.get('Dwell Time')),
+                    'average_value': safe_convert(row.get('Average')), # Will be present if available in CONGESTION_RAIL
+                    'indicator': safe_convert(row.get('Indicator')),
+                    'congestion_level': row.get('Category', 'Unknown') 
+                }
+                
+            except Exception as e:
+                print(f"⚠️ Error processing CONGESTION_RAIL row - {raw_location or 'Unknown Location'}: {str(e)}")
+                continue
+
+        # 2. Process CPKC data from CONGESTION_RAIL2 (Second Priority)
+        print("Processing CPKC data from CONGESTION_RAIL2 (Priority 2/4)...")
         for row in records_rail2:
             company = str(row.get('Railroad Company', '')).strip()
             if company == 'CPKC':
@@ -99,23 +132,27 @@ def fetch_rail_data():
                     lng_for_key = round(raw_lng, 5)
                     key = f"{normalized_location_for_key}-{lat_for_key}-{lng_for_key}"
 
-                    processed_rail_data[key] = {
-                        'date': str(row.get('Date of Rightmost Value', '')).strip(),
-                        'company': company, 
-                        'location': raw_location_from_g, 
-                        'lat': raw_lat,
-                        'lng': raw_lng,
-                        'dwell_time': dwell_time_rail2,
-                        'average_value': None, 
-                        'indicator': None, 
-                        'congestion_level': get_congestion_level_from_dwell_time(dwell_time_rail2) 
-                    }
+                    # Only add if not already covered by CONGESTION_RAIL data
+                    if key not in processed_rail_data:
+                        processed_rail_data[key] = {
+                            'date': str(row.get('Date of Rightmost Value', '')).strip(),
+                            'company': company, 
+                            'location': raw_location_from_g, 
+                            'lat': raw_lat,
+                            'lng': raw_lng,
+                            'dwell_time': dwell_time_rail2,
+                            'average_value': None, # CONGESTION_RAIL2 doesn't have 'Average'
+                            'indicator': None, # CONGESTION_RAIL2 doesn't have 'Indicator'
+                            'congestion_level': get_congestion_level_from_dwell_time(dwell_time_rail2) 
+                        }
+                    else:
+                        print(f"Skipping duplicate CPKC row (already covered by CONGESTION_RAIL): {raw_location_from_g}")
                 except Exception as e:
                     print(f"⚠️ Error processing CPKC row from CONGESTION_RAIL2 - {raw_location_from_g or 'Unknown Location'}: {str(e)}")
                     continue
 
-        # 2. Process CP and KCS data from CONGESTION_RAIL2 (Priority 2/4 - Convert to CPKC)
-        print("Processing CP and KCS data from CONGESTION_RAIL2 (Priority 2/4)...")
+        # 3. Process CP and KCS data from CONGESTION_RAIL2 (Third Priority - Convert to CPKC)
+        print("Processing CP and KCS data from CONGESTION_RAIL2 (Priority 3/4)...")
         for row in records_rail2:
             company = str(row.get('Railroad Company', '')).strip()
             if company in ['CP', 'KCS']:
@@ -134,7 +171,7 @@ def fetch_rail_data():
                     lng_for_key = round(raw_lng, 5)
                     key = f"{normalized_location_for_key}-{lat_for_key}-{lng_for_key}"
 
-                    # Only add if not already covered by CPKC data
+                    # Only add if not already covered by CONGESTION_RAIL or CPKC data
                     if key not in processed_rail_data:
                         processed_rail_data[key] = {
                             'date': str(row.get('Date of Rightmost Value', '')).strip(),
@@ -148,53 +185,16 @@ def fetch_rail_data():
                             'congestion_level': get_congestion_level_from_dwell_time(dwell_time_rail2) 
                         }
                     else:
-                        print(f"Skipping duplicate {company} row (already covered by CPKC): {raw_location_from_g}")
+                        print(f"Skipping duplicate {company} row (already covered by higher priority data): {raw_location_from_g}")
                 except Exception as e:
                     print(f"⚠️ Error processing {company} row from CONGESTION_RAIL2 - {raw_location_from_g or 'Unknown Location'}: {str(e)}")
                     continue
-
-        # 3. Process ALL data from CONGESTION_RAIL (Priority 3/4)
-        print("Processing CONGESTION_RAIL data (Priority 3/4)...")
-        for row in records_rail:
-            try:
-                raw_lat = safe_convert(row.get('Latitude'))
-                raw_lng = safe_convert(row.get('Longitude'))
-                raw_location = (row.get('Location', '') or row.get('Yard', '')).strip()
-                
-                if raw_lat is None or raw_lng is None or not raw_location:
-                    print(f"Skipping CONGESTION_RAIL row due to missing essential data: {raw_location or 'Unknown Location'}")
-                    continue
-
-                normalized_location_for_key = normalize_location_name(raw_location)
-                lat_for_key = round(raw_lat, 5) 
-                lng_for_key = round(raw_lng, 5)
-                key = f"{normalized_location_for_key}-{lat_for_key}-{lng_for_key}" 
-                
-                # Only add if not already covered by CPKC, CP, or KCS data from CONGESTION_RAIL2
-                if key not in processed_rail_data:
-                    processed_rail_data[key] = {
-                        'date': str(row.get('Date', '')).strip(),
-                        'company': str(row.get('Railroad', '')).strip(), 
-                        'location': raw_location, 
-                        'lat': raw_lat,
-                        'lng': raw_lng,
-                        'dwell_time': safe_convert(row.get('Dwell Time')),
-                        'average_value': safe_convert(row.get('Average')), 
-                        'indicator': safe_convert(row.get('Indicator')),
-                        'congestion_level': row.get('Category', 'Unknown') 
-                    }
-                else:
-                    print(f"Skipping duplicate CONGESTION_RAIL row (already covered by CONGESTION_RAIL2 high-priority data): {raw_location}")
-                
-            except Exception as e:
-                print(f"⚠️ Error processing CONGESTION_RAIL row - {raw_location or 'Unknown Location'}: {str(e)}")
-                continue
 
         # 4. Process Remaining non-CPKC/CP/KCS data from CONGESTION_RAIL2 (Lowest Priority)
         print("Processing remaining CONGESTION_RAIL2 data (Priority 4/4)...")
         for row in records_rail2:
             company = str(row.get('Railroad Company', '')).strip()
-            # Only process if not CPKC, CP, or KCS (already handled)
+            # Only process if not CPKC, CP, or KCS (already handled by higher priorities)
             if company not in ['CPKC', 'CP', 'KCS']:
                 try:
                     raw_lat = safe_convert(row.get('Latitude'))
