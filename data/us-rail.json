@@ -794,18 +794,6 @@
   {
     "date": "5/7/2025",
     "company": "CPKC",
-    "location": "Kansas City, MO",
-    "Yard": "Kansas City, MO",
-    "lat": 39.0997265,
-    "lng": -94.5785667,
-    "dwell_time": 15.33,
-    "Average": null,
-    "indicator": null,
-    "congestion_level": "Low"
-  },
-  {
-    "date": "5/7/2025",
-    "company": "CPKC",
     "location": "Wylie, TX",
     "Yard": "Wylie, TX",
     "lat": 33.02619265,
