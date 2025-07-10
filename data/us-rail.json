@@ -662,61 +662,6 @@
   {
     "date": "7/2/2025",
     "company": "CN",
-    "location": "BATON ROUGE",
-    "lat": 30,
-    "lng": -91,
-    "dwell_time": 19,
-    "average_value": null,
-    "indicator": null,
-    "congestion_level": "Average"
-  },
-  {
-    "date": "7/2/2025",
-    "company": "CN",
-    "location": "CHAMPAIGN",
-    "lat": 40,
-    "lng": -88,
-    "dwell_time": 13,
-    "average_value": null,
-    "indicator": null,
-    "congestion_level": "Low"
-  },
-  {
-    "date": "7/2/2025",
-    "company": "CN",
-    "location": "FOND DU LAC",
-    "lat": 43,
-    "lng": -88,
-    "dwell_time": 21,
-    "average_value": null,
-    "indicator": null,
-    "congestion_level": "Average"
-  },
-  {
-    "date": "7/2/2025",
-    "company": "CN",
-    "location": "GEISMAR",
-    "lat": 30,
-    "lng": -91,
-    "dwell_time": 18,
-    "average_value": null,
-    "indicator": null,
-    "congestion_level": "Low"
-  },
-  {
-    "date": "7/2/2025",
-    "company": "CN",
-    "location": "JACKSON",
-    "lat": 32,
-    "lng": -90,
-    "dwell_time": 17,
-    "average_value": null,
-    "indicator": null,
-    "congestion_level": "Low"
-  },
-  {
-    "date": "7/2/2025",
-    "company": "CN",
     "location": "KIRK YARD",
     "lat": 41,
     "lng": -87,
@@ -737,39 +682,6 @@
     "congestion_level": "Average"
   },
   {
-    "date": "7/2/2025",
-    "company": "CN",
-    "location": "MEMPHIS",
-    "lat": 35,
-    "lng": -90,
-    "dwell_time": 28,
-    "average_value": null,
-    "indicator": null,
-    "congestion_level": "High"
-  },
-  {
-    "date": "7/2/2025",
-    "company": "CN",
-    "location": "PROCTOR",
-    "lat": 46,
-    "lng": -92,
-    "dwell_time": 8,
-    "average_value": null,
-    "indicator": null,
-    "congestion_level": "Very Low"
-  },
-  {
-    "date": "7/2/2025",
-    "company": "CN",
-    "location": "STEVENS POINT",
-    "lat": 44,
-    "lng": -89,
-    "dwell_time": 21,
-    "average_value": null,
-    "indicator": null,
-    "congestion_level": "Average"
-  },
-  {
     "date": "5/7/2025",
     "company": "CP",
     "location": "Albany",
@@ -783,17 +695,6 @@
   {
     "date": "5/7/2025",
     "company": "CP",
-    "location": "Bensenville",
-    "lat": 41,
-    "lng": -87,
-    "dwell_time": 22,
-    "average_value": null,
-    "indicator": null,
-    "congestion_level": "Average"
-  },
-  {
-    "date": "5/7/2025",
-    "company": "CP",
     "location": "Glenwood",
     "lat": 45,
     "lng": -95,
@@ -801,17 +702,6 @@
     "average_value": null,
     "indicator": null,
     "congestion_level": "Average"
-  },
-  {
-    "date": "5/7/2025",
-    "company": "CP",
-    "location": "Harvey",
-    "lat": 47,
-    "lng": -99,
-    "dwell_time": 15,
-    "average_value": null,
-    "indicator": null,
-    "congestion_level": "Low"
   },
   {
     "date": "5/7/2025",
@@ -849,65 +739,10 @@
   {
     "date": "5/7/2025",
     "company": "CP",
-    "location": "Nahant",
-    "lat": 41,
-    "lng": -90,
-    "dwell_time": 41,
-    "average_value": null,
-    "indicator": null,
-    "congestion_level": "Very High"
-  },
-  {
-    "date": "5/7/2025",
-    "company": "CP",
     "location": "Saratoga Springs",
     "lat": 43,
     "lng": -73,
     "dwell_time": 17,
-    "average_value": null,
-    "indicator": null,
-    "congestion_level": "Low"
-  },
-  {
-    "date": "5/7/2025",
-    "company": "CP",
-    "location": "St Paul",
-    "lat": 44,
-    "lng": -93,
-    "dwell_time": 24,
-    "average_value": null,
-    "indicator": null,
-    "congestion_level": "High"
-  },
-  {
-    "date": "5/7/2025",
-    "company": "KCS",
-    "location": "Shreveport",
-    "lat": 32,
-    "lng": -93,
-    "dwell_time": 34,
-    "average_value": null,
-    "indicator": null,
-    "congestion_level": "Very High"
-  },
-  {
-    "date": "5/7/2025",
-    "company": "KCS",
-    "location": "Jackson",
-    "lat": 32,
-    "lng": -90,
-    "dwell_time": 20,
-    "average_value": null,
-    "indicator": null,
-    "congestion_level": "Average"
-  },
-  {
-    "date": "5/7/2025",
-    "company": "KCS",
-    "location": "Kansas City",
-    "lat": 39,
-    "lng": -94,
-    "dwell_time": 15,
     "average_value": null,
     "indicator": null,
     "congestion_level": "Low"
@@ -948,28 +783,6 @@
   {
     "date": "5/7/2025",
     "company": "KCS",
-    "location": "Baton Rouge",
-    "lat": 30,
-    "lng": -91,
-    "dwell_time": 9,
-    "average_value": null,
-    "indicator": null,
-    "congestion_level": "Very Low"
-  },
-  {
-    "date": "5/7/2025",
-    "company": "KCS",
-    "location": "Meridian",
-    "lat": 32,
-    "lng": -88,
-    "dwell_time": 2,
-    "average_value": null,
-    "indicator": null,
-    "congestion_level": "Very Low"
-  },
-  {
-    "date": "5/7/2025",
-    "company": "KCS",
     "location": "Latanier",
     "lat": 31,
     "lng": -92,
@@ -992,50 +805,6 @@
   {
     "date": "7/2/2025",
     "company": "NS",
-    "location": "ATLANTA",
-    "lat": 33,
-    "lng": -84,
-    "dwell_time": 19,
-    "average_value": null,
-    "indicator": null,
-    "congestion_level": "Average"
-  },
-  {
-    "date": "7/2/2025",
-    "company": "NS",
-    "location": "BELLEVUE",
-    "lat": 41,
-    "lng": -82,
-    "dwell_time": 35,
-    "average_value": null,
-    "indicator": null,
-    "congestion_level": "Very High"
-  },
-  {
-    "date": "7/2/2025",
-    "company": "NS",
-    "location": "BIRMINGHAM",
-    "lat": 33,
-    "lng": -86,
-    "dwell_time": 35,
-    "average_value": null,
-    "indicator": null,
-    "congestion_level": "Very High"
-  },
-  {
-    "date": "7/2/2025",
-    "company": "NS",
-    "location": "CHATTANOOGA",
-    "lat": 35,
-    "lng": -85,
-    "dwell_time": 26,
-    "average_value": null,
-    "indicator": null,
-    "congestion_level": "High"
-  },
-  {
-    "date": "7/2/2025",
-    "company": "NS",
     "location": "CONWAY",
     "lat": 40,
     "lng": -79,
@@ -1043,28 +812,6 @@
     "average_value": null,
     "indicator": null,
     "congestion_level": "Very High"
-  },
-  {
-    "date": "7/2/2025",
-    "company": "NS",
-    "location": "DECATUR",
-    "lat": 39,
-    "lng": -88,
-    "dwell_time": 34,
-    "average_value": null,
-    "indicator": null,
-    "congestion_level": "Very High"
-  },
-  {
-    "date": "7/2/2025",
-    "company": "NS",
-    "location": "ELKHART",
-    "lat": 41,
-    "lng": -85,
-    "dwell_time": 25,
-    "average_value": null,
-    "indicator": null,
-    "congestion_level": "High"
   },
   {
     "date": "7/2/2025",
@@ -1087,17 +834,6 @@
     "average_value": null,
     "indicator": null,
     "congestion_level": "Very Low"
-  },
-  {
-    "date": "7/2/2025",
-    "company": "NS",
-    "location": "ROANOKE",
-    "lat": 37,
-    "lng": -79,
-    "dwell_time": 37,
-    "average_value": null,
-    "indicator": null,
-    "congestion_level": "Very High"
   },
   {
     "date": "7/2/2025",
@@ -1135,28 +871,6 @@
   {
     "date": "7/2/2025",
     "company": "CPKC",
-    "location": "Laredo",
-    "lat": 27,
-    "lng": -99,
-    "dwell_time": 7,
-    "average_value": null,
-    "indicator": null,
-    "congestion_level": "Very Low"
-  },
-  {
-    "date": "7/2/2025",
-    "company": "CPKC",
-    "location": "New Orleans",
-    "lat": 29,
-    "lng": -90,
-    "dwell_time": 52,
-    "average_value": null,
-    "indicator": null,
-    "congestion_level": "Very High"
-  },
-  {
-    "date": "7/2/2025",
-    "company": "CPKC",
     "location": "Shreveport Yard",
     "lat": 32,
     "lng": -93,
@@ -1164,16 +878,5 @@
     "average_value": null,
     "indicator": null,
     "congestion_level": "Very High"
-  },
-  {
-    "date": "7/2/2025",
-    "company": "CPKC",
-    "location": "St. Paul",
-    "lat": 44,
-    "lng": -93,
-    "dwell_time": 20,
-    "average_value": null,
-    "indicator": null,
-    "congestion_level": "Average"
   }
 ]

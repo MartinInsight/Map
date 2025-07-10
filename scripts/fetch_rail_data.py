@@ -1,6 +1,7 @@
 import os
 import gspread
 import json
+import re # Import the regular expression module
 from google.oauth2 import service_account
 from datetime import datetime
 
@@ -13,6 +14,32 @@ def safe_convert(val, default=None):
         return float(val) if isinstance(val, str) and "." in val else int(val)
     except (ValueError, TypeError):
         return default
+
+# Function to normalize location names for consistent deduplication
+def normalize_location_name(location_str):
+    if not isinstance(location_str, str):
+        return ""
+    
+    # Convert to uppercase
+    normalized = location_str.upper()
+    
+    # Remove periods and commas
+    normalized = normalized.replace('.', '').replace(',', '')
+    
+    # Remove common US state abbreviations at the end of the string.
+    # This is a heuristic to handle cases like "Stevens Point, WI" vs "STEVENS POINT".
+    # This list covers all US state abbreviations.
+    state_abbrs = [
+        "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA", "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD", "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ", "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC", "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY"
+    ]
+    # Create a regex pattern to match these abbreviations at the end, preceded by a space
+    state_pattern = r'\s(?:' + '|'.join(state_abbrs) + r')$'
+    normalized = re.sub(state_pattern, '', normalized).strip()
+
+    # Replace multiple spaces with a single space and trim leading/trailing spaces
+    normalized = re.sub(r'\s+', ' ', normalized).strip()
+    
+    return normalized
 
 # Function to determine congestion level based on dwell time
 # This is used for CONGESTION_RAIL2 data which lacks an 'Indicator' or 'Category'
@@ -58,31 +85,32 @@ def fetch_rail_data():
                 lat = safe_convert(row.get('Latitude'))
                 lng = safe_convert(row.get('Longitude'))
                 # Prefer 'Location' then 'Yard' for the location name
-                location = (row.get('Location', '') or row.get('Yard', '')).strip()
+                raw_location = (row.get('Location', '') or row.get('Yard', '')).strip()
                 
                 # Skip rows if essential geographical data or location is missing
-                if None in [lat, lng] or not location:
-                    print(f"Skipping row from CONGESTION_RAIL due to missing essential data: {row.get('Location', 'Unknown')}")
+                if None in [lat, lng] or not raw_location:
+                    print(f"Skipping row from CONGESTION_RAIL due to missing essential data: {raw_location or 'Unknown Location'}")
                     continue
 
-                # Create a unique key for deduplication based on location and coordinates
-                key = f"{location}-{lat}-{lng}" 
+                # Normalize the location name for consistent key generation
+                normalized_location = normalize_location_name(raw_location)
+                key = f"{normalized_location}-{lat}-{lng}" 
                 
                 data = {
                     'date': str(row.get('Date', '')).strip(),
                     'company': str(row.get('Railroad', '')).strip(),
-                    'location': location,
+                    'location': raw_location, # Store original location for display
                     'lat': lat,
                     'lng': lng,
                     'dwell_time': safe_convert(row.get('Dwell Time')),
-                    'average_value': safe_convert(row.get('Average')), # Renamed to avoid conflict with JS variable names
+                    'average_value': safe_convert(row.get('Average')), 
                     'indicator': safe_convert(row.get('Indicator')),
-                    'congestion_level': row.get('Category', 'Unknown') # Use 'Category' from RAIL for congestion level
+                    'congestion_level': row.get('Category', 'Unknown') 
                 }
-                processed_rail_data[key] = data # Add to dictionary (will overwrite if key exists within this sheet, but unlikely)
+                processed_rail_data[key] = data 
                 
             except Exception as e:
-                print(f"⚠️ Error processing row from CONGESTION_RAIL - {row.get('Location', 'Unknown')}: {str(e)}")
+                print(f"⚠️ Error processing row from CONGESTION_RAIL - {raw_location or 'Unknown Location'}: {str(e)}")
                 continue
 
         # --- Fetch and process data from CONGESTION_RAIL2 (supplementary source) ---
@@ -96,37 +124,38 @@ def fetch_rail_data():
                 lat = safe_convert(row.get('Latitude'))
                 lng = safe_convert(row.get('Longitude'))
                 # Prefer 'City/Region' then 'Yard' for the location name in RAIL2
-                location = (row.get('City/Region', '') or row.get('Yard', '')).strip()
-                dwell_time_rail2 = safe_convert(row.get('Rightmost Dwell Time')) # Get dwell time first
+                raw_location = (row.get('City/Region', '') or row.get('Yard', '')).strip()
+                dwell_time_rail2 = safe_convert(row.get('Rightmost Dwell Time')) 
                 
                 # Skip rows if essential geographical data, location, OR dwell time is missing/invalid
-                if None in [lat, lng, dwell_time_rail2] or not location:
-                    print(f"Skipping row from CONGESTION_RAIL2 due to missing essential data (Location, Lat, Lng, or Dwell Time): {row.get('City/Region', 'Unknown')}")
+                if None in [lat, lng, dwell_time_rail2] or not raw_location:
+                    print(f"Skipping row from CONGESTION_RAIL2 due to missing essential data (Location, Lat, Lng, or Dwell Time): {raw_location or 'Unknown Location'}")
                     continue
 
-                key = f"{location}-{lat}-{lng}"
+                # Normalize the location name for consistent key generation
+                normalized_location = normalize_location_name(raw_location)
+                key = f"{normalized_location}-{lat}-{lng}"
 
-                # Only add data from CONGESTION_RAIL2 if a record with the same key
-                # (location + lat + lng) does NOT already exist from CONGESTION_RAIL.
+                # Only add data from CONGESTION_RAIL2 if a record with the same normalized key
+                # (normalized location + lat + lng) does NOT already exist from CONGESTION_RAIL.
                 # This ensures CONGESTION_RAIL data takes precedence.
                 if key not in processed_rail_data:
                     
                     data = {
                         'date': str(row.get('Date of Rightmost Value', '')).strip(),
                         'company': str(row.get('Railroad Company', '')).strip(),
-                        'location': location,
+                        'location': raw_location, # Store original location for display
                         'lat': lat,
                         'lng': lng,
                         'dwell_time': dwell_time_rail2,
-                        'average_value': None, # CONGESTION_RAIL2 does not have 'Average'
-                        'indicator': None, # CONGESTION_RAIL2 does not have 'Indicator'
-                        # Assign congestion level based on dwell time for RAIL2 data
+                        'average_value': None, 
+                        'indicator': None, 
                         'congestion_level': get_congestion_level_from_dwell_time(dwell_time_rail2) 
                     }
                     processed_rail_data[key] = data
                 
             except Exception as e:
-                print(f"⚠️ Error processing row from CONGESTION_RAIL2 - {row.get('City/Region', 'Unknown')}: {str(e)}")
+                print(f"⚠️ Error processing row from CONGESTION_RAIL2 - {raw_location or 'Unknown Location'}: {str(e)}")
                 continue
 
         # Convert the dictionary values (deduplicated records) to a list
@@ -134,7 +163,7 @@ def fetch_rail_data():
         
         # Define output directory and path
         output_dir = os.path.join(os.path.dirname(__file__), '../data')
-        os.makedirs(output_dir, exist_ok=True) # Create directory if it doesn't exist
+        os.makedirs(output_dir, exist_ok=True) 
         output_path = os.path.join(output_dir, 'us-rail.json')
         
         # Write the processed data to a JSON file
