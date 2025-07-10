@@ -66,6 +66,7 @@ def fetch_rail_data():
         sheet = gc.open_by_key(spreadsheet_id)
 
         # Dictionary to store processed data, using a unique key for deduplication
+        # The key now includes company to allow multiple companies at the same location
         processed_rail_data = {}
         
         # --- Fetch all records from both sheets first ---
@@ -86,6 +87,7 @@ def fetch_rail_data():
                 raw_lat = safe_convert(row.get('Latitude'))
                 raw_lng = safe_convert(row.get('Longitude'))
                 raw_location = (row.get('Location', '') or row.get('Yard', '')).strip()
+                company_name = str(row.get('Railroad', '')).strip()
                 
                 if raw_lat is None or raw_lng is None or not raw_location:
                     print(f"Skipping CONGESTION_RAIL row due to missing essential data: {raw_location or 'Unknown Location'}")
@@ -94,11 +96,12 @@ def fetch_rail_data():
                 normalized_location_for_key = normalize_location_name(raw_location)
                 lat_for_key = round(raw_lat, 5) 
                 lng_for_key = round(raw_lng, 5)
-                key = f"{normalized_location_for_key}-{lat_for_key}-{lng_for_key}" 
+                # Key now includes company name
+                key = f"{normalized_location_for_key}-{lat_for_key}-{lng_for_key}-{company_name.upper()}" 
                 
                 processed_rail_data[key] = {
                     'date': str(row.get('Date', '')).strip(),
-                    'company': str(row.get('Railroad', '')).strip(), 
+                    'company': company_name, 
                     'location': raw_location, 
                     'Yard': raw_location, # Add 'Yard' field for JavaScript consistency
                     'lat': raw_lat,
@@ -131,9 +134,10 @@ def fetch_rail_data():
                     normalized_location_for_key = normalize_location_name(raw_location_from_g)
                     lat_for_key = round(raw_lat, 5) 
                     lng_for_key = round(raw_lng, 5)
-                    key = f"{normalized_location_for_key}-{lat_for_key}-{lng_for_key}"
+                    # Key now includes company name (CPKC)
+                    key = f"{normalized_location_for_key}-{lat_for_key}-{lng_for_key}-{company.upper()}"
 
-                    # Only add if not already covered by CONGESTION_RAIL data
+                    # Only add if not already covered by CONGESTION_RAIL data with the same location AND company
                     if key not in processed_rail_data:
                         processed_rail_data[key] = {
                             'date': str(row.get('Date of Rightmost Value', '')).strip(),
@@ -148,7 +152,7 @@ def fetch_rail_data():
                             'congestion_level': get_congestion_level_from_dwell_time(dwell_time_rail2) 
                         }
                     else:
-                        print(f"Skipping duplicate CPKC row (already covered by CONGESTION_RAIL): {raw_location_from_g}")
+                        print(f"Skipping duplicate CPKC row (already covered by CONGESTION_RAIL with same location and company): {raw_location_from_g}")
                 except Exception as e:
                     print(f"⚠️ Error processing CPKC row from CONGESTION_RAIL2 - {raw_location_from_g or 'Unknown Location'}: {str(e)}")
                     continue
@@ -171,13 +175,14 @@ def fetch_rail_data():
                     normalized_location_for_key = normalize_location_name(raw_location_from_g)
                     lat_for_key = round(raw_lat, 5) 
                     lng_for_key = round(raw_lng, 5)
-                    key = f"{normalized_location_for_key}-{lat_for_key}-{lng_for_key}"
+                    # Key now includes company name (CPKC, as it will be displayed)
+                    key = f"{normalized_location_for_key}-{lat_for_key}-{lng_for_key}-CPKC" # Use CPKC for key as it's converted for display
 
                     # Only add if not already covered by CONGESTION_RAIL or CPKC data
                     if key not in processed_rail_data:
                         processed_rail_data[key] = {
                             'date': str(row.get('Date of Rightmost Value', '')).strip(),
-                            'company': 'CPKC', # Convert CP/KCS to CPKC
+                            'company': 'CPKC', # Convert CP/KCS to CPKC for display
                             'location': raw_location_from_g, 
                             'Yard': raw_location_from_g, # Add 'Yard' field for JavaScript consistency
                             'lat': raw_lat,
@@ -212,7 +217,8 @@ def fetch_rail_data():
                     normalized_location_for_key = normalize_location_name(raw_location_from_g)
                     lat_for_key = round(raw_lat, 5) 
                     lng_for_key = round(raw_lng, 5)
-                    key = f"{normalized_location_for_key}-{lat_for_key}-{lng_for_key}"
+                    # Key now includes company name
+                    key = f"{normalized_location_for_key}-{lat_for_key}-{lng_for_key}-{company.upper()}"
 
                     # Only add if not already covered by higher priority data
                     if key not in processed_rail_data:
