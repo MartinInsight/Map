@@ -66,17 +66,21 @@ def fetch_rail_data():
         sheet = gc.open_by_key(spreadsheet_id)
 
         # Dictionary to store processed data, using a unique key for deduplication
-        # This will be populated based on priority: CPKC > CP/KCS > CONGESTION_RAIL
         processed_rail_data = {}
+        
+        # --- Fetch all records from both sheets first ---
+        worksheet_rail = sheet.worksheet('CONGESTION_RAIL')
+        records_rail = worksheet_rail.get_all_records()
+        print(f"📝 Number of records fetched from CONGESTION_RAIL: {len(records_rail)}")
 
-        # --- Fetch and process data from CONGESTION_RAIL2 (supplementary source) ---
-        # Process CONGESTION_RAIL2 first to establish CPKC priority
         worksheet_rail2 = sheet.worksheet('CONGESTION_RAIL2')
         records_rail2 = worksheet_rail2.get_all_records()
         print(f"📝 Number of records fetched from CONGESTION_RAIL2: {len(records_rail2)}")
 
-        # 1. Process CPKC data from CONGESTION_RAIL2 (highest priority)
-        print("Processing CPKC data from CONGESTION_RAIL2...")
+        # --- Processing Order based on Priority ---
+
+        # 1. Process CPKC data from CONGESTION_RAIL2 (Highest Priority)
+        print("Processing CPKC data from CONGESTION_RAIL2 (Priority 1/4)...")
         for row in records_rail2:
             company = str(row.get('Railroad Company', '')).strip()
             if company == 'CPKC':
@@ -95,10 +99,9 @@ def fetch_rail_data():
                     lng_for_key = round(raw_lng, 5)
                     key = f"{normalized_location_for_key}-{lat_for_key}-{lng_for_key}"
 
-                    # Add CPKC data directly, it has highest priority
                     processed_rail_data[key] = {
                         'date': str(row.get('Date of Rightmost Value', '')).strip(),
-                        'company': company, # Keep as CPKC
+                        'company': company, 
                         'location': raw_location_from_g, 
                         'lat': raw_lat,
                         'lng': raw_lng,
@@ -111,8 +114,8 @@ def fetch_rail_data():
                     print(f"⚠️ Error processing CPKC row from CONGESTION_RAIL2 - {raw_location_from_g or 'Unknown Location'}: {str(e)}")
                     continue
 
-        # 2. Process CP and KCS data from CONGESTION_RAIL2 (second priority, convert to CPKC)
-        print("Processing CP and KCS data from CONGESTION_RAIL2...")
+        # 2. Process CP and KCS data from CONGESTION_RAIL2 (Priority 2/4 - Convert to CPKC)
+        print("Processing CP and KCS data from CONGESTION_RAIL2 (Priority 2/4)...")
         for row in records_rail2:
             company = str(row.get('Railroad Company', '')).strip()
             if company in ['CP', 'KCS']:
@@ -131,7 +134,7 @@ def fetch_rail_data():
                     lng_for_key = round(raw_lng, 5)
                     key = f"{normalized_location_for_key}-{lat_for_key}-{lng_for_key}"
 
-                    # Only add if CPKC hasn't already added this location
+                    # Only add if not already covered by CPKC data
                     if key not in processed_rail_data:
                         processed_rail_data[key] = {
                             'date': str(row.get('Date of Rightmost Value', '')).strip(),
@@ -150,12 +153,8 @@ def fetch_rail_data():
                     print(f"⚠️ Error processing {company} row from CONGESTION_RAIL2 - {raw_location_from_g or 'Unknown Location'}: {str(e)}")
                     continue
 
-        # --- Fetch and process data from CONGESTION_RAIL (lowest priority) ---
-        worksheet_rail = sheet.worksheet('CONGESTION_RAIL')
-        records_rail = worksheet_rail.get_all_records()
-        print(f"📝 Number of records fetched from CONGESTION_RAIL: {len(records_rail)}")
-        
-        print("Processing CONGESTION_RAIL data...")
+        # 3. Process ALL data from CONGESTION_RAIL (Priority 3/4)
+        print("Processing CONGESTION_RAIL data (Priority 3/4)...")
         for row in records_rail:
             try:
                 raw_lat = safe_convert(row.get('Latitude'))
@@ -171,11 +170,11 @@ def fetch_rail_data():
                 lng_for_key = round(raw_lng, 5)
                 key = f"{normalized_location_for_key}-{lat_for_key}-{lng_for_key}" 
                 
-                # Only add if not already in processed_rail_data (covered by CPKC, CP, or KCS)
+                # Only add if not already covered by CPKC, CP, or KCS data from CONGESTION_RAIL2
                 if key not in processed_rail_data:
                     processed_rail_data[key] = {
                         'date': str(row.get('Date', '')).strip(),
-                        'company': str(row.get('Railroad', '')).strip(), # Keep original company name for CONGESTION_RAIL
+                        'company': str(row.get('Railroad', '')).strip(), 
                         'location': raw_location, 
                         'lat': raw_lat,
                         'lng': raw_lng,
@@ -185,11 +184,51 @@ def fetch_rail_data():
                         'congestion_level': row.get('Category', 'Unknown') 
                     }
                 else:
-                    print(f"Skipping duplicate CONGESTION_RAIL row (already covered by CONGESTION_RAIL2 data): {raw_location}")
+                    print(f"Skipping duplicate CONGESTION_RAIL row (already covered by CONGESTION_RAIL2 high-priority data): {raw_location}")
                 
             except Exception as e:
                 print(f"⚠️ Error processing CONGESTION_RAIL row - {raw_location or 'Unknown Location'}: {str(e)}")
                 continue
+
+        # 4. Process Remaining non-CPKC/CP/KCS data from CONGESTION_RAIL2 (Lowest Priority)
+        print("Processing remaining CONGESTION_RAIL2 data (Priority 4/4)...")
+        for row in records_rail2:
+            company = str(row.get('Railroad Company', '')).strip()
+            # Only process if not CPKC, CP, or KCS (already handled)
+            if company not in ['CPKC', 'CP', 'KCS']:
+                try:
+                    raw_lat = safe_convert(row.get('Latitude'))
+                    raw_lng = safe_convert(row.get('Longitude'))
+                    raw_location_from_g = row.get('Location', '').strip() 
+                    dwell_time_rail2 = safe_convert(row.get('Rightmost Dwell Time')) 
+                    
+                    if raw_lat is None or raw_lng is None or dwell_time_rail2 is None or not raw_location_from_g:
+                        print(f"Skipping remaining CONGESTION_RAIL2 row due to missing essential data: {raw_location_from_g or 'Unknown Location'}")
+                        continue
+
+                    normalized_location_for_key = normalize_location_name(raw_location_from_g)
+                    lat_for_key = round(raw_lat, 5) 
+                    lng_for_key = round(raw_lng, 5)
+                    key = f"{normalized_location_for_key}-{lat_for_key}-{lng_for_key}"
+
+                    # Only add if not already covered by higher priority data
+                    if key not in processed_rail_data:
+                        processed_rail_data[key] = {
+                            'date': str(row.get('Date of Rightmost Value', '')).strip(),
+                            'company': company, # Keep original company name for other RAIL2 data
+                            'location': raw_location_from_g, 
+                            'lat': raw_lat,
+                            'lng': raw_lng,
+                            'dwell_time': dwell_time_rail2,
+                            'average_value': None, 
+                            'indicator': None, 
+                            'congestion_level': get_congestion_level_from_dwell_time(dwell_time_rail2) 
+                        }
+                    else:
+                        print(f"Skipping duplicate remaining CONGESTION_RAIL2 row (already covered by higher priority data): {raw_location_from_g}")
+                except Exception as e:
+                    print(f"⚠️ Error processing remaining CONGESTION_RAIL2 row - {raw_location_from_g or 'Unknown Location'}: {str(e)}")
+                    continue
 
         # Convert the dictionary values (deduplicated records) to a list
         result = list(processed_rail_data.values()) 
