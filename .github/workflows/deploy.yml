@@ -1,8 +1,8 @@
 name: Deploy
 
 on:
-  schedule:
-    - cron: '0 12 * * *'
+  # schedule:
+  #   - cron: '0 12 * * *'
   workflow_dispatch: # 이 줄을 추가하여 수동 실행 활성화
 
 jobs:
